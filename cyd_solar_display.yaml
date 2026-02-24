@@ -53,6 +53,41 @@ ota:
   - platform: esphome
     password: ""
 
+logger:
+  level: DEBUG
+  baud_rate: 115200
+
+# RGB LED & Backlight
+output:
+  - platform: ledc
+    pin: 4
+    inverted: true
+    id: led_red
+  - platform: ledc
+    pin: 16
+    inverted: true
+    id: led_green
+  - platform: ledc
+    pin: 17
+    inverted: true
+    id: led_blue
+  - platform: ledc
+    pin: 21
+    id: backlight_pwm
+
+light:
+  - platform: rgb
+    name: "Status LED"
+    red: led_red
+    green: led_green
+    blue: led_blue
+    id: status_led
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: backlight
+    restore_mode: ALWAYS_ON
+
 # --- DISPLAY SETUP (Cheap Yellow Display 2.8") ---
 spi:
   clk_pin: 14
@@ -66,6 +101,7 @@ display:
     cs_pin: 15
     dc_pin: 2
     invert_colors: true
+    color_order: BGR
     rotation: 90
     lambda: |-
       static const char *TAG = "display";
@@ -79,6 +115,13 @@ display:
       auto color_bat = Color(167, 139, 250); // Battery Purple
       
       it.fill(color_bg);
+
+      // --- CHECK IF DATA IS READY ---
+      if (std::isnan(id(solar_w).state)) {
+        it.print(160, 100, id(font_medium), Color::WHITE, TextAlign::TOP_CENTER, "Warten auf Daten...");
+        it.printf(160, 140, id(font_small), Color(150, 150, 150), TextAlign::TOP_CENTER, "IP: %s", id(wifi_ip).state.c_str());
+        return;
+      }
 
       // Top Bar
       it.rectangle(0, 0, 320, 30, Color(30, 41, 59));
@@ -129,6 +172,10 @@ display:
       for(int i=0; i<2; i++) {
         it.filled_circle(310, 110 + (i*20), 4, (id(current_page).state == i+1) ? Color::WHITE : Color(60, 60, 60));
       }
+
+      // Display IP Address in Footer
+      it.printf(5, 225, id(font_tiny), Color(100, 100, 100), TextAlign::BOTTOM_LEFT, "IP: %s", id(wifi_ip).state.c_str());
+      it.printf(315, 225, id(font_tiny), Color(100, 100, 100), TextAlign::BOTTOM_RIGHT, "v1.1.2");
 
 # --- DATEN-HALTER (Werden von der HA Integration befüllt) ---
 # Wir nutzen Template-Sensoren, die Werte halten
@@ -181,6 +228,12 @@ sensor:
     unit_of_measurement: "kWh"
     accuracy_decimals: 1
 
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "CYD IP Address"
+      id: wifi_ip
+
 # Aktuelle Seite
 number:
   - platform: template
@@ -214,16 +267,7 @@ font:
   - file: "gfonts://Roboto"
     id: font_large
     size: 32
+  - file: "gfonts://Roboto"
+    id: font_tiny
+    size: 10
 
-# --- BACKLIGHT CONTROL ---
-output:
-  - platform: ledc
-    pin: 21
-    id: backlight_pwm
-
-light:
-  - platform: monochromatic
-    output: backlight_pwm
-    name: "Display Backlight"
-    id: backlight
-    restore_mode: ALWAYS_ON
