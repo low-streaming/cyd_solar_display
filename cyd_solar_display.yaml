@@ -1,0 +1,175 @@
+esphome:
+  name: cyd-solar-display
+  friendly_name: CYD Solar Display
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Ersetze diese Werte durch deine WLAN-Daten
+wifi:
+  ssid: "DEINE_SSID"
+  password: "DEIN_PASSWORT"
+  
+  # Schnelle Verbindung
+  fast_connect: true
+
+# Aktiviert die Weboberfläche & API für Home Assistant
+api:
+  password: ""
+
+ota:
+  password: ""
+
+web_server:
+  port: 80
+
+# --- DISPLAY SETUP (Cheap Yellow Display 2.8") ---
+spi:
+  clk_pin: 14
+  mosi_pin: 13
+  miso_pin: 12
+
+display:
+  - platform: ili9341
+    id: cyd_display
+    model: TFT 2.4
+    cs_pin: 15
+    dc_pin: 2
+    # Reset is usually connected to ESP32 RST, so -1 or omit
+    led_pin: 21 # Backlight control
+    rotation: 90
+    lambda: |-
+      static const char *TAG = "display";
+      
+      // Farben definieren
+      auto solar_color = Color(253, 216, 53); // Yellow
+      auto house_color = Color(79, 195, 247); // Blue
+      auto grid_color_import = Color(239, 83, 80); // Red
+      auto grid_color_export = Color(102, 187, 106); // Green
+      auto bg_color = Color(0, 0, 0);
+
+      // Hintergrund
+      it.fill(bg_color);
+
+      // Header
+      it.print(160, 10, id(font_small), Color::WHITE, TextAlign::TOP_CENTER, "SOLAR MONITOR");
+      it.line(0, 30, 320, 30, Color::WHITE);
+
+      if (id(current_page).state == 1) {
+        // --- SEITE 1: POWER FLOW ---
+        
+        // Solar
+        it.printf(10, 50, id(font_large), solar_color, "Solar: %.0f W", id(solar_w).state);
+        
+        // Haus
+        it.printf(10, 100, id(font_large), house_color, "Haus: %.0f W", id(house_w).state);
+        
+        // Netz (Farbe je nach Richtung)
+        auto g_color = (id(grid_w).state < 0) ? grid_color_export : grid_color_import;
+        it.printf(10, 150, id(font_large), g_color, "Netz: %.0f W", id(grid_w).state);
+        
+        // Batterie
+        it.printf(10, 200, id(font_large), Color::WHITE, "Akku: %.0f %%", id(battery_soc).state);
+        
+      } else {
+        // --- SEITE 2: TAGESSTATISTIK ---
+        it.print(160, 40, id(font_medium), Color::WHITE, TextAlign::TOP_CENTER, "Tageswerte");
+        
+        it.printf(40, 80, id(font_medium), solar_color, "Ertrag: %.1f kWh", id(yield_today).state);
+        it.printf(40, 120, id(font_medium), grid_color_import, "Bezug: %.1f kWh", id(grid_import).state);
+        it.printf(40, 160, id(font_medium), grid_color_export, "Einspeis.: %.1f kWh", id(grid_export).state);
+      }
+
+# --- DATEN-HALTER (Werden von der HA Integration befüllt) ---
+# Wir nutzen Template-Sensoren, die Werte halten
+sensor:
+  - platform: template
+    name: "Solar Power"
+    id: solar_w
+    unit_of_measurement: "W"
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "Grid Power"
+    id: grid_w
+    unit_of_measurement: "W"
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "House Power"
+    id: house_w
+    unit_of_measurement: "W"
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "Battery SoC"
+    id: battery_soc
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "Yield Today"
+    id: yield_today
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 1
+
+  - platform: template
+    name: "Grid Import"
+    id: grid_import
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 1
+
+  - platform: template
+    name: "Grid Export"
+    id: grid_export
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 1
+
+# Aktuelle Seite
+number:
+  - platform: template
+    name: "Current Page"
+    id: current_page
+    min_value: 1
+    max_value: 2
+    step: 1
+    initial_value: 1
+    optimistic: true
+
+# --- ENDPOINT FÜR DIE INTEGRATION ---
+# Diese Automatisierung empfängt das JSON der HA Integration
+http_request:
+  user_agent: esphome/cyd
+
+# Um native JSON POSTs von meiner Integration zu empfangen, 
+# nutzen wir den web_server und definieren Lambdas für die API.
+# Hinweis: Die einfachste Methode in ESPHome ist, die Sensoren 
+# über Home Assistant Dienste zu aktualisieren oder meine Integration
+# nutzt die REST API von ESPHome.
+
+# --- SCHRIFTARTEN ---
+font:
+  - file: "gfonts://Roboto"
+    id: font_small
+    size: 14
+  - file: "gfonts://Roboto"
+    id: font_medium
+    size: 22
+  - file: "gfonts://Roboto"
+    id: font_large
+    size: 32
+
+# --- BACKLIGHT CONTROL ---
+output:
+  - platform: ledc
+    pin: 21
+    id: backlight_pwm
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: backlight
+    restore_mode: ALWAYS_ON
