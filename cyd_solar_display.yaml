@@ -7,23 +7,51 @@ esp32:
   framework:
     type: arduino
 
-# Ersetze diese Werte durch deine WLAN-Daten
+# WiFi Konfiguration mit Captive Portal (macht eine AP auf, wenn kein WLAN gefunden wird)
 wifi:
-  ssid: "DEINE_SSID"
-  password: "DEIN_PASSWORT"
+  # Falls du schon Daten hast, kannst du sie hier eintragen:
+  # ssid: "DEINE_SSID"
+  # password: "DEIN_PASSWORT"
   
-  # Schnelle Verbindung
-  fast_connect: true
+  ap:
+    ssid: "CYD-Solar-Setup"
+    password: "" # Kein Passwort für den Setup-AP
 
-# Aktiviert die Weboberfläche & API für Home Assistant
-api:
-  password: ""
+captive_portal:
 
-ota:
-  password: ""
-
+# Aktiviert die Weboberfläche
 web_server:
   port: 80
+
+# Native API mit Dienst-Definition für HA
+api:
+  services:
+    - service: update_display
+      variables:
+        solar: float
+        grid: float
+        house: float
+        bat_w: float
+        bat_soc: float
+        yield: float
+        grid_in: float
+        grid_out: float
+        page_num: int
+      then:
+        - lambda: |-
+            id(solar_w).publish_state(solar);
+            id(grid_w).publish_state(grid);
+            id(house_w).publish_state(house);
+            id(battery_w).publish_state(bat_w);
+            id(battery_soc).publish_state(bat_soc);
+            id(yield_today).publish_state(yield);
+            id(grid_import).publish_state(grid_in);
+            id(grid_export).publish_state(grid_out);
+            id(current_page).publish_state(page_num);
+
+ota:
+  - platform: esphome
+    password: ""
 
 # --- DISPLAY SETUP (Cheap Yellow Display 2.8") ---
 spi:
@@ -32,54 +60,74 @@ spi:
   miso_pin: 12
 
 display:
-  - platform: ili9341
+  - platform: ili9xxx
     id: cyd_display
-    model: TFT 2.4
+    model: ILI9341
     cs_pin: 15
     dc_pin: 2
-    # Reset is usually connected to ESP32 RST, so -1 or omit
-    led_pin: 21 # Backlight control
+    invert_colors: true
     rotation: 90
     lambda: |-
       static const char *TAG = "display";
       
-      // Farben definieren
-      auto solar_color = Color(253, 216, 53); // Yellow
-      auto house_color = Color(79, 195, 247); // Blue
-      auto grid_color_import = Color(239, 83, 80); // Red
-      auto grid_color_export = Color(102, 187, 106); // Green
-      auto bg_color = Color(0, 0, 0);
+      // Colors (Modern Palette)
+      auto color_bg = Color(10, 15, 30);
+      auto color_solar = Color(253, 216, 53); // Solar Yellow
+      auto color_house = Color(56, 189, 248); // Tech Blue
+      auto color_grid_in = Color(239, 83, 80); // Grid Import (Red)
+      auto color_grid_out = Color(74, 222, 128); // Grid Export (Green)
+      auto color_bat = Color(167, 139, 250); // Battery Purple
+      
+      it.fill(color_bg);
 
-      // Hintergrund
-      it.fill(bg_color);
-
-      // Header
-      it.print(160, 10, id(font_small), Color::WHITE, TextAlign::TOP_CENTER, "SOLAR MONITOR");
-      it.line(0, 30, 320, 30, Color::WHITE);
-
+      // Top Bar
+      it.rectangle(0, 0, 320, 30, Color(30, 41, 59));
+      it.print(160, 5, id(font_small), Color::WHITE, TextAlign::TOP_CENTER, "CYD SOLAR MONITOR");
+      
       if (id(current_page).state == 1) {
-        // --- SEITE 1: POWER FLOW ---
+        // --- PAGE 1: LIVE POWER FLOW ---
         
-        // Solar
-        it.printf(10, 50, id(font_large), solar_color, "Solar: %.0f W", id(solar_w).state);
+        // Solar Box
+        it.printf(10, 45, id(font_medium), color_solar, "Erzeugung:");
+        it.printf(160, 40, id(font_large), color_solar, TextAlign::TOP_CENTER, "%.0f W", id(solar_w).state);
         
-        // Haus
-        it.printf(10, 100, id(font_large), house_color, "Haus: %.0f W", id(house_w).state);
+        // House Box
+        it.printf(10, 95, id(font_medium), color_house, "Verbrauch:");
+        it.printf(160, 90, id(font_large), color_house, TextAlign::TOP_CENTER, "%.0f W", id(house_w).state);
         
-        // Netz (Farbe je nach Richtung)
-        auto g_color = (id(grid_w).state < 0) ? grid_color_export : grid_color_import;
-        it.printf(10, 150, id(font_large), g_color, "Netz: %.0f W", id(grid_w).state);
+        // Grid Box
+        auto g_val = id(grid_w).state;
+        auto g_color = (g_val <= 0) ? color_grid_out : color_grid_in;
+        const char* g_label = (g_val <= 0) ? "Einspeisung:" : "Netzbezug:";
+        it.printf(10, 145, id(font_medium), g_color, g_label);
+        it.printf(160, 140, id(font_large), g_color, TextAlign::TOP_CENTER, "%.0f W", abs(g_val));
         
-        // Batterie
-        it.printf(10, 200, id(font_large), Color::WHITE, "Akku: %.0f %%", id(battery_soc).state);
-        
+        // Battery Box
+        it.printf(10, 195, id(font_medium), color_bat, "Batterie:");
+        it.printf(160, 190, id(font_large), Color::WHITE, TextAlign::TOP_CENTER, "%.0f%%", id(battery_soc).state);
+        it.printf(250, 203, id(font_small), color_bat, "(%.0f W)", id(battery_w).state);
+
       } else {
-        // --- SEITE 2: TAGESSTATISTIK ---
-        it.print(160, 40, id(font_medium), Color::WHITE, TextAlign::TOP_CENTER, "Tageswerte");
+        // --- PAGE 2: DAILY STATISTICS ---
+        it.print(160, 40, id(font_medium), Color::WHITE, TextAlign::TOP_CENTER, "Tagesstatistik");
+        it.line(40, 65, 280, 65, Color(100, 100, 100));
         
-        it.printf(40, 80, id(font_medium), solar_color, "Ertrag: %.1f kWh", id(yield_today).state);
-        it.printf(40, 120, id(font_medium), grid_color_import, "Bezug: %.1f kWh", id(grid_import).state);
-        it.printf(40, 160, id(font_medium), grid_color_export, "Einspeis.: %.1f kWh", id(grid_export).state);
+        it.printf(20, 80, id(font_medium), color_solar, "Heute Ertrag:");
+        it.printf(300, 80, id(font_medium), Color::WHITE, TextAlign::TOP_RIGHT, "%.1f kWh", id(yield_today).state);
+        
+        it.printf(20, 120, id(font_medium), color_grid_in, "Netz-Bezug:");
+        it.printf(300, 120, id(font_medium), Color::WHITE, TextAlign::TOP_RIGHT, "%.1f kWh", id(grid_import).state);
+        
+        it.printf(20, 160, id(font_medium), color_grid_out, "Einspeisung:");
+        it.printf(300, 160, id(font_medium), Color::WHITE, TextAlign::TOP_RIGHT, "%.1f kWh", id(grid_export).state);
+        
+        // Footer hint
+        it.print(160, 210, id(font_small), Color(150, 150, 150), TextAlign::TOP_CENTER, "Werte werden alle 5s aktualisiert");
+      }
+
+      // Page indicators
+      for(int i=0; i<2; i++) {
+        it.filled_circle(310, 110 + (i*20), 4, (id(current_page).state == i+1) ? Color::WHITE : Color(60, 60, 60));
       }
 
 # --- DATEN-HALTER (Werden von der HA Integration befüllt) ---
@@ -107,6 +155,12 @@ sensor:
     name: "Battery SoC"
     id: battery_soc
     unit_of_measurement: "%"
+    accuracy_decimals: 0
+
+  - platform: template
+    name: "Battery Power"
+    id: battery_w
+    unit_of_measurement: "W"
     accuracy_decimals: 0
 
   - platform: template
@@ -141,7 +195,7 @@ number:
 # --- ENDPOINT FÜR DIE INTEGRATION ---
 # Diese Automatisierung empfängt das JSON der HA Integration
 http_request:
-  user_agent: esphome/cyd
+  useragent: esphome/cyd
 
 # Um native JSON POSTs von meiner Integration zu empfangen, 
 # nutzen wir den web_server und definieren Lambdas für die API.

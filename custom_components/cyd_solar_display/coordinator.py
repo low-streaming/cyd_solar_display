@@ -80,16 +80,28 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
                 self.current_page = 2 if self.current_page == 1 else 1
                 self.last_page_switch = datetime.now()
         
-        payload["page"] = self.current_page
+        # Data for Service Call
+        service_data = {
+            "solar": payload["solar_w"] or 0,
+            "grid": payload["grid_w"] or 0,
+            "house": payload["house_w"] or 0,
+            "bat_w": payload["battery_w"] or 0,
+            "bat_soc": payload["battery_soc"] or 0,
+            "yield": payload["yield_today_kwh"] or 0,
+            "grid_in": payload["grid_import_kwh"] or 0,
+            "grid_out": payload["grid_export_kwh"] or 0,
+            "page_num": self.current_page,
+        }
         
-        # Push to ESP32
-        url = f"http://{self.host}:{self.port}/state"
+        # Call the ESPHome Service
+        # We assume the device name is 'cyd_solar_display' as per YAML
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=payload, timeout=2) as response:
-                    if response.status != 200:
-                        _LOGGER.debug("CYD Display returned status %s", response.status)
+            await self.hass.services.async_call(
+                "esphome", 
+                "cyd_solar_display_update_display", 
+                service_data
+            )
         except Exception as err:
-            _LOGGER.debug("Could not connect to CYD Display at %s: %s", url, err)
+            _LOGGER.debug("Could not call ESPHome service: %s", err)
 
         return payload
