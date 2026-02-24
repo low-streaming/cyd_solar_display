@@ -1,0 +1,8 @@
+{
+    "name": "CYD Solar Display",
+    "content_type": "integration",
+    "domains": [
+        "cyd_solar_display"
+    ],
+    "homeassistant": "2023.1.0"
+}
