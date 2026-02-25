@@ -31,6 +31,14 @@ from .const import (
     CONF_CUSTOM3_ENTITY,
     CONF_CUSTOM4_NAME,
     CONF_CUSTOM4_ENTITY,
+    CONF_CUSTOM5_NAME,
+    CONF_CUSTOM5_ENTITY,
+    CONF_CUSTOM6_NAME,
+    CONF_CUSTOM6_ENTITY,
+    CONF_CUSTOM7_NAME,
+    CONF_CUSTOM7_ENTITY,
+    CONF_CUSTOM8_NAME,
+    CONF_CUSTOM8_ENTITY,
     CONF_AUTO_PAGE_SWITCH,
     CONF_PAGE_INTERVAL
 )
@@ -104,12 +112,21 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "c3_v": get_custom_val(self.entry.options.get(CONF_CUSTOM3_ENTITY)),
             "c4_n": self.entry.options.get(CONF_CUSTOM4_NAME, "Custom 4"),
             "c4_v": get_custom_val(self.entry.options.get(CONF_CUSTOM4_ENTITY)),
+            
+            "c5_n": self.entry.options.get(CONF_CUSTOM5_NAME, "Custom 5"),
+            "c5_v": get_custom_val(self.entry.options.get(CONF_CUSTOM5_ENTITY)),
+            "c6_n": self.entry.options.get(CONF_CUSTOM6_NAME, "Custom 6"),
+            "c6_v": get_custom_val(self.entry.options.get(CONF_CUSTOM6_ENTITY)),
+            "c7_n": self.entry.options.get(CONF_CUSTOM7_NAME, "Custom 7"),
+            "c7_v": get_custom_val(self.entry.options.get(CONF_CUSTOM7_ENTITY)),
+            "c8_n": self.entry.options.get(CONF_CUSTOM8_NAME, "Custom 8"),
+            "c8_v": get_custom_val(self.entry.options.get(CONF_CUSTOM8_ENTITY)),
         }
 
         # Handle Page Switching
         auto_switch = self.entry.options.get("auto_page_switch", False)
-        # We now have up to 3 pages
-        max_page = 3
+        # We now have up to 4 pages
+        max_page = 4
         if auto_switch:
             interval = self.entry.options.get("page_interval", 10)
             if (datetime.now() - self.last_page_switch).total_seconds() >= interval:
@@ -140,6 +157,14 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "c3_v": payload["c3_v"] or " ",
             "c4_n": payload["c4_n"] or " ",
             "c4_v": payload["c4_v"] or " ",
+            "c5_n": payload["c5_n"] or " ",
+            "c5_v": payload["c5_v"] or " ",
+            "c6_n": payload["c6_n"] or " ",
+            "c6_v": payload["c6_v"] or " ",
+            "c7_n": payload["c7_n"] or " ",
+            "c7_v": payload["c7_v"] or " ",
+            "c8_n": payload["c8_n"] or " ",
+            "c8_v": payload["c8_v"] or " ",
         }
         
         # Call the ESPHome Service

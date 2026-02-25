@@ -32,6 +32,16 @@ CONF_CUSTOM3_ENTITY = "custom3_entity"
 CONF_CUSTOM4_NAME = "custom4_name"
 CONF_CUSTOM4_ENTITY = "custom4_entity"
 
+# Page 4 (More Custom Sensors)
+CONF_CUSTOM5_NAME = "custom5_name"
+CONF_CUSTOM5_ENTITY = "custom5_entity"
+CONF_CUSTOM6_NAME = "custom6_name"
+CONF_CUSTOM6_ENTITY = "custom6_entity"
+CONF_CUSTOM7_NAME = "custom7_name"
+CONF_CUSTOM7_ENTITY = "custom7_entity"
+CONF_CUSTOM8_NAME = "custom8_name"
+CONF_CUSTOM8_ENTITY = "custom8_entity"
+
 # Meta
 CONF_AUTO_PAGE_SWITCH = "auto_page_switch"
 CONF_PAGE_INTERVAL = "page_interval"

@@ -125,6 +125,18 @@ class CYDPreview extends LitElement {
     const c4_n = this.editConfig.custom4_name || "Custom 4";
     const c4_v = this.getLiveValue(this.editConfig.custom4_entity, 1.0) + " bar";
 
+    const c5_n = this.editConfig.custom5_name || "Custom 5";
+    const c5_v = this.getLiveValue(this.editConfig.custom5_entity, 21.5) + " °C";
+    const c6_n = this.editConfig.custom6_name || "Custom 6";
+    const c6_v = this.getLiveValue(this.editConfig.custom6_entity, 48.0) + " %";
+    const c7_n = this.editConfig.custom7_name || "Custom 7";
+    const c7_v = this.getLiveValue(this.editConfig.custom7_entity, 1120.0) + " kWh";
+    const c8_n = this.editConfig.custom8_name || "Custom 8";
+    const c8_v = this.getLiveValue(this.editConfig.custom8_entity, 1.0) + " bar";
+
+    const hasPage3 = this.editConfig.custom1_entity || this.editConfig.custom2_entity || this.editConfig.custom3_entity || this.editConfig.custom4_entity;
+    const hasPage4 = this.editConfig.custom5_entity || this.editConfig.custom6_entity || this.editConfig.custom7_entity || this.editConfig.custom8_entity;
+
     const isNegative = grid_w < 0;
 
     return html`
@@ -191,25 +203,54 @@ class CYDPreview extends LitElement {
                       </div>
                     </div>
                   </div>
-                ` : html`
+                ` : this.page === 3 ? html`
                   <div class="page page3">
                     <div class="stats-grid">
+                      ${this.editConfig.custom1_entity ? html`
                       <div class="stat-item" style="border-left: 4px solid #00f3ff;">
                           <div class="label" style="color: #00f3ff;">${c1_n}</div>
                           <div class="value">${c1_v}</div>
-                      </div>
+                      </div>` : ''}
+                      ${this.editConfig.custom2_entity ? html`
                       <div class="stat-item" style="border-left: 4px solid #00ff73;">
                           <div class="label" style="color: #00ff73;">${c2_n}</div>
                           <div class="value">${c2_v}</div>
-                      </div>
+                      </div>` : ''}
+                      ${this.editConfig.custom3_entity ? html`
                       <div class="stat-item" style="border-left: 4px solid #b026ff;">
                           <div class="label" style="color: #b026ff;">${c3_n}</div>
                           <div class="value">${c3_v}</div>
-                      </div>
+                      </div>` : ''}
+                      ${this.editConfig.custom4_entity ? html`
                       <div class="stat-item" style="border-left: 4px solid #ff003c;">
                           <div class="label" style="color: #ff003c;">${c4_n}</div>
                           <div class="value">${c4_v}</div>
-                      </div>
+                      </div>` : ''}
+                    </div>
+                  </div>
+                ` : html`
+                  <div class="page page4">
+                    <div class="stats-grid">
+                      ${this.editConfig.custom5_entity ? html`
+                      <div class="stat-item" style="border-left: 4px solid #00f3ff;">
+                          <div class="label" style="color: #00f3ff;">${c5_n}</div>
+                          <div class="value">${c5_v}</div>
+                      </div>` : ''}
+                      ${this.editConfig.custom6_entity ? html`
+                      <div class="stat-item" style="border-left: 4px solid #00ff73;">
+                          <div class="label" style="color: #00ff73;">${c6_n}</div>
+                          <div class="value">${c6_v}</div>
+                      </div>` : ''}
+                      ${this.editConfig.custom7_entity ? html`
+                      <div class="stat-item" style="border-left: 4px solid #b026ff;">
+                          <div class="label" style="color: #b026ff;">${c7_n}</div>
+                          <div class="value">${c7_v}</div>
+                      </div>` : ''}
+                      ${this.editConfig.custom8_entity ? html`
+                      <div class="stat-item" style="border-left: 4px solid #ff003c;">
+                          <div class="label" style="color: #ff003c;">${c8_n}</div>
+                          <div class="value">${c8_v}</div>
+                      </div>` : ''}
                     </div>
                   </div>
                 `}
@@ -218,14 +259,16 @@ class CYDPreview extends LitElement {
                   <div class="dots">
                     <div class="dot ${this.page === 1 ? 'active' : ''}"></div>
                     <div class="dot ${this.page === 2 ? 'active' : ''}"></div>
-                    <div class="dot ${this.page === 3 ? 'active' : ''}"></div>
+                    ${hasPage3 ? html`<div class="dot ${this.page === 3 ? 'active' : ''}"></div>` : ''}
+                    ${hasPage4 ? html`<div class="dot ${this.page === 4 ? 'active' : ''}"></div>` : ''}
                   </div>
                 </div>
               </div>
               <div class="cyd-controls">
                 <button @click="${() => this.page = 1}">P1</button>
                 <button @click="${() => this.page = 2}">P2</button>
-                <button @click="${() => this.page = 3}">P3</button>
+                ${hasPage3 ? html`<button @click="${() => this.page = 3}">P3</button>` : ''}
+                ${hasPage4 ? html`<button @click="${() => this.page = 4}">P4</button>` : ''}
               </div>
             </div>
           </div>
@@ -381,6 +424,64 @@ class CYDPreview extends LitElement {
   </select>
                 </div>
             </div>
+            
+            <h3 style="color: #fdd835; margin-top: 15px;">🔮 Eigene Sensoren (für Seite 4)</h3>
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 5</label>
+                <input type="text" name="custom5_name" .value="${this.editConfig.custom5_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 5</label>
+                <select name="custom5_entity" @change="${this.handleFormInput}">
+                <option value="" ?selected="${!this.editConfig.custom5_entity}">-- Sensor wählen --</option>
+              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom5_entity === opt.id}">${opt.name}</option>`)}
+            </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 6</label>
+                <input type="text" name="custom6_name" .value="${this.editConfig.custom6_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 6</label>
+                <select name="custom6_entity" @change="${this.handleFormInput}">
+                <option value="" ?selected="${!this.editConfig.custom6_entity}">-- Sensor wählen --</option>
+              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom6_entity === opt.id}">${opt.name}</option>`)}
+            </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 7</label>
+                <input type="text" name="custom7_name" .value="${this.editConfig.custom7_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 7</label>
+                <select name="custom7_entity" @change="${this.handleFormInput}">
+                <option value="" ?selected="${!this.editConfig.custom7_entity}">-- Sensor wählen --</option>
+              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom7_entity === opt.id}">${opt.name}</option>`)}
+            </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 8</label>
+                <input type="text" name="custom8_name" .value="${this.editConfig.custom8_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 8</label>
+                <select name="custom8_entity" @change="${this.handleFormInput}">
+                <option value="" ?selected="${!this.editConfig.custom8_entity}">-- Sensor wählen --</option>
+              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom8_entity === opt.id}">${opt.name}</option>`)}
+            </select>
+              </div>
+            </div>
+            
         </div>
         
         <div class="tech-box" style="margin-top: 20px; border-color: rgba(155, 89, 182, 0.4);">

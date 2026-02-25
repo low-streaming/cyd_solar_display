@@ -27,6 +27,14 @@ from .const import (
     CONF_CUSTOM3_ENTITY,
     CONF_CUSTOM4_NAME,
     CONF_CUSTOM4_ENTITY,
+    CONF_CUSTOM5_NAME,
+    CONF_CUSTOM5_ENTITY,
+    CONF_CUSTOM6_NAME,
+    CONF_CUSTOM6_ENTITY,
+    CONF_CUSTOM7_NAME,
+    CONF_CUSTOM7_ENTITY,
+    CONF_CUSTOM8_NAME,
+    CONF_CUSTOM8_ENTITY,
     CONF_AUTO_PAGE_SWITCH,
     CONF_PAGE_INTERVAL,
 )
@@ -101,6 +109,16 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_CUSTOM3_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM3_ENTITY)): selector.EntitySelector(),
                 vol.Optional(CONF_CUSTOM4_NAME, default=self.config_entry.options.get(CONF_CUSTOM4_NAME, "Custom 4")): str,
                 vol.Optional(CONF_CUSTOM4_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM4_ENTITY)): selector.EntitySelector(),
+                
+                # Page 4 (More Custom Sensors)
+                vol.Optional(CONF_CUSTOM5_NAME, default=self.config_entry.options.get(CONF_CUSTOM5_NAME, "Custom 5")): str,
+                vol.Optional(CONF_CUSTOM5_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM5_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_CUSTOM6_NAME, default=self.config_entry.options.get(CONF_CUSTOM6_NAME, "Custom 6")): str,
+                vol.Optional(CONF_CUSTOM6_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM6_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_CUSTOM7_NAME, default=self.config_entry.options.get(CONF_CUSTOM7_NAME, "Custom 7")): str,
+                vol.Optional(CONF_CUSTOM7_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM7_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_CUSTOM8_NAME, default=self.config_entry.options.get(CONF_CUSTOM8_NAME, "Custom 8")): str,
+                vol.Optional(CONF_CUSTOM8_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM8_ENTITY)): selector.EntitySelector(),
                 
                 # Settings
                 vol.Optional("update_interval", default=self.config_entry.options.get("update_interval", 5)): int,
