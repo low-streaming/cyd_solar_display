@@ -61,7 +61,7 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=update_interval),
+            update_interval=timedelta(seconds=int(entry.options.get("update_interval", 5))),
         )
 
     async def _async_update_data(self):
@@ -128,7 +128,11 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         # We now have up to 4 pages
         max_page = 4
         if auto_switch:
-            interval = self.entry.options.get("page_interval", 10)
+            try:
+                interval = int(self.entry.options.get("page_interval", 10))
+            except (ValueError, TypeError):
+                interval = 10
+            
             if (datetime.now() - self.last_page_switch).total_seconds() >= interval:
                 self.current_page = self.current_page + 1
                 if self.current_page > max_page:
@@ -137,34 +141,34 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         
         # Data for Service Call
         service_data = {
-            "solar": payload["solar_w"] or 0,
-            "grid": payload["grid_w"] or 0,
-            "house": payload["house_w"] or 0,
-            "bat_w": payload["battery_w"] or 0,
-            "bat_soc": payload["battery_soc"] or 0,
-            "val_yield": payload["yield_today_kwh"] or 0,
-            "val_yield_month": payload["yield_month_kwh"] or 0,
-            "val_yield_year": payload["yield_year_kwh"] or 0,
-            "val_yield_total": payload["yield_total_kwh"] or 0,
-            "grid_in": payload["grid_import_kwh"] or 0,
-            "grid_out": payload["grid_export_kwh"] or 0,
-            "page_num": self.current_page,
-            "c1_n": payload["c1_n"] or " ",
-            "c1_v": payload["c1_v"] or " ",
-            "c2_n": payload["c2_n"] or " ",
-            "c2_v": payload["c2_v"] or " ",
-            "c3_n": payload["c3_n"] or " ",
-            "c3_v": payload["c3_v"] or " ",
-            "c4_n": payload["c4_n"] or " ",
-            "c4_v": payload["c4_v"] or " ",
-            "c5_n": payload["c5_n"] or " ",
-            "c5_v": payload["c5_v"] or " ",
-            "c6_n": payload["c6_n"] or " ",
-            "c6_v": payload["c6_v"] or " ",
-            "c7_n": payload["c7_n"] or " ",
-            "c7_v": payload["c7_v"] or " ",
-            "c8_n": payload["c8_n"] or " ",
-            "c8_v": payload["c8_v"] or " ",
+            "solar": float(payload["solar_w"] or 0.0),
+            "grid": float(payload["grid_w"] or 0.0),
+            "house": float(payload["house_w"] or 0.0),
+            "bat_w": float(payload["battery_w"] or 0.0),
+            "bat_soc": float(payload["battery_soc"] or 0.0),
+            "val_yield": float(payload["yield_today_kwh"] or 0.0),
+            "val_yield_month": float(payload["yield_month_kwh"] or 0.0),
+            "val_yield_year": float(payload["yield_year_kwh"] or 0.0),
+            "val_yield_total": float(payload["yield_total_kwh"] or 0.0),
+            "grid_in": float(payload["grid_import_kwh"] or 0.0),
+            "grid_out": float(payload["grid_export_kwh"] or 0.0),
+            "page_num": int(self.current_page),
+            "c1_n": str(payload["c1_n"] or " "),
+            "c1_v": str(payload["c1_v"] or " "),
+            "c2_n": str(payload["c2_n"] or " "),
+            "c2_v": str(payload["c2_v"] or " "),
+            "c3_n": str(payload["c3_n"] or " "),
+            "c3_v": str(payload["c3_v"] or " "),
+            "c4_n": str(payload["c4_n"] or " "),
+            "c4_v": str(payload["c4_v"] or " "),
+            "c5_n": str(payload["c5_n"] or " "),
+            "c5_v": str(payload["c5_v"] or " "),
+            "c6_n": str(payload["c6_n"] or " "),
+            "c6_v": str(payload["c6_v"] or " "),
+            "c7_n": str(payload["c7_n"] or " "),
+            "c7_v": str(payload["c7_v"] or " "),
+            "c8_n": str(payload["c8_n"] or " "),
+            "c8_v": str(payload["c8_v"] or " "),
         }
         
         # Call the ESPHome Service
