@@ -151,6 +151,6 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
                 service_data
             )
         except Exception as err:
-            _LOGGER.debug("Could not call ESPHome service: %s", err)
+            _LOGGER.error("Could not call ESPHome service '%s': %s", "cyd_solar_display_update_display", err)
 
         return payload
