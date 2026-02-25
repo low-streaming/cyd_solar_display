@@ -166,22 +166,27 @@ sensor:
     name: "Yield Today"
     id: yield_today
     unit_of_measurement: "kWh"
+    accuracy_decimals: 1
   - platform: template
     name: "Yield Month"
     id: yield_month
     unit_of_measurement: "kWh"
+    accuracy_decimals: 1
   - platform: template
     name: "Yield Year"
     id: yield_year
     unit_of_measurement: "kWh"
+    accuracy_decimals: 1
   - platform: template
     name: "Yield Total"
     id: yield_total
     unit_of_measurement: "kWh"
+    accuracy_decimals: 1
   - platform: template
     name: "Grid Import"
     id: grid_import
     unit_of_measurement: "kWh"
+    accuracy_decimals: 1
   - platform: template
     name: "Grid Export"
     id: grid_export
