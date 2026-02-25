@@ -32,6 +32,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # This makes the JS available for the entire UI, needed for our custom selector/preview
     add_extra_js_url(hass, f"/cyd_solar_display/{entry.entry_id}/cyd-preview.js")
 
+    # Register the Sidebar Panel
+    # Note: 'cyd-preview' is the custom element name defined in the JS file
+    hass.components.frontend.async_register_panel(
+        DOMAIN,
+        "cyd-preview",
+        "mdi:monitor-dashboard",
+        "CYD Monitor",
+        require_admin=True
+    )
+
     entry.async_on_unload(entry.add_update_listener(update_listener))
 
     return True
