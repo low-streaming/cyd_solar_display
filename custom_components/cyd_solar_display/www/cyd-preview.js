@@ -30,14 +30,9 @@ class CYDPreview extends LitElement {
     if (!this.panel || !this.panel.config || !this.panel.config.entry_id) return;
     const entryId = this.panel.config.entry_id;
     try {
-      const res = await fetch(`/api/cyd_solar_display/config/${entryId}`, {
-        headers: { 'Authorization': `Bearer ${this.hass?.auth?.token?.access_token || ''}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        this.editConfig = data.options || {};
-        this.requestUpdate();
-      }
+      const data = await this.hass.callApi('GET', `cyd_solar_display/config/${entryId}`);
+      this.editConfig = data.options || {};
+      this.requestUpdate();
     } catch (e) { console.error("Failed to load config", e); }
   }
 
@@ -45,21 +40,12 @@ class CYDPreview extends LitElement {
     if (!this.panel || !this.panel.config || !this.panel.config.entry_id) return;
     const entryId = this.panel.config.entry_id;
     try {
-      const res = await fetch(`/api/cyd_solar_display/config/${entryId}`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.hass?.auth?.token?.access_token || ''}`
-        },
-        body: JSON.stringify(this.editConfig)
-      });
-      if (res.ok) {
-        alert("✅ Einstellungen wurden erfolgreich gespeichert!");
-      } else {
-        alert("❌ Fehler beim Speichern der Einstellungen.");
-      }
-    } catch (e) { console.error(e); alert("❌ Verbindungsfehler beim Speichern."); }
+      await this.hass.callApi('POST', `cyd_solar_display/config/${entryId}`, this.editConfig);
+      alert("✅ Einstellungen wurden erfolgreich gespeichert!");
+    } catch (e) {
+      console.error(e);
+      alert("❌ Fehler beim Speichern der Einstellungen.");
+    }
   }
 
   getEntitiesByDomain(domainPrefix) {
@@ -145,31 +131,28 @@ class CYDPreview extends LitElement {
                 ${this.page === 1 ? html`
                   <div class="page page1">
                     <div class="flow-layout">
-                      <div class="box solar">
+                      <div class="box solar" style="margin: 0 auto; width: 120px;">
                         <div class="icon">☀️</div>
                         <div class="value">${solar_w}<span>W</span></div>
                       </div>
 
                       <div class="middle-row">
-                          <div class="box battery">
+                          <div class="box battery" style="width: 70px;">
                               <div class="soc-ring" style="--perc: ${battery_soc}%">
                                   <div class="inner">${battery_soc}%</div>
                               </div>
                               <div class="value small">${battery_w}W</div>
                           </div>
-                          <div class="flow-center">
-                              <div class="arrow ${isNegative ? 'out' : 'in'}"></div>
-                          </div>
-                          <div class="box house">
+                          <div class="box house" style="width: 70px;">
                               <div class="icon">🏠</div>
                               <div class="value">${house_w}<span>W</span></div>
                           </div>
                       </div>
 
-                      <div class="box grid ${isNegative ? 'export' : 'import'}">
+                      <div class="box grid ${isNegative ? 'export' : 'import'}" style="margin: 0 auto; width: 120px;">
                         <div class="icon">⚡</div>
                         <div class="value">${Math.abs(grid_w)}<span>W</span></div>
-                        <div class="label">${isNegative ? 'Einspeisung' : 'Netzbezug'}</div>
+                        <div class="label" style="font-size: 10px;">${isNegative ? 'Einspeisung' : 'Netzbezug'}</div>
                       </div>
                     </div>
                   </div>
@@ -468,10 +451,17 @@ class CYDPreview extends LitElement {
 
       .page { flex: 1; padding: 10px; display: flex; flex-direction: column; }
       
+      .flow-layout {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          height: 185px;
+      }
+      
       .box {
         background: #111;
         border-radius: 6px;
-        padding: 8px;
+        padding: 4px;
         text-align: center;
         border: 1px solid #333;
       }
@@ -480,30 +470,30 @@ class CYDPreview extends LitElement {
       .grid.export { color: #66bb6a; box-shadow: inset 0 0 15px rgba(102,187,106,0.1); }
       .grid.import { color: #ef5350; box-shadow: inset 0 0 15px rgba(239,83,80,0.1); }
       
-      .value { font-size: 24px; font-weight: bold; }
-      .value span { font-size: 12px; margin-left: 2px; }
-      .value.small { font-size: 14px; }
+      .value { font-size: 20px; font-weight: bold; line-height: 1.2; }
+      .value span { font-size: 10px; margin-left: 2px; }
+      .value.small { font-size: 12px; }
 
       .middle-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin: 10px 0;
+          margin: 0;
       }
 
       .soc-ring {
-          width: 40px;
-          height: 40px;
+          width: 34px;
+          height: 34px;
           border-radius: 50%;
           background: conic-gradient(#4caf50 var(--perc), #333 0);
           display: flex;
           align-items: center;
           justify-content: center;
-          margin: 0 auto 5px;
+          margin: 0 auto 3px;
       }
       .soc-ring .inner {
-          width: 32px;
-          height: 32px;
+          width: 26px;
+          height: 26px;
           background: #111;
           border-radius: 50%;
           font-size: 9px;
