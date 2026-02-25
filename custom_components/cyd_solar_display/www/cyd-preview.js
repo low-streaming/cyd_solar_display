@@ -3,7 +3,7 @@
  * Simulates a 320x240 ESP32 Display
  */
 
-(function() {
+(function () {
   const LitElement = Object.getPrototypeOf(customElements.get("ha-panel-config"));
   const { html, css } = LitElement.prototype;
 
@@ -34,14 +34,14 @@
 
     render() {
       const isNegative = this.data.grid_w < 0;
-      
+
       return html`
         <div class="cyd-container">
           <div class="cyd-frame">
             <div class="cyd-screen">
               <div class="header">
                 <span class="title">Solar Monitor</span>
-                <span class="time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                <span class="time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
               
               ${this.page === 1 ? this.renderPage1() : this.renderPage2()}
