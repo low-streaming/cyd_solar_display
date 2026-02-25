@@ -33,9 +33,20 @@ api:
         bat_w: float
         bat_soc: float
         yield: float
+        yield_month: float
+        yield_year: float
+        yield_total: float
         grid_in: float
         grid_out: float
         page_num: int
+        c1_n: string
+        c1_v: string
+        c2_n: string
+        c2_v: string
+        c3_n: string
+        c3_v: string
+        c4_n: string
+        c4_v: string
       then:
         - lambda: |-
             id(solar_w).publish_state(solar);
@@ -44,9 +55,20 @@ api:
             id(battery_w).publish_state(bat_w);
             id(battery_soc).publish_state(bat_soc);
             id(yield_today).publish_state(yield);
+            id(yield_month).publish_state(yield_month);
+            id(yield_year).publish_state(yield_year);
+            id(yield_total).publish_state(yield_total);
             id(grid_import).publish_state(grid_in);
             id(grid_export).publish_state(grid_out);
             id(current_page).publish_state(page_num);
+            id(custom1_n).publish_state(c1_n);
+            id(custom1_v).publish_state(c1_v);
+            id(custom2_n).publish_state(c2_n);
+            id(custom2_v).publish_state(c2_v);
+            id(custom3_n).publish_state(c3_n);
+            id(custom3_v).publish_state(c3_v);
+            id(custom4_n).publish_state(c4_n);
+            id(custom4_v).publish_state(c4_v);
 
 ota:
   - platform: esphome
@@ -71,7 +93,7 @@ light:
     id: backlight
     restore_mode: ALWAYS_ON
 
-# Colors (Based on Grow Box Dashboard)
+# Colors (OpenKairo Cyberpunk Aesthetic)
 color:
   - id: color_bg
     red: 0%
@@ -82,28 +104,28 @@ color:
     green: 100%
     blue: 100%
   - id: color_panel
-    red: 10%
-    green: 10%
-    blue: 10% 
+    red: 6%
+    green: 6%
+    blue: 8% 
   - id: color_solar
-    red: 100%
-    green: 85%
-    blue: 20%
+    red: 98%
+    green: 93%
+    blue: 3%
   - id: color_house
-    red: 20%
-    green: 70%
+    red: 0%
+    green: 95%
     blue: 100%
   - id: color_grid_in
-    red: 90%
-    green: 20%
-    blue: 20%
+    red: 100%
+    green: 0%
+    blue: 23%
   - id: color_grid_out
-    red: 30%
-    green: 90%
-    blue: 30%
+    red: 0%
+    green: 100%
+    blue: 45%
   - id: color_bat
-    red: 65%
-    green: 55%
+    red: 69%
+    green: 15%
     blue: 100%
 
 # Fonts
@@ -145,6 +167,18 @@ sensor:
     id: yield_today
     unit_of_measurement: "kWh"
   - platform: template
+    name: "Yield Month"
+    id: yield_month
+    unit_of_measurement: "kWh"
+  - platform: template
+    name: "Yield Year"
+    id: yield_year
+    unit_of_measurement: "kWh"
+  - platform: template
+    name: "Yield Total"
+    id: yield_total
+    unit_of_measurement: "kWh"
+  - platform: template
     name: "Grid Import"
     id: grid_import
     unit_of_measurement: "kWh"
@@ -159,6 +193,30 @@ text_sensor:
     ip_address:
       name: "CYD IP Address"
       id: wifi_ip
+  - platform: template
+    name: "Custom 1 Name"
+    id: custom1_n
+  - platform: template
+    name: "Custom 1 Value"
+    id: custom1_v
+  - platform: template
+    name: "Custom 2 Name"
+    id: custom2_n
+  - platform: template
+    name: "Custom 2 Value"
+    id: custom2_v
+  - platform: template
+    name: "Custom 3 Name"
+    id: custom3_n
+  - platform: template
+    name: "Custom 3 Value"
+    id: custom3_v
+  - platform: template
+    name: "Custom 4 Name"
+    id: custom4_n
+  - platform: template
+    name: "Custom 4 Value"
+    id: custom4_v
 
 number:
   - platform: template
@@ -204,17 +262,20 @@ display:
 
       if (page == 1) {
         // 1. SOLAR (Top Center)
-        it.rectangle(100, 42, 120, 55, id(color_panel)); // Border
+        it.rectangle(100, 42, 120, 55, id(color_panel)); 
+        it.filled_rectangle(100, 42, 3, 10, id(color_solar)); // Cyberpunk Accent
         it.print(160, 50, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "SOLAR");
         it.printf(160, 67, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.0f W", id(solar_w).state);
         
         // 2. BATTERIE (Middle Left)
-        it.rectangle(15, 107, 110, 45, id(color_panel)); // Border
+        it.rectangle(15, 107, 110, 45, id(color_panel));
+        it.filled_rectangle(15, 107, 3, 10, id(color_bat)); // Cyberpunk Accent
         it.print(70, 113, id(font_label), id(color_bat), TextAlign::TOP_CENTER, "BATTERIE");
         it.printf(70, 128, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%.0f%% / %.0fW", id(battery_soc).state, id(battery_w).state);
         
         // 3. HAUS (Middle Right)
-        it.rectangle(195, 107, 110, 45, id(color_panel)); // Border
+        it.rectangle(195, 107, 110, 45, id(color_panel));
+        it.filled_rectangle(195, 107, 3, 10, id(color_house)); // Cyberpunk Accent
         it.print(250, 113, id(font_label), id(color_house), TextAlign::TOP_CENTER, "HAUSVERBRAUCH");
         it.printf(250, 128, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%.0f W", id(house_w).state);
         
@@ -222,41 +283,69 @@ display:
         auto g_val = id(grid_w).state;
         auto g_color = (g_val <= 0) ? id(color_grid_out) : id(color_grid_in);
         const char* g_label = (g_val <= 0) ? "EINSPEISUNG" : "NETZBEZUG";
-        it.rectangle(100, 162, 120, 55, id(color_panel)); // Border
+        it.rectangle(100, 162, 120, 55, id(color_panel));
+        it.filled_rectangle(100, 162, 3, 10, g_color); // Cyberpunk Accent
         it.print(160, 170, id(font_label), g_color, TextAlign::TOP_CENTER, g_label);
         it.printf(160, 187, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.0f W", abs(g_val));
-      } else {
-        // PAGE 2 (STATISTICS)
-        // 1. ERTRAG
-        it.rectangle(15, 50, 140, 65, id(color_panel)); // Border
-        it.print(85, 60, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "ERTRAG HEUTE");
+      } else if (page == 2) {
+        // PAGE 2 (STATISTICS) - OPENKAIRO STYLE
+        
+        // 1. ERTRAG TAG
+        it.rectangle(15, 50, 140, 65, id(color_panel));
+        it.filled_rectangle(15, 50, 4, 15, id(color_solar));
+        it.print(85, 60, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "ERTRAG TAG");
         it.printf(85, 82, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(yield_today).state);
         
-        // 2. NETZBEZUG
-        it.rectangle(165, 50, 140, 65, id(color_panel)); // Border
-        it.print(235, 60, id(font_label), id(color_grid_in), TextAlign::TOP_CENTER, "NETZBEZUG");
-        it.printf(235, 82, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(grid_import).state);
+        // 2. ERTRAG MONAT
+        it.rectangle(165, 50, 140, 65, id(color_panel));
+        it.filled_rectangle(165, 50, 4, 15, id(color_solar));
+        it.print(235, 60, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "ERTRAG MONAT");
+        it.printf(235, 82, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(yield_month).state);
 
-        // 3. EINSPEISUNG
-        it.rectangle(15, 125, 140, 65, id(color_panel)); // Border
-        it.print(85, 135, id(font_label), id(color_grid_out), TextAlign::TOP_CENTER, "EINSPEISUNG");
-        it.printf(85, 157, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(grid_export).state);
+        // 3. ERTRAG JAHR
+        it.rectangle(15, 125, 140, 65, id(color_panel));
+        it.filled_rectangle(15, 125, 4, 15, id(color_solar));
+        it.print(85, 135, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "ERTRAG JAHR");
+        it.printf(85, 157, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(yield_year).state);
 
-        // 4. AUTARKIE (SIMULATED OR CALCULATION)
-        it.rectangle(165, 125, 140, 65, id(color_panel)); // Border
-        it.print(235, 135, id(font_label), id(color_house), TextAlign::TOP_CENTER, "AUTARKIE");
-        it.printf(235, 157, id(font_value), id(color_text), TextAlign::TOP_CENTER, "94 %%"); 
+        // 4. GESAMTERTRAG
+        it.rectangle(165, 125, 140, 65, id(color_panel));
+        it.filled_rectangle(165, 125, 4, 15, id(color_solar));
+        it.print(235, 135, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "GESAMTERTRAG");
+        it.printf(235, 157, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(yield_total).state); 
+      } else {
+        // PAGE 3 (CUSTOM OPENKAIRO SENSORS)
+        
+        // C1
+        it.rectangle(15, 50, 140, 65, id(color_panel));
+        it.filled_rectangle(15, 50, 4, 15, id(color_house)); 
+        it.print(85, 60, id(font_label), id(color_house), TextAlign::TOP_CENTER, id(custom1_n).state.c_str());
+        it.printf(85, 82, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom1_v).state.c_str());
+        
+        // C2
+        it.rectangle(165, 50, 140, 65, id(color_panel));
+        it.filled_rectangle(165, 50, 4, 15, id(color_grid_out));
+        it.print(235, 60, id(font_label), id(color_grid_out), TextAlign::TOP_CENTER, id(custom2_n).state.c_str());
+        it.printf(235, 82, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom2_v).state.c_str());
+
+        // C3
+        it.rectangle(15, 125, 140, 65, id(color_panel));
+        it.filled_rectangle(15, 125, 4, 15, id(color_bat));
+        it.print(85, 135, id(font_label), id(color_bat), TextAlign::TOP_CENTER, id(custom3_n).state.c_str());
+        it.printf(85, 157, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom3_v).state.c_str());
+
+        // C4
+        it.rectangle(165, 125, 140, 65, id(color_panel));
+        it.filled_rectangle(165, 125, 4, 15, id(color_grid_in));
+        it.print(235, 135, id(font_label), id(color_grid_in), TextAlign::TOP_CENTER, id(custom4_n).state.c_str());
+        it.printf(235, 157, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom4_v).state.c_str()); 
       }
 
       // FOOTER
       it.filled_rectangle(0, 222, 320, 18, id(color_panel));
       it.line(0, 222, 320, 222, id(color_text));
       
-      if (page == 1) {
-          it.print(160, 225, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "Seite 1 / 2");
-      } else {
-          it.print(160, 225, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "Seite 2 / 2");
-      }
+      it.printf(160, 225, id(font_label), id(color_house), TextAlign::TOP_CENTER, "SEITE %d / 3", page);
 
 # Touchscreen Setup
 touchscreen:

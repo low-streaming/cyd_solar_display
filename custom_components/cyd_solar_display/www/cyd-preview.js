@@ -108,8 +108,18 @@ class CYDPreview extends LitElement {
     const battery_soc = this.getLiveValue(this.editConfig.battery_soc_entity, 85);
 
     const yield_today = this.getLiveValue(this.editConfig.yield_today_entity, 12.4);
-    const grid_in = this.getLiveValue(this.editConfig.grid_import_entity, 2.1);
-    const grid_out = this.getLiveValue(this.editConfig.grid_export_entity, 5.8);
+    const yield_month = this.getLiveValue(this.editConfig.yield_month_entity, 114.2);
+    const yield_year = this.getLiveValue(this.editConfig.yield_year_entity, 1054.8);
+    const yield_total = this.getLiveValue(this.editConfig.yield_total_entity, 3450.5);
+
+    const c1_n = this.editConfig.custom1_name || "Custom 1";
+    const c1_v = this.getLiveValue(this.editConfig.custom1_entity, 21.5) + " °C";
+    const c2_n = this.editConfig.custom2_name || "Custom 2";
+    const c2_v = this.getLiveValue(this.editConfig.custom2_entity, 48.0) + " %";
+    const c3_n = this.editConfig.custom3_name || "Custom 3";
+    const c3_v = this.getLiveValue(this.editConfig.custom3_entity, 1120.0) + " kWh";
+    const c4_n = this.editConfig.custom4_name || "Custom 4";
+    const c4_v = this.getLiveValue(this.editConfig.custom4_entity, 1.0) + " bar";
 
     const isNegative = grid_w < 0;
 
@@ -156,24 +166,45 @@ class CYDPreview extends LitElement {
                       </div>
                     </div>
                   </div>
-                ` : html`
+                ` : this.page === 2 ? html`
                   <div class="page page2">
                     <div class="stats-grid">
-                      <div class="stat-item">
-                          <div class="label">Ertrag Heute</div>
+                      <div class="stat-item" style="border-left: 4px solid #fdd835;">
+                          <div class="label" style="color: #fdd835;">Ertrag Tag</div>
                           <div class="value">${yield_today} <span>kWh</span></div>
                       </div>
-                      <div class="stat-item">
-                          <div class="label">Netzbezug</div>
-                          <div class="value">${grid_in} <span>kWh</span></div>
+                      <div class="stat-item" style="border-left: 4px solid #fdd835;">
+                          <div class="label" style="color: #fdd835;">Ertrag Monat</div>
+                          <div class="value">${yield_month} <span>kWh</span></div>
                       </div>
-                      <div class="stat-item">
-                          <div class="label">Einspeisung</div>
-                          <div class="value">${grid_out} <span>kWh</span></div>
+                      <div class="stat-item" style="border-left: 4px solid #fdd835;">
+                          <div class="label" style="color: #fdd835;">Ertrag Jahr</div>
+                          <div class="value">${yield_year} <span>kWh</span></div>
                       </div>
-                      <div class="stat-item">
-                          <div class="label">Autarkie</div>
-                          <div class="value">94 <span>%</span></div>
+                      <div class="stat-item" style="border-left: 4px solid #fdd835;">
+                          <div class="label" style="color: #fdd835;">Gesamtertrag</div>
+                          <div class="value">${yield_total} <span>kWh</span></div>
+                      </div>
+                    </div>
+                  </div>
+                ` : html`
+                  <div class="page page3">
+                    <div class="stats-grid">
+                      <div class="stat-item" style="border-left: 4px solid #00f3ff;">
+                          <div class="label" style="color: #00f3ff;">${c1_n}</div>
+                          <div class="value">${c1_v}</div>
+                      </div>
+                      <div class="stat-item" style="border-left: 4px solid #00ff73;">
+                          <div class="label" style="color: #00ff73;">${c2_n}</div>
+                          <div class="value">${c2_v}</div>
+                      </div>
+                      <div class="stat-item" style="border-left: 4px solid #b026ff;">
+                          <div class="label" style="color: #b026ff;">${c3_n}</div>
+                          <div class="value">${c3_v}</div>
+                      </div>
+                      <div class="stat-item" style="border-left: 4px solid #ff003c;">
+                          <div class="label" style="color: #ff003c;">${c4_n}</div>
+                          <div class="value">${c4_v}</div>
                       </div>
                     </div>
                   </div>
@@ -183,12 +214,14 @@ class CYDPreview extends LitElement {
                   <div class="dots">
                     <div class="dot ${this.page === 1 ? 'active' : ''}"></div>
                     <div class="dot ${this.page === 2 ? 'active' : ''}"></div>
+                    <div class="dot ${this.page === 3 ? 'active' : ''}"></div>
                   </div>
                 </div>
               </div>
               <div class="cyd-controls">
                 <button @click="${() => this.page = 1}">P1</button>
                 <button @click="${() => this.page = 2}">P2</button>
+                <button @click="${() => this.page = 3}">P3</button>
               </div>
             </div>
           </div>
@@ -219,35 +252,35 @@ class CYDPreview extends LitElement {
                   <select name="grid_entity" @change="${this.handleFormInput}">
                     <option value="" ?selected="${!this.editConfig.grid_entity}">-- Sensor wählen --</option>
                     ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.grid_entity === opt.id}">${opt.name}</option>`)}
-                  </select>
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group flex-1">
-                  <label>Hausverbrauch (W)</label>
-                  <select name="house_entity" @change="${this.handleFormInput}">
-                    <option value="" ?selected="${!this.editConfig.house_entity}">-- Sensor wählen --</option>
-                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.house_entity === opt.id}">${opt.name}</option>`)}
-                  </select>
-                </div>
-                <div class="form-group flex-1">
-                  <label>Batterie Leistung (W)</label>
-                  <select name="battery_entity" @change="${this.handleFormInput}">
-                    <option value="" ?selected="${!this.editConfig.battery_entity}">-- Sensor wählen --</option>
-                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.battery_entity === opt.id}">${opt.name}</option>`)}
-                  </select>
-                </div>
-            </div>
+                  </select >
+                </div >
+            </div >
 
-            <div class="form-group" style="width: 50%;">
-                <label>Batterie Füllstand (%)</label>
-                <select name="battery_soc_entity" @change="${this.handleFormInput}">
-                <option value="" ?selected="${!this.editConfig.battery_soc_entity}">-- Sensor wählen --</option>
+  <div class="form-row">
+    <div class="form-group flex-1">
+      <label>Hausverbrauch (W)</label>
+      <select name="house_entity" @change="${this.handleFormInput}">
+      <option value="" ?selected="${!this.editConfig.house_entity}">-- Sensor wählen --</option>
+    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.house_entity === opt.id}">${opt.name}</option>`)}
+  </select>
+                </div >
+  <div class="form-group flex-1">
+    <label>Batterie Leistung (W)</label>
+    <select name="battery_entity" @change="${this.handleFormInput}">
+    <option value="" ?selected="${!this.editConfig.battery_entity}">-- Sensor wählen --</option>
+                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.battery_entity === opt.id}">${opt.name}</option>`)}
+                  </select >
+                </div >
+            </div >
+
+  <div class="form-group" style="width: 50%;">
+    <label>Batterie Füllstand (%)</label>
+    <select name="battery_soc_entity" @change="${this.handleFormInput}">
+    <option value="" ?selected="${!this.editConfig.battery_soc_entity}">-- Sensor wählen --</option>
                 ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.battery_soc_entity === opt.id}">${opt.name}</option>`)}
-                </select>
-            </div>
-        </div>
+                </select >
+            </div >
+        </div >
 
         <div class="tech-box" style="margin-top: 20px; border-color: rgba(52, 152, 219, 0.4);">
             <h3 style="color: #3498db; margin-top: 0;">📊 Statistik-Sensoren (kWh) - Für Seite 2</h3>
@@ -260,21 +293,91 @@ class CYDPreview extends LitElement {
                   </select>
                 </div>
                 <div class="form-group flex-1">
-                  <label>Netzbezug Heute (kWh)</label>
-                  <select name="grid_import_entity" @change="${this.handleFormInput}">
-                    <option value="" ?selected="${!this.editConfig.grid_import_entity}">-- Sensor wählen --</option>
-                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.grid_import_entity === opt.id}">${opt.name}</option>`)}
-                  </select>
-                </div>
-                 <div class="form-group flex-1">
-                  <label>Einspeisung Heute (kWh)</label>
-                  <select name="grid_export_entity" @change="${this.handleFormInput}">
-                    <option value="" ?selected="${!this.editConfig.grid_export_entity}">-- Sensor wählen --</option>
-                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.grid_export_entity === opt.id}">${opt.name}</option>`)}
-                  </select>
-                </div>
-            </div>
-        </div>
+                  <label>Ertrag Laufender Monat (kWh)</label>
+                  <select name="yield_month_entity" @change="${this.handleFormInput}">
+                    <option value="" ?selected="${!this.editConfig.yield_month_entity}">-- Sensor wählen --</option>
+                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.yield_month_entity === opt.id}">${opt.name}</option>`)}
+                  </select >
+                </div >
+            </div >
+  <div class="form-row">
+    <div class="form-group flex-1">
+      <label>Ertrag Laufendes Jahr (kWh)</label>
+      <select name="yield_year_entity" @change="${this.handleFormInput}">
+      <option value="" ?selected="${!this.editConfig.yield_year_entity}">-- Sensor wählen --</option>
+    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.yield_year_entity === opt.id}">${opt.name}</option>`)}
+  </select>
+                </div >
+  <div class="form-group flex-1">
+    <label>Gesamtertrag (Lifelime) (kWh)</label>
+    <select name="yield_total_entity" @change="${this.handleFormInput}">
+    <option value="" ?selected="${!this.editConfig.yield_total_entity}">-- Sensor wählen --</option>
+                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.yield_total_entity === opt.id}">${opt.name}</option>`)}
+                  </select >
+                </div >
+            </div >
+        </div >
+
+  <div class="tech-box" style="margin-top: 20px; border-color: #00f3ff;">
+    <h3 style="color: #00f3ff; margin-top: 0;">🔮 Eigene Sensoren (für Seite 3)</h3>
+    <p style="color:#aaa; font-size: 12px; margin-top:-10px; margin-bottom: 15px;">Füge bis zu 4 eigene Sensoren hinzu, welche auf der dritten Seite angezeigt werden.</p>
+
+    <div class="form-row">
+      <div class="form-group flex-1">
+        <label>Name 1 (z.B. Temperatur)</label>
+        <input type="text" name="custom1_name" .value="${this.editConfig.custom1_name || ''}" @input="${this.handleFormInput}">
+      </div>
+      <div class="form-group flex-1">
+        <label>Sensor 1</label>
+        <select name="custom1_entity" @change="${this.handleFormInput}">
+        <option value="" ?selected="${!this.editConfig.custom1_entity}">-- Sensor wählen --</option>
+      ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom1_entity === opt.id}">${opt.name}</option>`)}
+    </select>
+  </div>
+            </div >
+
+  <div class="form-row">
+    <div class="form-group flex-1">
+      <label>Name 2 (z.B. Luftfeuchte)</label>
+      <input type="text" name="custom2_name" .value="${this.editConfig.custom2_name || ''}" @input="${this.handleFormInput}">
+    </div>
+    <div class="form-group flex-1">
+      <label>Sensor 2</label>
+      <select name="custom2_entity" @change="${this.handleFormInput}">
+      <option value="" ?selected="${!this.editConfig.custom2_entity}">-- Sensor wählen --</option>
+    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom2_entity === opt.id}">${opt.name}</option>`)}
+  </select>
+                </div >
+            </div >
+
+  <div class="form-row">
+    <div class="form-group flex-1">
+      <label>Name 3</label>
+      <input type="text" name="custom3_name" .value="${this.editConfig.custom3_name || ''}" @input="${this.handleFormInput}">
+    </div>
+    <div class="form-group flex-1">
+      <label>Sensor 3</label>
+      <select name="custom3_entity" @change="${this.handleFormInput}">
+      <option value="" ?selected="${!this.editConfig.custom3_entity}">-- Sensor wählen --</option>
+    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom3_entity === opt.id}">${opt.name}</option>`)}
+  </select>
+                </div >
+            </div >
+
+  <div class="form-row">
+    <div class="form-group flex-1">
+      <label>Name 4</label>
+      <input type="text" name="custom4_name" .value="${this.editConfig.custom4_name || ''}" @input="${this.handleFormInput}">
+    </div>
+    <div class="form-group flex-1">
+      <label>Sensor 4</label>
+      <select name="custom4_entity" @change="${this.handleFormInput}">
+      <option value="" ?selected="${!this.editConfig.custom4_entity}">-- Sensor wählen --</option>
+    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom4_entity === opt.id}">${opt.name}</option>`)}
+  </select>
+                </div >
+            </div >
+        </div >
         
         <div class="tech-box" style="margin-top: 20px; border-color: rgba(155, 89, 182, 0.4);">
             <h3 style="color: #9b59b6; margin-top: 0;">⚙️ Allgemeine Eigenschaften</h3>
@@ -302,14 +405,14 @@ class CYDPreview extends LitElement {
 
         <div class="form-actions" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; text-align: right;">
             <button class="btn-save" @click="${this.saveConfig}">💾 Konfiguration Speichern & Anwenden</button>
-        </div>
-      </div>
-    `;
+        </div >
+      </div >
+  `;
   }
 
   renderInfo() {
     return html`
-      <div class="card">
+  < div class="card" >
         <h2>ℹ️ Informationen & Ersteinrichtung</h2>
         <p>Willkommen beim <strong>CYD Solar Display</strong> Panel.</p>
         
@@ -327,282 +430,282 @@ class CYDPreview extends LitElement {
             <li><strong style="color:#ddd;">4. Los gehts:</strong> Die Sensoren werden nun im gewählten Intervall an das Display gepusht! Viel Spaß.</li>
           </ul>
         </div>
-      </div>
-    `;
+      </div >
+  `;
   }
 
   static get styles() {
     return css`
       :host {
-        display: block;
-        color: #e1e1e1;
-        font-family: 'Roboto', 'Inter', sans-serif;
-        background: #111111;
-        min-height: 100vh;
-        padding: 20px;
-        box-sizing: border-box;
-      }
+  display: block;
+  color: #e1e1e1;
+  font - family: 'Roboto', 'Inter', sans - serif;
+  background: #111111;
+  min - height: 100vh;
+  padding: 20px;
+  box - sizing: border - box;
+}
       
-      .main-wrapper {
-        max-width: 900px;
-        margin: 0 auto;
-      }
+      .main - wrapper {
+  max - width: 900px;
+  margin: 0 auto;
+}
 
-      .header-main {
-        text-align: center;
-        margin-bottom: 30px;
-      }
-      .header-main h1 {
-        margin: 0;
-        font-size: 2.5em;
-        color: #fff;
-        text-shadow: 0 0 20px rgba(253, 216, 53, 0.4);
-      }
-      .header-main .subtitle {
-        color: #888;
-        font-size: 1.1em;
-        margin: 5px 0 0;
-      }
+      .header - main {
+  text - align: center;
+  margin - bottom: 30px;
+}
+      .header - main h1 {
+  margin: 0;
+  font - size: 2.5em;
+  color: #fff;
+  text - shadow: 0 0 20px rgba(253, 216, 53, 0.4);
+}
+      .header - main.subtitle {
+  color: #888;
+  font - size: 1.1em;
+  margin: 5px 0 0;
+}
 
       /* TABS */
       .tabs {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #333;
-        padding-bottom: 10px;
-      }
+  display: flex;
+  gap: 10px;
+  margin - bottom: 20px;
+  border - bottom: 2px solid #333;
+  padding - bottom: 10px;
+}
       .tab {
-        padding: 10px 20px;
-        border-radius: 8px;
-        cursor: pointer;
-        background: #222;
-        color: #aaa;
-        font-weight: 600;
-        transition: all 0.2s ease-in-out;
-      }
+  padding: 10px 20px;
+  border - radius: 8px;
+  cursor: pointer;
+  background: #222;
+  color: #aaa;
+  font - weight: 600;
+  transition: all 0.2s ease -in -out;
+}
       .tab:hover {
-        background: #333;
-        color: #fff;
-      }
+  background: #333;
+  color: #fff;
+}
       .tab.active {
-        background: #fdd835;
-        color: #000;
-        box-shadow: 0 4px 15px rgba(253, 216, 53, 0.3);
-      }
+  background: #fdd835;
+  color: #000;
+  box - shadow: 0 4px 15px rgba(253, 216, 53, 0.3);
+}
 
       /* CONTENT CARDS */
       .card {
-        background: #1a1a1c;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        border: 1px solid #333;
-      }
+  background: #1a1a1c;
+  border - radius: 12px;
+  padding: 25px;
+  box - shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  border: 1px solid #333;
+}
       
       .card h2 {
-          margin-top: 0;
-          color: #fff;
-      }
+  margin - top: 0;
+  color: #fff;
+}
 
       /* CYD PREVIEW LAYOUT */
-      .cyd-container {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-      }
-      .cyd-frame {
-        width: 340px;
-        height: 260px;
-        background: #2b2b2b;
-        border-radius: 12px;
-        padding: 10px;
-        position: relative;
-        box-shadow: inset 0 0 10px rgba(0,0,0,1), 0 10px 30px rgba(0,0,0,0.5);
-        border: 2px solid #444;
-      }
-      .cyd-screen {
-        width: 320px;
-        height: 240px;
-        background: #000;
-        overflow: hidden;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-      }
+      .cyd - container {
+  display: flex;
+  justify - content: center;
+  margin - top: 20px;
+}
+      .cyd - frame {
+  width: 340px;
+  height: 260px;
+  background: #2b2b2b;
+  border - radius: 12px;
+  padding: 10px;
+  position: relative;
+  box - shadow: inset 0 0 10px rgba(0, 0, 0, 1), 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 2px solid #444;
+}
+      .cyd - screen {
+  width: 320px;
+  height: 240px;
+  background: #000;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex - direction: column;
+}
       .header {
-        display: flex;
-        justify-content: space-between;
-        padding: 5px 10px;
-        font-size: 10px;
-        background: #222;
-        color: #aaa;
-      }
+  display: flex;
+  justify - content: space - between;
+  padding: 5px 10px;
+  font - size: 10px;
+  background: #222;
+  color: #aaa;
+}
       .footer {
-        position: absolute;
-        bottom: 5px;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-      }
+  position: absolute;
+  bottom: 5px;
+  width: 100 %;
+  display: flex;
+  justify - content: center;
+}
       .dots { display: flex; gap: 5px; }
-      .dot { width: 4px; height: 4px; border-radius: 50%; background: #555; }
+      .dot { width: 4px; height: 4px; border - radius: 50 %; background: #555; }
       .dot.active { background: #fdd835; }
 
-      .page { flex: 1; padding: 10px; display: flex; flex-direction: column; }
+      .page { flex: 1; padding: 10px; display: flex; flex - direction: column; }
       
-      .flow-layout {
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          height: 185px;
-      }
+      .flow - layout {
+  display: flex;
+  flex - direction: column;
+  justify - content: space - between;
+  height: 185px;
+}
       
       .box {
-        background: #111;
-        border-radius: 6px;
-        padding: 4px;
-        text-align: center;
-        border: 1px solid #333;
-      }
-      .solar { color: #fdd835; box-shadow: inset 0 0 15px rgba(253,216,53,0.1); }
-      .house { color: #4fc3f7; box-shadow: inset 0 0 15px rgba(79,195,247,0.1); }
-      .grid.export { color: #66bb6a; box-shadow: inset 0 0 15px rgba(102,187,106,0.1); }
-      .grid.import { color: #ef5350; box-shadow: inset 0 0 15px rgba(239,83,80,0.1); }
+  background: #111;
+  border - radius: 6px;
+  padding: 4px;
+  text - align: center;
+  border: 1px solid #333;
+}
+      .solar { color: #fdd835; box - shadow: inset 0 0 15px rgba(253, 216, 53, 0.1); }
+      .house { color: #4fc3f7; box - shadow: inset 0 0 15px rgba(79, 195, 247, 0.1); }
+      .grid.export { color: #66bb6a; box - shadow: inset 0 0 15px rgba(102, 187, 106, 0.1); }
+      .grid.import { color: #ef5350; box - shadow: inset 0 0 15px rgba(239, 83, 80, 0.1); }
       
-      .value { font-size: 20px; font-weight: bold; line-height: 1.2; }
-      .value span { font-size: 10px; margin-left: 2px; }
-      .value.small { font-size: 12px; }
+      .value { font - size: 20px; font - weight: bold; line - height: 1.2; }
+      .value span { font - size: 10px; margin - left: 2px; }
+      .value.small { font - size: 12px; }
 
-      .middle-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin: 0;
-      }
+      .middle - row {
+  display: flex;
+  justify - content: space - between;
+  align - items: center;
+  margin: 0;
+}
 
-      .soc-ring {
-          width: 34px;
-          height: 34px;
-          border-radius: 50%;
-          background: conic-gradient(#4caf50 var(--perc), #333 0);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 3px;
-      }
-      .soc-ring .inner {
-          width: 26px;
-          height: 26px;
-          background: #111;
-          border-radius: 50%;
-          font-size: 9px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-      }
+      .soc - ring {
+  width: 34px;
+  height: 34px;
+  border - radius: 50 %;
+  background: conic - gradient(#4caf50 var(--perc), #333 0);
+  display: flex;
+  align - items: center;
+  justify - content: center;
+  margin: 0 auto 3px;
+}
+      .soc - ring.inner {
+  width: 26px;
+  height: 26px;
+  background: #111;
+  border - radius: 50 %;
+  font - size: 9px;
+  display: flex;
+  align - items: center;
+  justify - content: center;
+}
 
-      .stats-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          height: 100%;
-      }
-      .stat-item {
-          background: #111;
-          border-radius: 8px;
-          padding: 10px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          border: 1px solid #333;
-      }
-      .stat-item .label { font-size: 10px; color: #888; text-transform: uppercase; }
+      .stats - grid {
+  display: grid;
+  grid - template - columns: 1fr 1fr;
+  gap: 10px;
+  height: 100 %;
+}
+      .stat - item {
+  background: #111;
+  border - radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex - direction: column;
+  justify - content: center;
+  border: 1px solid #333;
+}
+      .stat - item.label { font - size: 10px; color: #888; text - transform: uppercase; }
       
-      .cyd-controls {
-          position: absolute;
-          right: -55px;
-          top: 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-      }
-      .cyd-controls button {
-          background: #444;
-          color: white;
-          border: none;
-          padding: 6px 12px;
-          border-radius: 6px;
-          cursor: pointer;
-          font-weight: bold;
-      }
-      .cyd-controls button:hover { background: #555; }
+      .cyd - controls {
+  position: absolute;
+  right: -55px;
+  top: 20px;
+  display: flex;
+  flex - direction: column;
+  gap: 10px;
+}
+      .cyd - controls button {
+  background: #444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border - radius: 6px;
+  cursor: pointer;
+  font - weight: bold;
+}
+      .cyd - controls button:hover { background: #555; }
       
-      .cyd-info { margin-bottom: 25px; text-align: center; color: #aaa; }
-      .cyd-info h3 { margin: 0; color: #4fc3f7; font-size: 16px; }
-      .cyd-info p { margin: 5px 0 0; font-size: 12px; }
+      .cyd - info { margin - bottom: 25px; text - align: center; color: #aaa; }
+      .cyd - info h3 { margin: 0; color: #4fc3f7; font - size: 16px; }
+      .cyd - info p { margin: 5px 0 0; font - size: 12px; }
 
       /* FORMS & SETTINGS */
-      .tech-box {
-          background: rgba(0,0,0,0.3);
-          border: 1px solid #333;
-          border-radius: 10px;
-          padding: 20px;
-      }
-      .form-row {
-          display: flex;
-          gap: 15px;
-          margin-bottom: 15px;
-      }
-      .flex-1 { flex: 1; }
+      .tech - box {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #333;
+  border - radius: 10px;
+  padding: 20px;
+}
+      .form - row {
+  display: flex;
+  gap: 15px;
+  margin - bottom: 15px;
+}
+      .flex - 1 { flex: 1; }
       
-      .form-group {
-          display: flex;
-          flex-direction: column;
-          margin-bottom: 15px;
-      }
-      .form-group label {
-          font-size: 0.9em;
-          color: #bbb;
-          margin-bottom: 6px;
-          font-weight: 500;
-      }
-      .form-group select, .form-group input[type="text"], .form-group input[type="number"] {
-          background: #111;
-          color: #fff;
-          border: 1px solid #444;
-          padding: 10px;
-          border-radius: 6px;
-          font-size: 1em;
-          outline: none;
-          width: 100%;
-          box-sizing: border-box;
-      }
-      .form-group select:focus, .form-group input:focus {
-          border-color: #fdd835;
-      }
-      .form-group small {
-          color: #aaa;
-          margin-top: 5px;
-          font-size: 0.85em;
-      }
+      .form - group {
+  display: flex;
+  flex - direction: column;
+  margin - bottom: 15px;
+}
+      .form - group label {
+  font - size: 0.9em;
+  color: #bbb;
+  margin - bottom: 6px;
+  font - weight: 500;
+}
+      .form - group select, .form - group input[type = "text"], .form - group input[type = "number"] {
+  background: #111;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 10px;
+  border - radius: 6px;
+  font - size: 1em;
+  outline: none;
+  width: 100 %;
+  box - sizing: border - box;
+}
+      .form - group select: focus, .form - group input:focus {
+  border - color: #fdd835;
+}
+      .form - group small {
+  color: #aaa;
+  margin - top: 5px;
+  font - size: 0.85em;
+}
 
-      .btn-save {
-          background: #4caf50;
-          color: white;
-          border: none;
-          padding: 12px 30px;
-          border-radius: 8px;
-          font-size: 1.1em;
-          font-weight: bold;
-          cursor: pointer;
-          transition: background 0.2s;
-          box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-      }
-      .btn-save:hover {
-          background: #43a047;
-      }
-    `;
+      .btn - save {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border - radius: 8px;
+  font - size: 1.1em;
+  font - weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  box - shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+      .btn - save:hover {
+  background: #43a047;
+}
+`;
   }
 }
 

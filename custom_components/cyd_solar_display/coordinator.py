@@ -18,8 +18,19 @@ from .const import (
     CONF_BATTERY_ENTITY,
     CONF_BATTERY_SOC_ENTITY,
     CONF_YIELD_TODAY_ENTITY,
+    CONF_YIELD_MONTH_ENTITY,
+    CONF_YIELD_YEAR_ENTITY,
+    CONF_YIELD_TOTAL_ENTITY,
     CONF_GRID_IMPORT_ENTITY,
     CONF_GRID_EXPORT_ENTITY,
+    CONF_CUSTOM1_NAME,
+    CONF_CUSTOM1_ENTITY,
+    CONF_CUSTOM2_NAME,
+    CONF_CUSTOM2_ENTITY,
+    CONF_CUSTOM3_NAME,
+    CONF_CUSTOM3_ENTITY,
+    CONF_CUSTOM4_NAME,
+    CONF_CUSTOM4_ENTITY,
     CONF_AUTO_PAGE_SWITCH,
     CONF_PAGE_INTERVAL
 )
@@ -49,7 +60,6 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         """Fetch data from entities and push to ESP32."""
         data = {}
         
-        # Helper to get numeric state
         def get_value(entity_id):
             if not entity_id:
                 return None
@@ -61,6 +71,16 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             except (ValueError, TypeError):
                 return None
 
+        def get_custom_val(entity_id):
+            if not entity_id:
+                return ""
+            state = self.hass.states.get(entity_id)
+            if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                return "--"
+            val = state.state
+            unit = state.attributes.get("unit_of_measurement", "")
+            return f"{val} {unit}".strip()
+
         # Gather data
         payload = {
             "solar_w": get_value(self.entry.options.get(CONF_SOLAR_ENTITY)),
@@ -69,17 +89,33 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "battery_w": get_value(self.entry.options.get(CONF_BATTERY_ENTITY)),
             "battery_soc": get_value(self.entry.options.get(CONF_BATTERY_SOC_ENTITY)),
             "yield_today_kwh": get_value(self.entry.options.get(CONF_YIELD_TODAY_ENTITY)),
+            "yield_month_kwh": get_value(self.entry.options.get(CONF_YIELD_MONTH_ENTITY)),
+            "yield_year_kwh": get_value(self.entry.options.get(CONF_YIELD_YEAR_ENTITY)),
+            "yield_total_kwh": get_value(self.entry.options.get(CONF_YIELD_TOTAL_ENTITY)),
             "grid_import_kwh": get_value(self.entry.options.get(CONF_GRID_IMPORT_ENTITY)),
             "grid_export_kwh": get_value(self.entry.options.get(CONF_GRID_EXPORT_ENTITY)),
             "timestamp": datetime.now().isoformat(),
+            
+            "c1_n": self.entry.options.get(CONF_CUSTOM1_NAME, "Custom 1"),
+            "c1_v": get_custom_val(self.entry.options.get(CONF_CUSTOM1_ENTITY)),
+            "c2_n": self.entry.options.get(CONF_CUSTOM2_NAME, "Custom 2"),
+            "c2_v": get_custom_val(self.entry.options.get(CONF_CUSTOM2_ENTITY)),
+            "c3_n": self.entry.options.get(CONF_CUSTOM3_NAME, "Custom 3"),
+            "c3_v": get_custom_val(self.entry.options.get(CONF_CUSTOM3_ENTITY)),
+            "c4_n": self.entry.options.get(CONF_CUSTOM4_NAME, "Custom 4"),
+            "c4_v": get_custom_val(self.entry.options.get(CONF_CUSTOM4_ENTITY)),
         }
 
         # Handle Page Switching
         auto_switch = self.entry.options.get("auto_page_switch", False)
+        # We now have up to 3 pages
+        max_page = 3
         if auto_switch:
             interval = self.entry.options.get("page_interval", 10)
             if (datetime.now() - self.last_page_switch).total_seconds() >= interval:
-                self.current_page = 2 if self.current_page == 1 else 1
+                self.current_page = self.current_page + 1
+                if self.current_page > max_page:
+                    self.current_page = 1
                 self.last_page_switch = datetime.now()
         
         # Data for Service Call
@@ -90,9 +126,20 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "bat_w": payload["battery_w"] or 0,
             "bat_soc": payload["battery_soc"] or 0,
             "yield": payload["yield_today_kwh"] or 0,
+            "yield_month": payload["yield_month_kwh"] or 0,
+            "yield_year": payload["yield_year_kwh"] or 0,
+            "yield_total": payload["yield_total_kwh"] or 0,
             "grid_in": payload["grid_import_kwh"] or 0,
             "grid_out": payload["grid_export_kwh"] or 0,
             "page_num": self.current_page,
+            "c1_n": payload["c1_n"] or " ",
+            "c1_v": payload["c1_v"] or " ",
+            "c2_n": payload["c2_n"] or " ",
+            "c2_v": payload["c2_v"] or " ",
+            "c3_n": payload["c3_n"] or " ",
+            "c3_v": payload["c3_v"] or " ",
+            "c4_n": payload["c4_n"] or " ",
+            "c4_v": payload["c4_v"] or " ",
         }
         
         # Call the ESPHome Service

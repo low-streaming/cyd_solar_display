@@ -16,8 +16,21 @@ CONF_BATTERY_SOC_ENTITY = "battery_soc_entity"
 # Page 2 Entities
 CONF_ENABLE_PAGE2 = "enable_page2"
 CONF_YIELD_TODAY_ENTITY = "yield_today_entity"
+CONF_YIELD_MONTH_ENTITY = "yield_month_entity"
+CONF_YIELD_YEAR_ENTITY = "yield_year_entity"
+CONF_YIELD_TOTAL_ENTITY = "yield_total_entity"
 CONF_GRID_IMPORT_ENTITY = "grid_import_entity"
 CONF_GRID_EXPORT_ENTITY = "grid_export_entity"
+
+# Page 3 (Custom OpenKairo Sensors)
+CONF_CUSTOM1_NAME = "custom1_name"
+CONF_CUSTOM1_ENTITY = "custom1_entity"
+CONF_CUSTOM2_NAME = "custom2_name"
+CONF_CUSTOM2_ENTITY = "custom2_entity"
+CONF_CUSTOM3_NAME = "custom3_name"
+CONF_CUSTOM3_ENTITY = "custom3_entity"
+CONF_CUSTOM4_NAME = "custom4_name"
+CONF_CUSTOM4_ENTITY = "custom4_entity"
 
 # Meta
 CONF_AUTO_PAGE_SWITCH = "auto_page_switch"

@@ -14,8 +14,19 @@ from .const import (
     CONF_BATTERY_ENTITY,
     CONF_BATTERY_SOC_ENTITY,
     CONF_YIELD_TODAY_ENTITY,
+    CONF_YIELD_MONTH_ENTITY,
+    CONF_YIELD_YEAR_ENTITY,
+    CONF_YIELD_TOTAL_ENTITY,
     CONF_GRID_IMPORT_ENTITY,
     CONF_GRID_EXPORT_ENTITY,
+    CONF_CUSTOM1_NAME,
+    CONF_CUSTOM1_ENTITY,
+    CONF_CUSTOM2_NAME,
+    CONF_CUSTOM2_ENTITY,
+    CONF_CUSTOM3_NAME,
+    CONF_CUSTOM3_ENTITY,
+    CONF_CUSTOM4_NAME,
+    CONF_CUSTOM4_ENTITY,
     CONF_AUTO_PAGE_SWITCH,
     CONF_PAGE_INTERVAL,
 )
@@ -75,8 +86,21 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
                 
                 # Page 2
                 vol.Optional(CONF_YIELD_TODAY_ENTITY, default=self.config_entry.options.get(CONF_YIELD_TODAY_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_YIELD_MONTH_ENTITY, default=self.config_entry.options.get(CONF_YIELD_MONTH_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_YIELD_YEAR_ENTITY, default=self.config_entry.options.get(CONF_YIELD_YEAR_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_YIELD_TOTAL_ENTITY, default=self.config_entry.options.get(CONF_YIELD_TOTAL_ENTITY)): selector.EntitySelector(),
                 vol.Optional(CONF_GRID_IMPORT_ENTITY, default=self.config_entry.options.get(CONF_GRID_IMPORT_ENTITY)): selector.EntitySelector(),
                 vol.Optional(CONF_GRID_EXPORT_ENTITY, default=self.config_entry.options.get(CONF_GRID_EXPORT_ENTITY)): selector.EntitySelector(),
+                
+                # Page 3 (Custom Sensors)
+                vol.Optional(CONF_CUSTOM1_NAME, default=self.config_entry.options.get(CONF_CUSTOM1_NAME, "Custom 1")): str,
+                vol.Optional(CONF_CUSTOM1_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM1_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_CUSTOM2_NAME, default=self.config_entry.options.get(CONF_CUSTOM2_NAME, "Custom 2")): str,
+                vol.Optional(CONF_CUSTOM2_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM2_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_CUSTOM3_NAME, default=self.config_entry.options.get(CONF_CUSTOM3_NAME, "Custom 3")): str,
+                vol.Optional(CONF_CUSTOM3_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM3_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_CUSTOM4_NAME, default=self.config_entry.options.get(CONF_CUSTOM4_NAME, "Custom 4")): str,
+                vol.Optional(CONF_CUSTOM4_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM4_ENTITY)): selector.EntitySelector(),
                 
                 # Settings
                 vol.Optional("update_interval", default=self.config_entry.options.get("update_interval", 5)): int,
