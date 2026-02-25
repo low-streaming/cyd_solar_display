@@ -32,10 +32,10 @@ api:
         house: float
         bat_w: float
         bat_soc: float
-        yield: float
-        yield_month: float
-        yield_year: float
-        yield_total: float
+        val_yield: float
+        val_yield_month: float
+        val_yield_year: float
+        val_yield_total: float
         grid_in: float
         grid_out: float
         page_num: int
@@ -54,10 +54,10 @@ api:
             id(house_w).publish_state(house);
             id(battery_w).publish_state(bat_w);
             id(battery_soc).publish_state(bat_soc);
-            id(yield_today).publish_state(yield);
-            id(yield_month).publish_state(yield_month);
-            id(yield_year).publish_state(yield_year);
-            id(yield_total).publish_state(yield_total);
+            id(yield_today).publish_state(val_yield);
+            id(yield_month).publish_state(val_yield_month);
+            id(yield_year).publish_state(val_yield_year);
+            id(yield_total).publish_state(val_yield_total);
             id(grid_import).publish_state(grid_in);
             id(grid_export).publish_state(grid_out);
             id(current_page).publish_state(page_num);
