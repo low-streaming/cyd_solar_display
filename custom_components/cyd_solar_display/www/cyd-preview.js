@@ -134,8 +134,8 @@ class CYDPreview extends LitElement {
     const c8_n = this.editConfig.custom8_name || "Custom 8";
     const c8_v = this.getLiveValue(this.editConfig.custom8_entity, 1.0) + " bar";
 
-    const hasPage3 = this.editConfig.custom1_entity || this.editConfig.custom2_entity || this.editConfig.custom3_entity || this.editConfig.custom4_entity;
-    const hasPage4 = this.editConfig.custom5_entity || this.editConfig.custom6_entity || this.editConfig.custom7_entity || this.editConfig.custom8_entity;
+    const hasPage3 = this.editConfig.enable_page3 !== false;
+    const hasPage4 = this.editConfig.enable_page4 !== false;
 
     const isNegative = grid_w < 0;
 
@@ -366,7 +366,15 @@ class CYDPreview extends LitElement {
         </div>
 
   <div class="tech-box" style="margin-top: 20px; border-color: #00f3ff;">
-    <h3 style="color: #00f3ff; margin-top: 0;">🔮 Eigene Sensoren (für Seite 3)</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="color: #00f3ff; margin-top: 0;">🔮 Eigene Sensoren (Seite 3)</h3>
+      <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #fff;">
+          <input type="checkbox" name="enable_page3" .checked="${this.editConfig.enable_page3 !== false}" @change="${this.handleFormInput}" style="width: 18px; height: 18px; accent-color: #00f3ff;">
+          Aktivieren
+      </label>
+    </div>
+    
+    ${this.editConfig.enable_page3 !== false ? html`
     <p style="color:#aaa; font-size: 12px; margin-top:-10px; margin-bottom: 15px;">Füge bis zu 4 eigene Sensoren hinzu, welche auf der dritten Seite angezeigt werden.</p>
 
     <div class="form-row">
@@ -424,8 +432,19 @@ class CYDPreview extends LitElement {
   </select>
                 </div>
             </div>
+            ` : ''}
+        </div>
+
+        <div class="tech-box" style="margin-top: 20px; border-color: #fdd835;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="color: #fdd835; margin-top: 0;">🔮 Eigene Sensoren (Seite 4)</h3>
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #fff;">
+                  <input type="checkbox" name="enable_page4" .checked="${this.editConfig.enable_page4 !== false}" @change="${this.handleFormInput}" style="width: 18px; height: 18px; accent-color: #fdd835;">
+                  Aktivieren
+              </label>
+            </div>
             
-            <h3 style="color: #fdd835; margin-top: 15px;">🔮 Eigene Sensoren (für Seite 4)</h3>
+            ${this.editConfig.enable_page4 !== false ? html`
             <div class="form-row">
               <div class="form-group flex-1">
                 <label>Name 5</label>
@@ -481,7 +500,7 @@ class CYDPreview extends LitElement {
             </select>
               </div>
             </div>
-            
+            ` : ''}
         </div>
         
         <div class="tech-box" style="margin-top: 20px; border-color: rgba(155, 89, 182, 0.4);">
@@ -493,12 +512,10 @@ class CYDPreview extends LitElement {
                   <input type="number" name="update_interval" min="1" .value="${this.editConfig.update_interval || 5}" @input="${this.handleFormInput}">
                   <small>Wie oft sollen Daten zum ESP32 gesendet werden?</small>
                 </div>
-                 <div class="form-group flex-1" style="display: flex; flex-direction: column; justify-content: center;">
-                  <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 16px;">
-                      <input type="checkbox" name="auto_page_switch" .checked="${this.editConfig.auto_page_switch}" @change="${this.handleFormInput}" style="width: 20px; height: 20px; accent-color: #9b59b6;">
-                      Automatischer Seitenwechsel
-                  </label>
-                  <small style="margin-top: 8px;">Wechselt auf dem Display zwischen den Seiten.</small>
+                <div class="form-group flex-1">
+                  <label>Seitenwechsel Intervall (Sekunden)</label>
+                  <input type="number" name="page_interval" min="5" .value="${this.editConfig.page_interval || 10}" @input="${this.handleFormInput}">
+                  <small>Wie lange eine Seite auf dem LCD angezeigt wird.</small>
                 </div>
                 <div class="form-group flex-1">
                   <label>Seitenwechsel Intervall (Sekunden)</label>

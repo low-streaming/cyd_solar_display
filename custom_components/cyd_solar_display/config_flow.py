@@ -19,6 +19,7 @@ from .const import (
     CONF_YIELD_TOTAL_ENTITY,
     CONF_GRID_IMPORT_ENTITY,
     CONF_GRID_EXPORT_ENTITY,
+    CONF_ENABLE_PAGE3,
     CONF_CUSTOM1_NAME,
     CONF_CUSTOM1_ENTITY,
     CONF_CUSTOM2_NAME,
@@ -27,6 +28,7 @@ from .const import (
     CONF_CUSTOM3_ENTITY,
     CONF_CUSTOM4_NAME,
     CONF_CUSTOM4_ENTITY,
+    CONF_ENABLE_PAGE4,
     CONF_CUSTOM5_NAME,
     CONF_CUSTOM5_ENTITY,
     CONF_CUSTOM6_NAME,
@@ -101,6 +103,7 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_GRID_EXPORT_ENTITY, default=self.config_entry.options.get(CONF_GRID_EXPORT_ENTITY)): selector.EntitySelector(),
                 
                 # Page 3 (Custom Sensors)
+                vol.Optional(CONF_ENABLE_PAGE3, default=self.config_entry.options.get(CONF_ENABLE_PAGE3, True)): bool,
                 vol.Optional(CONF_CUSTOM1_NAME, default=self.config_entry.options.get(CONF_CUSTOM1_NAME, "Custom 1")): str,
                 vol.Optional(CONF_CUSTOM1_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM1_ENTITY)): selector.EntitySelector(),
                 vol.Optional(CONF_CUSTOM2_NAME, default=self.config_entry.options.get(CONF_CUSTOM2_NAME, "Custom 2")): str,
@@ -111,6 +114,7 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_CUSTOM4_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM4_ENTITY)): selector.EntitySelector(),
                 
                 # Page 4 (More Custom Sensors)
+                vol.Optional(CONF_ENABLE_PAGE4, default=self.config_entry.options.get(CONF_ENABLE_PAGE4, True)): bool,
                 vol.Optional(CONF_CUSTOM5_NAME, default=self.config_entry.options.get(CONF_CUSTOM5_NAME, "Custom 5")): str,
                 vol.Optional(CONF_CUSTOM5_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM5_ENTITY)): selector.EntitySelector(),
                 vol.Optional(CONF_CUSTOM6_NAME, default=self.config_entry.options.get(CONF_CUSTOM6_NAME, "Custom 6")): str,
@@ -122,7 +126,6 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
                 
                 # Settings
                 vol.Optional("update_interval", default=self.config_entry.options.get("update_interval", 5)): int,
-                vol.Optional(CONF_AUTO_PAGE_SWITCH, default=self.config_entry.options.get(CONF_AUTO_PAGE_SWITCH, False)): bool,
                 vol.Optional(CONF_PAGE_INTERVAL, default=self.config_entry.options.get(CONF_PAGE_INTERVAL, 10)): int,
             })
         )

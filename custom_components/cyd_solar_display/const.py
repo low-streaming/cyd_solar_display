@@ -23,6 +23,7 @@ CONF_GRID_IMPORT_ENTITY = "grid_import_entity"
 CONF_GRID_EXPORT_ENTITY = "grid_export_entity"
 
 # Page 3 (Custom OpenKairo Sensors)
+CONF_ENABLE_PAGE3 = "enable_page3"
 CONF_CUSTOM1_NAME = "custom1_name"
 CONF_CUSTOM1_ENTITY = "custom1_entity"
 CONF_CUSTOM2_NAME = "custom2_name"
@@ -33,6 +34,7 @@ CONF_CUSTOM4_NAME = "custom4_name"
 CONF_CUSTOM4_ENTITY = "custom4_entity"
 
 # Page 4 (More Custom Sensors)
+CONF_ENABLE_PAGE4 = "enable_page4"
 CONF_CUSTOM5_NAME = "custom5_name"
 CONF_CUSTOM5_ENTITY = "custom5_entity"
 CONF_CUSTOM6_NAME = "custom6_name"

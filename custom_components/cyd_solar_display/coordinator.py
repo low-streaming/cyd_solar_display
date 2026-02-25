@@ -27,10 +27,12 @@ from .const import (
     CONF_CUSTOM1_ENTITY,
     CONF_CUSTOM2_NAME,
     CONF_CUSTOM2_ENTITY,
+    CONF_ENABLE_PAGE3,
     CONF_CUSTOM3_NAME,
     CONF_CUSTOM3_ENTITY,
     CONF_CUSTOM4_NAME,
     CONF_CUSTOM4_ENTITY,
+    CONF_ENABLE_PAGE4,
     CONF_CUSTOM5_NAME,
     CONF_CUSTOM5_ENTITY,
     CONF_CUSTOM6_NAME,
@@ -123,21 +125,29 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "c8_v": get_custom_val(self.entry.options.get(CONF_CUSTOM8_ENTITY)),
         }
 
-        # Handle Page Switching
-        auto_switch = self.entry.options.get("auto_page_switch", False)
-        # We now have up to 4 pages
-        max_page = 4
-        if auto_switch:
-            try:
-                interval = int(self.entry.options.get("page_interval", 10))
-            except (ValueError, TypeError):
-                interval = 10
+        # Handle Page Switching (Always auto-switch over enabled pages)
+        enable_p3 = self.entry.options.get(CONF_ENABLE_PAGE3, True)
+        enable_p4 = self.entry.options.get(CONF_ENABLE_PAGE4, True)
+        enabled_pages = [1, 2]
+        if enable_p3: enabled_pages.append(3)
+        if enable_p4: enabled_pages.append(4)
+        
+        try:
+            interval = int(self.entry.options.get("page_interval", 10))
+        except (ValueError, TypeError):
+            interval = 10
+        
+        # Ensure our current page is valid
+        if self.current_page not in enabled_pages:
+            self.current_page = enabled_pages[0]
             
-            if (datetime.now() - self.last_page_switch).total_seconds() >= interval:
-                self.current_page = self.current_page + 1
-                if self.current_page > max_page:
-                    self.current_page = 1
-                self.last_page_switch = datetime.now()
+        if (datetime.now() - self.last_page_switch).total_seconds() >= interval:
+            idx = enabled_pages.index(self.current_page)
+            self.current_page = enabled_pages[(idx + 1) % len(enabled_pages)]
+            self.last_page_switch = datetime.now()
+            
+        page_idx = enabled_pages.index(self.current_page) + 1
+        page_total = len(enabled_pages)
         
         # Data for Service Call
         service_data = {
@@ -153,6 +163,8 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "grid_in": float(payload["grid_import_kwh"] or 0.0),
             "grid_out": float(payload["grid_export_kwh"] or 0.0),
             "page_num": int(self.current_page),
+            "page_idx": int(page_idx),
+            "page_total": int(page_total),
             "c1_n": str(payload["c1_n"] or " "),
             "c1_v": str(payload["c1_v"] or " "),
             "c2_n": str(payload["c2_n"] or " "),

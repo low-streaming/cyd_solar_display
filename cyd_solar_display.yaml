@@ -39,6 +39,8 @@ api:
         grid_in: float
         grid_out: float
         page_num: int
+        page_idx: int
+        page_total: int
         c1_n: string
         c1_v: string
         c2_n: string
@@ -69,6 +71,8 @@ api:
             id(grid_import).publish_state(grid_in);
             id(grid_export).publish_state(grid_out);
             id(current_page).publish_state(page_num);
+            id(page_display_idx).publish_state(page_idx);
+            id(page_display_total).publish_state(page_total);
             id(custom1_n).publish_state(c1_n);
             id(custom1_v).publish_state(c1_v);
             id(custom2_n).publish_state(c2_n);
@@ -268,7 +272,21 @@ number:
     name: "Current Page"
     id: current_page
     min_value: 1
-    max_value: 2
+    max_value: 4
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Page Index"
+    id: page_display_idx
+    min_value: 1
+    max_value: 4
+    step: 1
+    optimistic: true
+  - platform: template
+    name: "Page Total"
+    id: page_display_total
+    min_value: 1
+    max_value: 4
     step: 1
     optimistic: true
 
@@ -432,7 +450,7 @@ display:
       it.filled_rectangle(0, 222, 320, 18, id(color_panel));
       it.line(0, 222, 320, 222, id(color_text));
       
-      it.printf(160, 225, id(font_label), id(color_house), TextAlign::TOP_CENTER, "SEITE %d / 4", page);
+      it.printf(160, 225, id(font_label), id(color_house), TextAlign::TOP_CENTER, "SEITE %d / %d", (int)id(page_display_idx).state, (int)id(page_display_total).state);
 
 # Touchscreen Setup
 touchscreen:
