@@ -37,18 +37,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Register the Sidebar Panel
     # Note: 'cyd-preview' is the custom element name defined in the JS file
-    try:
-        await panel_custom.async_register_panel(
-            hass,
-            frontend_url_path=DOMAIN,
-            webcomponent_name="cyd-preview",
-            module_url=js_url,
-            sidebar_title="CYD Monitor",
-            sidebar_icon="mdi:monitor-dashboard",
-            require_admin=True
-        )
-    except Exception as err:
-        _LOGGER.error("Could not register panel: %s", err)
+    if DOMAIN not in hass.data.get("frontend_panels", {}):
+        try:
+            await panel_custom.async_register_panel(
+                hass,
+                frontend_url_path=DOMAIN,
+                webcomponent_name="cyd-preview",
+                module_url=js_url,
+                sidebar_title="CYD Monitor",
+                sidebar_icon="mdi:monitor-dashboard",
+                require_admin=True
+            )
+        except Exception as err:
+            _LOGGER.error("Could not register panel: %s", err)
 
     entry.async_on_unload(entry.add_update_listener(update_listener))
 
@@ -56,6 +57,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+    # Remove the registered panel from the frontend on unload
+    frontend.async_remove_panel(hass, DOMAIN)
+
     unload_ok = True
     hass.data[DOMAIN].pop(entry.entry_id)
 
