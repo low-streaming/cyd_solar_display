@@ -110,10 +110,10 @@ color:
 font:
   - file: "gfonts://Roboto"
     id: font_title
-    size: 20
+    size: 14
   - file: "gfonts://Roboto"
     id: font_value
-    size: 28
+    size: 24
   - file: "gfonts://Roboto"
     id: font_label
     size: 12
@@ -176,7 +176,7 @@ display:
     id: cyd_display
     cs_pin: 15
     dc_pin: 2
-    invert_colors: true
+    invert_colors: false
     color_order: BGR
     # Palette optimization from the working Grow Box example
     color_palette: 8BIT
@@ -204,17 +204,17 @@ display:
 
       if (page == 1) {
         // 1. SOLAR (Top Center)
-        it.filled_rectangle(100, 42, 120, 55, id(color_panel));
+        it.rectangle(100, 42, 120, 55, id(color_panel)); // Border
         it.print(160, 50, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "SOLAR");
         it.printf(160, 67, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.0f W", id(solar_w).state);
         
         // 2. BATTERIE (Middle Left)
-        it.filled_rectangle(15, 107, 110, 45, id(color_panel));
+        it.rectangle(15, 107, 110, 45, id(color_panel)); // Border
         it.print(70, 113, id(font_label), id(color_bat), TextAlign::TOP_CENTER, "BATTERIE");
         it.printf(70, 128, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%.0f%% / %.0fW", id(battery_soc).state, id(battery_w).state);
         
         // 3. HAUS (Middle Right)
-        it.filled_rectangle(195, 107, 110, 45, id(color_panel));
+        it.rectangle(195, 107, 110, 45, id(color_panel)); // Border
         it.print(250, 113, id(font_label), id(color_house), TextAlign::TOP_CENTER, "HAUSVERBRAUCH");
         it.printf(250, 128, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%.0f W", id(house_w).state);
         
@@ -222,28 +222,28 @@ display:
         auto g_val = id(grid_w).state;
         auto g_color = (g_val <= 0) ? id(color_grid_out) : id(color_grid_in);
         const char* g_label = (g_val <= 0) ? "EINSPEISUNG" : "NETZBEZUG";
-        it.filled_rectangle(100, 162, 120, 55, id(color_panel));
+        it.rectangle(100, 162, 120, 55, id(color_panel)); // Border
         it.print(160, 170, id(font_label), g_color, TextAlign::TOP_CENTER, g_label);
         it.printf(160, 187, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.0f W", abs(g_val));
       } else {
         // PAGE 2 (STATISTICS)
         // 1. ERTRAG
-        it.filled_rectangle(15, 50, 140, 65, id(color_panel));
+        it.rectangle(15, 50, 140, 65, id(color_panel)); // Border
         it.print(85, 60, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "ERTRAG HEUTE");
         it.printf(85, 82, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(yield_today).state);
         
         // 2. NETZBEZUG
-        it.filled_rectangle(165, 50, 140, 65, id(color_panel));
+        it.rectangle(165, 50, 140, 65, id(color_panel)); // Border
         it.print(235, 60, id(font_label), id(color_grid_in), TextAlign::TOP_CENTER, "NETZBEZUG");
         it.printf(235, 82, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(grid_import).state);
 
         // 3. EINSPEISUNG
-        it.filled_rectangle(15, 125, 140, 65, id(color_panel));
+        it.rectangle(15, 125, 140, 65, id(color_panel)); // Border
         it.print(85, 135, id(font_label), id(color_grid_out), TextAlign::TOP_CENTER, "EINSPEISUNG");
         it.printf(85, 157, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(grid_export).state);
 
         // 4. AUTARKIE (SIMULATED OR CALCULATION)
-        it.filled_rectangle(165, 125, 140, 65, id(color_panel));
+        it.rectangle(165, 125, 140, 65, id(color_panel)); // Border
         it.print(235, 135, id(font_label), id(color_house), TextAlign::TOP_CENTER, "AUTARKIE");
         it.printf(235, 157, id(font_value), id(color_text), TextAlign::TOP_CENTER, "94 %%"); 
       }
