@@ -3,9 +3,11 @@
  * Simulates a 320x240 ESP32 Display
  */
 
-(function () {
-  const LitElement = Object.getPrototypeOf(customElements.get("ha-panel-config"));
-  const { html, css } = LitElement.prototype;
+import {
+  LitElement,
+  html,
+  css,
+} from "https://unpkg.com/lit-element@2.4.0/lit-element.js?module";
 
   class CYDPreview extends LitElement {
     static get properties() {
@@ -276,4 +278,3 @@
   }
 
   customElements.define("cyd-preview", CYDPreview);
-})();
