@@ -4,7 +4,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.components import frontend, panel_custom
 from homeassistant.components.frontend import add_extra_js_url
-from homeassistant.components.http import StaticPathConfig
+from homeassistant.components.http import StaticPathConfig, HomeAssistantView
+from aiohttp import web
 
 from .const import DOMAIN
 from .coordinator import CYDSolarCoordinator
@@ -19,6 +20,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
+
+    # Register API View for Panel Config
+    if "api_registered" not in hass.data[DOMAIN]:
+        hass.http.register_view(CYDConfigView(hass))
+        hass.data[DOMAIN]["api_registered"] = True
 
     # Register the preview component
     # Using the modern async method for registering static paths
@@ -46,7 +52,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 module_url=js_url,
                 sidebar_title="CYD Monitor",
                 sidebar_icon="mdi:monitor-dashboard",
-                require_admin=True
+                require_admin=True,
+                config={"entry_id": entry.entry_id}
             )
         except Exception as err:
             _LOGGER.error("Could not register panel: %s", err)
@@ -68,3 +75,32 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Handle options update."""
     await hass.config_entries.async_reload(entry.entry_id)
+
+class CYDConfigView(HomeAssistantView):
+    """API Endpoint context for panel configuration."""
+    url = "/api/cyd_solar_display/config/{entry_id}"
+    name = "api:cyd_solar_display:config"
+    requires_auth = True
+
+    def __init__(self, hass: HomeAssistant):
+        self.hass = hass
+
+    async def get(self, request: web.Request, entry_id: str) -> web.Response:
+        """Get current options."""
+        entry = self.hass.config_entries.async_get_entry(entry_id)
+        if not entry:
+            return self.json_message("Entry not found", 404)
+        return self.json({"options": dict(entry.options)})
+
+    async def post(self, request: web.Request, entry_id: str) -> web.Response:
+        """Update options."""
+        data = await request.json()
+        entry = self.hass.config_entries.async_get_entry(entry_id)
+        if not entry:
+            return self.json_message("Entry not found", 404)
+        
+        new_options = dict(entry.options)
+        new_options.update(data)
+        
+        self.hass.config_entries.async_update_entry(entry, options=new_options)
+        return self.json({"status": "ok"})
