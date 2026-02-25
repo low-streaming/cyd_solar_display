@@ -517,11 +517,6 @@ class CYDPreview extends LitElement {
                   <input type="number" name="page_interval" min="5" .value="${this.editConfig.page_interval || 10}" @input="${this.handleFormInput}">
                   <small>Wie lange eine Seite auf dem LCD angezeigt wird.</small>
                 </div>
-                <div class="form-group flex-1">
-                  <label>Seitenwechsel Intervall (Sekunden)</label>
-                  <input type="number" name="page_interval" min="5" .value="${this.editConfig.page_interval || 10}" @input="${this.handleFormInput}">
-                  <small>Erst aktiv, sobald der Haken gesetzt ist.</small>
-                </div>
             </div>
         </div>
 
