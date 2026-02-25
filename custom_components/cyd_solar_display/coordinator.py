@@ -138,12 +138,19 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             interval = 10
         
         # Ensure our current page is valid
+        # Ensure our current page is valid, and handle first-boot injection
         if self.current_page not in enabled_pages:
             self.current_page = enabled_pages[0]
             
-        if (datetime.now() - self.last_page_switch).total_seconds() >= interval:
+        # Check if first launch OR time has passed
+        time_since = (datetime.now() - self.last_page_switch).total_seconds()
+        
+        if time_since >= interval or time_since > 31536000: # Over an interval, or last_switch was epoch
             idx = enabled_pages.index(self.current_page)
-            self.current_page = enabled_pages[(idx + 1) % len(enabled_pages)]
+            # Only advance the page if this wasn't the very first call
+            if time_since < 31536000:
+                self.current_page = enabled_pages[(idx + 1) % len(enabled_pages)]
+                
             self.last_page_switch = datetime.now()
             
         page_idx = enabled_pages.index(self.current_page) + 1
