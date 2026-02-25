@@ -1,29 +1,28 @@
+# =======================================================
+# CYD SOLAR MONITOR - GROW BOX DESIGN V2
+# =======================================================
+substitutions:
+  name: "cyd-solar-display"
+  friendly_name: "CYD Solar Display"
+
 esphome:
-  name: cyd-solar-display
-  friendly_name: CYD Solar Display
+  name: ${name}
+  friendly_name: ${friendly_name}
 
 esp32:
   board: esp32dev
   framework:
     type: arduino
 
-# WiFi Konfiguration mit Captive Portal (macht eine AP auf, wenn kein WLAN gefunden wird)
+# WiFi & API
 wifi:
-  # Falls du schon Daten hast, kannst du sie hier eintragen:
-  # ssid: "DEINE_SSID"
-  # password: "DEIN_PASSWORT"
-  
   ap:
     ssid: "CYD-Solar-Setup"
-    password: "" # Kein Passwort für den Setup-AP
-
+    password: ""
 captive_portal:
-
-# Aktiviert die Weboberfläche
 web_server:
   port: 80
 
-# Native API mit Dienst-Definition für HA
 api:
   services:
     - service: update_display
@@ -51,177 +50,104 @@ api:
 
 ota:
   - platform: esphome
-    password: ""
 
 logger:
   level: DEBUG
-  baud_rate: 115200
 
-# RGB LED & Backlight
+# Hardware Setup (CYD)
+spi:
+  clk_pin: 14
+  mosi_pin: 13
+  miso_pin: 12
+
 output:
-  - platform: ledc
-    pin: 4
-    inverted: true
-    id: led_red
-  - platform: ledc
-    pin: 16
-    inverted: true
-    id: led_green
-  - platform: ledc
-    pin: 17
-    inverted: true
-    id: led_blue
   - platform: ledc
     pin: 21
     id: backlight_pwm
-
 light:
-  - platform: rgb
-    name: "Status LED"
-    red: led_red
-    green: led_green
-    blue: led_blue
-    id: status_led
   - platform: monochromatic
     output: backlight_pwm
     name: "Display Backlight"
     id: backlight
     restore_mode: ALWAYS_ON
 
-# --- DISPLAY SETUP (Cheap Yellow Display 2.8") ---
-spi:
-  clk_pin: 14
-  mosi_pin: 13
-  miso_pin: 12
+# Colors (Based on Grow Box Dashboard)
+color:
+  - id: color_bg
+    red: 0%
+    green: 0%
+    blue: 0%
+  - id: color_text
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: color_panel
+    red: 10%
+    green: 10%
+    blue: 10% 
+  - id: color_solar
+    red: 100%
+    green: 85%
+    blue: 20%
+  - id: color_house
+    red: 20%
+    green: 70%
+    blue: 100%
+  - id: color_grid_in
+    red: 90%
+    green: 20%
+    blue: 20%
+  - id: color_grid_out
+    red: 30%
+    green: 90%
+    blue: 30%
+  - id: color_bat
+    red: 65%
+    green: 55%
+    blue: 100%
 
-display:
-  - platform: ili9xxx
-    id: cyd_display
-    model: ILI9341
-    cs_pin: 15
-    dc_pin: 2
-    invert_colors: true
-    color_order: BGR
-    rotation: 90
-    lambda: |-
-      static const char *TAG = "display";
-      
-      // Colors (Modern Palette)
-      auto color_bg = Color(10, 15, 30);
-      auto color_solar = Color(253, 216, 53); // Solar Yellow
-      auto color_house = Color(56, 189, 248); // Tech Blue
-      auto color_grid_in = Color(239, 83, 80); // Grid Import (Red)
-      auto color_grid_out = Color(74, 222, 128); // Grid Export (Green)
-      auto color_bat = Color(167, 139, 250); // Battery Purple
-      
-      it.fill(color_bg);
+# Fonts
+font:
+  - file: "gfonts://Roboto"
+    id: font_title
+    size: 20
+  - file: "gfonts://Roboto"
+    id: font_value
+    size: 28
+  - file: "gfonts://Roboto"
+    id: font_label
+    size: 12
 
-      // --- CHECK IF DATA IS READY ---
-      if (std::isnan(id(solar_w).state)) {
-        it.print(160, 100, id(font_medium), Color::WHITE, TextAlign::TOP_CENTER, "Warten auf Daten...");
-        it.printf(160, 140, id(font_small), Color(150, 150, 150), TextAlign::TOP_CENTER, "IP: %s", id(wifi_ip).state.c_str());
-        return;
-      }
-
-      // Top Bar
-      it.rectangle(0, 0, 320, 30, Color(30, 41, 59));
-      it.print(160, 5, id(font_small), Color::WHITE, TextAlign::TOP_CENTER, "CYD SOLAR MONITOR");
-      
-      if (id(current_page).state == 1) {
-        // --- PAGE 1: LIVE POWER FLOW ---
-        
-        // Solar Box
-        it.printf(10, 45, id(font_medium), color_solar, "Erzeugung:");
-        it.printf(160, 40, id(font_large), color_solar, TextAlign::TOP_CENTER, "%.0f W", id(solar_w).state);
-        
-        // House Box
-        it.printf(10, 95, id(font_medium), color_house, "Verbrauch:");
-        it.printf(160, 90, id(font_large), color_house, TextAlign::TOP_CENTER, "%.0f W", id(house_w).state);
-        
-        // Grid Box
-        auto g_val = id(grid_w).state;
-        auto g_color = (g_val <= 0) ? color_grid_out : color_grid_in;
-        const char* g_label = (g_val <= 0) ? "Einspeisung:" : "Netzbezug:";
-        it.printf(10, 145, id(font_medium), g_color, g_label);
-        it.printf(160, 140, id(font_large), g_color, TextAlign::TOP_CENTER, "%.0f W", abs(g_val));
-        
-        // Battery Box
-        it.printf(10, 195, id(font_medium), color_bat, "Batterie:");
-        it.printf(160, 190, id(font_large), Color::WHITE, TextAlign::TOP_CENTER, "%.0f%%", id(battery_soc).state);
-        it.printf(250, 203, id(font_small), color_bat, "(%.0f W)", id(battery_w).state);
-
-      } else {
-        // --- PAGE 2: DAILY STATISTICS ---
-        it.print(160, 40, id(font_medium), Color::WHITE, TextAlign::TOP_CENTER, "Tagesstatistik");
-        it.line(40, 65, 280, 65, Color(100, 100, 100));
-        
-        it.printf(20, 80, id(font_medium), color_solar, "Heute Ertrag:");
-        it.printf(300, 80, id(font_medium), Color::WHITE, TextAlign::TOP_RIGHT, "%.1f kWh", id(yield_today).state);
-        
-        it.printf(20, 120, id(font_medium), color_grid_in, "Netz-Bezug:");
-        it.printf(300, 120, id(font_medium), Color::WHITE, TextAlign::TOP_RIGHT, "%.1f kWh", id(grid_import).state);
-        
-        it.printf(20, 160, id(font_medium), color_grid_out, "Einspeisung:");
-        it.printf(300, 160, id(font_medium), Color::WHITE, TextAlign::TOP_RIGHT, "%.1f kWh", id(grid_export).state);
-        
-        // Footer hint
-        it.print(160, 210, id(font_small), Color(150, 150, 150), TextAlign::TOP_CENTER, "Werte werden alle 5s aktualisiert");
-      }
-
-      // Page indicators
-      for(int i=0; i<2; i++) {
-        it.filled_circle(310, 110 + (i*20), 4, (id(current_page).state == i+1) ? Color::WHITE : Color(60, 60, 60));
-      }
-
-      // Display IP Address in Footer
-      it.printf(5, 225, id(font_tiny), Color(100, 100, 100), TextAlign::BOTTOM_LEFT, "IP: %s", id(wifi_ip).state.c_str());
-      it.printf(315, 225, id(font_tiny), Color(100, 100, 100), TextAlign::BOTTOM_RIGHT, "v1.1.2");
-
-# --- DATEN-HALTER (Werden von der HA Integration befüllt) ---
-# Wir nutzen Template-Sensoren, die Werte halten
+# Sensors
 sensor:
   - platform: template
     name: "Solar Power"
     id: solar_w
     unit_of_measurement: "W"
-    accuracy_decimals: 0
-
   - platform: template
     name: "Grid Power"
     id: grid_w
     unit_of_measurement: "W"
-    accuracy_decimals: 0
-
   - platform: template
     name: "House Power"
     id: house_w
     unit_of_measurement: "W"
-    accuracy_decimals: 0
-
   - platform: template
     name: "Battery SoC"
     id: battery_soc
     unit_of_measurement: "%"
-    accuracy_decimals: 0
-
   - platform: template
     name: "Battery Power"
     id: battery_w
     unit_of_measurement: "W"
-    accuracy_decimals: 0
-
   - platform: template
     name: "Yield Today"
     id: yield_today
     unit_of_measurement: "kWh"
-    accuracy_decimals: 1
-
   - platform: template
     name: "Grid Import"
     id: grid_import
     unit_of_measurement: "kWh"
-    accuracy_decimals: 1
-
   - platform: template
     name: "Grid Export"
     id: grid_export
@@ -234,7 +160,6 @@ text_sensor:
       name: "CYD IP Address"
       id: wifi_ip
 
-# Aktuelle Seite
 number:
   - platform: template
     name: "Current Page"
@@ -242,32 +167,88 @@ number:
     min_value: 1
     max_value: 2
     step: 1
-    initial_value: 1
     optimistic: true
 
-# --- ENDPOINT FÜR DIE INTEGRATION ---
-# Diese Automatisierung empfängt das JSON der HA Integration
-http_request:
-  useragent: esphome/cyd
+# Display Logic (Grow Box Design)
+display:
+  - platform: ili9xxx
+    model: ILI9341
+    id: cyd_display
+    cs_pin: 15
+    dc_pin: 2
+    invert_colors: true
+    color_order: BGR
+    # Palette optimization from the working Grow Box example
+    color_palette: 8BIT
+    rotation: 90
+    lambda: |-
+      static const char *TAG = "display";
+      
+      // Background
+      it.fill(id(color_bg));
 
-# Um native JSON POSTs von meiner Integration zu empfangen, 
-# nutzen wir den web_server und definieren Lambdas für die API.
-# Hinweis: Die einfachste Methode in ESPHome ist, die Sensoren 
-# über Home Assistant Dienste zu aktualisieren oder meine Integration
-# nutzt die REST API von ESPHome.
+      // Check if data available
+      if (std::isnan(id(solar_w).state)) {
+        it.print(160, 70, id(font_title), id(color_text), TextAlign::TOP_CENTER, "Warten auf Daten...");
+        it.printf(160, 110, id(font_label), id(color_text), TextAlign::TOP_CENTER, "IP: %s", id(wifi_ip).state.c_str());
+        it.print(160, 140, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "Bitte diese IP in der");
+        it.print(160, 155, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "HA Integration eingeben.");
+        return;
+      }
 
-# --- SCHRIFTARTEN ---
-font:
-  - file: "gfonts://Roboto"
-    id: font_small
-    size: 14
-  - file: "gfonts://Roboto"
-    id: font_medium
-    size: 22
-  - file: "gfonts://Roboto"
-    id: font_large
-    size: 32
-  - file: "gfonts://Roboto"
-    id: font_tiny
-    size: 10
+      // HEADER
+      it.filled_rectangle(0, 0, 320, 32, id(color_panel));
+      it.print(10, 6, id(font_title), id(color_solar), TextAlign::TOP_LEFT, "Solar");
+      it.print(310, 6, id(font_title), id(color_text), TextAlign::TOP_RIGHT, "Live Daten");
+      it.line(0, 32, 320, 32, id(color_text));
+      
+      // GRID DIMENSIONS
+      int w = 145;
+      int h = 75;
+      
+      // 1. SOLAR (Top Left)
+      it.filled_rectangle(10, 42, w, h, id(color_panel));
+      it.print(20, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERZEUGUNG");
+      it.printf(82, 72, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.0f W", id(solar_w).state);
+      
+      // 2. HOUSE (Top Right)
+      it.filled_rectangle(165, 42, w, h, id(color_panel));
+      it.print(175, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, "VERBRAUCH");
+      it.printf(237, 72, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.0f W", id(house_w).state);
+      
+      // 3. GRID (Bottom Left)
+      auto g_val = id(grid_w).state;
+      auto g_color = (g_val <= 0) ? id(color_grid_out) : id(color_grid_in);
+      const char* g_label = (g_val <= 0) ? "EINSPEISUNG" : "NETZBEZUG";
+      it.filled_rectangle(10, 125, w, h, id(color_panel));
+      it.print(20, 133, id(font_label), g_color, TextAlign::TOP_LEFT, g_label);
+      it.printf(82, 155, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.0f W", abs(g_val));
+      
+      // 4. BATTERY (Bottom Right)
+      it.filled_rectangle(165, 125, w, h, id(color_panel));
+      it.print(175, 133, id(font_label), id(color_bat), TextAlign::TOP_LEFT, "BATTERIE");
+      it.printf(237, 145, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.0f%%", id(battery_soc).state);
+      it.printf(237, 178, id(font_label), id(color_bat), TextAlign::TOP_CENTER, "(%.0f W)", id(battery_w).state);
+      
+      // FOOTER
+      it.filled_rectangle(0, 208, 320, 32, id(color_panel));
+      it.line(0, 208, 320, 208, id(color_text));
+      
+      it.printf(10, 215, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "Ertrag: %.1fkWh", id(yield_today).state);
+      it.printf(310, 215, id(font_label), id(color_text), TextAlign::TOP_RIGHT, "v2.0.0");
 
+# Touchscreen Setup
+touchscreen:
+  - platform: xpt2046
+    cs_pin: 33
+    interrupt_pin: 36
+    threshold: 400
+    calibration:
+      x_min: 380
+      x_max: 3800
+      y_min: 300
+      y_max: 3800
+    transform:
+      mirror_x: true
+      mirror_y: false
+      swap_xy: true
