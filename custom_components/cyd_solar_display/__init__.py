@@ -2,6 +2,7 @@ import logging
 import os
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.components import frontend
 from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
 
@@ -34,7 +35,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Register the Sidebar Panel
     # Note: 'cyd-preview' is the custom element name defined in the JS file
-    hass.components.frontend.async_register_panel(
+    frontend.async_register_panel(
+        hass,
         DOMAIN,
         "cyd-preview",
         "mdi:monitor-dashboard",
