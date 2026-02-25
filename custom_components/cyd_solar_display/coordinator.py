@@ -172,14 +172,23 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         }
         
         # Call the ESPHome Service
-        # We assume the device name is 'cyd_solar_display' as per YAML
+        # We assume the device name is 'cyd_solar_display' as per YAML,
+        # but HA might append strings like 'cyd_solar_display_2' or 'cyd_solar_display_495ec4'
+        esphome_services = self.hass.services.async_services().get("esphome", {})
+        service_name = "cyd_solar_display_update_display"
+        
+        if service_name not in esphome_services:
+            possible_services = [s for s in esphome_services if s.endswith("_update_display")]
+            if possible_services:
+                service_name = possible_services[0]
+                
         try:
             await self.hass.services.async_call(
                 "esphome", 
-                "cyd_solar_display_update_display", 
+                service_name, 
                 service_data
             )
         except Exception as err:
-            _LOGGER.error("Could not call ESPHome service '%s': %s", "cyd_solar_display_update_display", err)
+            _LOGGER.error("Could not call ESPHome service '%s': %s", service_name, err)
 
         return payload
