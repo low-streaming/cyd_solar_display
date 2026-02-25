@@ -74,9 +74,9 @@ class CYDSolarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class CYDSolarOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow."""
 
-    def __init__(self, config_entry):
+    def __init__(self, config_entry) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        pass
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
