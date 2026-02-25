@@ -3,6 +3,7 @@ import os
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 
 from .const import DOMAIN
 from .coordinator import CYDSolarCoordinator
@@ -19,12 +20,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
     # Register the preview component
-    # We serve the local 'www' folder via HA's built-in mechanism for custom components
-    hass.http.register_static_path(
-        f"/cyd_solar_display/{entry.entry_id}",
-        hass.config.path(f"custom_components/{DOMAIN}/www"),
-        cache_headers=False
-    )
+    # Using the modern async method for registering static paths
+    await hass.http.async_register_static_paths([
+        StaticPathConfig(
+            f"/cyd_solar_display/{entry.entry_id}",
+            hass.config.path(f"custom_components/{DOMAIN}/www"),
+            False
+        )
+    ])
     
     # This makes the JS available for the entire UI, needed for our custom selector/preview
     add_extra_js_url(hass, f"/cyd_solar_display/{entry.entry_id}/cyd-preview.js")
