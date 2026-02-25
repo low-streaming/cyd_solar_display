@@ -65,6 +65,15 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             name=DOMAIN,
             update_interval=timedelta(seconds=int(entry.options.get("update_interval", 5))),
         )
+        
+        # VERY IMPORTANT: DataUpdateCoordinator stops polling natively if there are no listeners.
+        # Since this integration only PUSHES data to ESPHome and has no HA entities, we must attach
+        # a dummy listener so it runs forever in the background.
+        self.async_add_listener(self._dummy_listener)
+
+    def _dummy_listener(self):
+        """Dummy listener to keep DataUpdateCoordinator polling active."""
+        pass
 
     async def _async_update_data(self):
         """Fetch data from entities and push to ESP32."""
