@@ -1,5 +1,6 @@
 from homeassistant import config_entries
 from homeassistant.core import callback
+from homeassistant.helpers import selector
 import voluptuous as vol
 
 from .const import (
@@ -66,16 +67,16 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
             step_id="init",
             data_schema=vol.Schema({
                 # Core Entities
-                vol.Optional(CONF_SOLAR_ENTITY, default=self.config_entry.options.get(CONF_SOLAR_ENTITY, "")): "entity_picker",
-                vol.Optional(CONF_GRID_ENTITY, default=self.config_entry.options.get(CONF_GRID_ENTITY, "")): "entity_picker",
-                vol.Optional(CONF_HOUSE_ENTITY, default=self.config_entry.options.get(CONF_HOUSE_ENTITY, "")): "entity_picker",
-                vol.Optional(CONF_BATTERY_ENTITY, default=self.config_entry.options.get(CONF_BATTERY_ENTITY, "")): "entity_picker",
-                vol.Optional(CONF_BATTERY_SOC_ENTITY, default=self.config_entry.options.get(CONF_BATTERY_SOC_ENTITY, "")): "entity_picker",
+                vol.Optional(CONF_SOLAR_ENTITY, default=self.config_entry.options.get(CONF_SOLAR_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_GRID_ENTITY, default=self.config_entry.options.get(CONF_GRID_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_HOUSE_ENTITY, default=self.config_entry.options.get(CONF_HOUSE_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_BATTERY_ENTITY, default=self.config_entry.options.get(CONF_BATTERY_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_BATTERY_SOC_ENTITY, default=self.config_entry.options.get(CONF_BATTERY_SOC_ENTITY)): selector.EntitySelector(),
                 
                 # Page 2
-                vol.Optional(CONF_YIELD_TODAY_ENTITY, default=self.config_entry.options.get(CONF_YIELD_TODAY_ENTITY, "")): "entity_picker",
-                vol.Optional(CONF_GRID_IMPORT_ENTITY, default=self.config_entry.options.get(CONF_GRID_IMPORT_ENTITY, "")): "entity_picker",
-                vol.Optional(CONF_GRID_EXPORT_ENTITY, default=self.config_entry.options.get(CONF_GRID_EXPORT_ENTITY, "")): "entity_picker",
+                vol.Optional(CONF_YIELD_TODAY_ENTITY, default=self.config_entry.options.get(CONF_YIELD_TODAY_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_GRID_IMPORT_ENTITY, default=self.config_entry.options.get(CONF_GRID_IMPORT_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_GRID_EXPORT_ENTITY, default=self.config_entry.options.get(CONF_GRID_EXPORT_ENTITY)): selector.EntitySelector(),
                 
                 # Settings
                 vol.Optional("update_interval", default=self.config_entry.options.get("update_interval", 5)): int,

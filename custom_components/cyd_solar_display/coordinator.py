@@ -51,6 +51,8 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         
         # Helper to get numeric state
         def get_value(entity_id):
+            if not entity_id:
+                return None
             state = self.hass.states.get(entity_id)
             if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
                 return None
