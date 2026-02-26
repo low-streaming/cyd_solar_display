@@ -134,10 +134,24 @@ class CYDPreview extends LitElement {
     const c8_n = this.editConfig.custom8_name || "Custom 8";
     const c8_v = this.getLiveValue(this.editConfig.custom8_entity, 1.0) + " bar";
 
+    const m1_n = this.editConfig.mining1_name || "Mining 1";
+    const m1_v = this.getLiveValue(this.editConfig.mining1_entity, 120.0) + " TH/s";
+    const m2_n = this.editConfig.mining2_name || "Mining 2";
+    const m2_v = this.getLiveValue(this.editConfig.mining2_entity, 65.0) + " °C";
+    const m3_n = this.editConfig.mining3_name || "Mining 3";
+    const m3_v = this.getLiveValue(this.editConfig.mining3_entity, 3500.0) + " W";
+    const m4_n = this.editConfig.mining4_name || "Mining 4";
+    const m4_v = this.getLiveValue(this.editConfig.mining4_entity, 1.0) + " BTC";
+
+    const hasPage1 = this.editConfig.enable_page1 !== false;
+    const hasPage2 = this.editConfig.enable_page2 !== false;
     const hasPage3 = this.editConfig.enable_page3 !== false;
     const hasPage4 = this.editConfig.enable_page4 !== false;
+    const hasPage5 = this.editConfig.enable_page5 !== false;
 
     const isNegative = grid_w < 0;
+    const pVal = (w) => this.editConfig.show_kw ? (w / 1000).toFixed(2) : Math.round(w);
+    const pUnit = this.editConfig.show_kw ? "kW" : "W";
 
     return html`
       <div class="card">
@@ -159,7 +173,7 @@ class CYDPreview extends LitElement {
                     <div class="flow-layout">
                       <div class="box solar" style="margin: 0 auto; width: 120px;">
                         <div class="icon">☀️</div>
-                        <div class="value">${solar_w}<span>W</span></div>
+                        <div class="value">${pVal(solar_w)}<span>${pUnit}</span></div>
                       </div>
 
                       <div class="middle-row">
@@ -167,17 +181,17 @@ class CYDPreview extends LitElement {
                               <div class="soc-ring" style="--perc: ${battery_soc}%">
                                   <div class="inner">${battery_soc}%</div>
                               </div>
-                              <div class="value small">${battery_w}W</div>
+                              <div class="value small">${pVal(battery_w)}${pUnit}</div>
                           </div>
                           <div class="box house" style="width: 70px;">
                               <div class="icon">🏠</div>
-                              <div class="value">${house_w}<span>W</span></div>
+                              <div class="value">${pVal(house_w)}<span>${pUnit}</span></div>
                           </div>
                       </div>
 
                       <div class="box grid ${isNegative ? 'export' : 'import'}" style="margin: 0 auto; width: 120px;">
                         <div class="icon">⚡</div>
-                        <div class="value">${Math.abs(grid_w)}<span>W</span></div>
+                        <div class="value">${pVal(Math.abs(grid_w))}<span>${pUnit}</span></div>
                         <div class="label" style="font-size: 10px;">${isNegative ? 'Einspeisung' : 'Netzbezug'}</div>
                       </div>
                     </div>
@@ -228,7 +242,7 @@ class CYDPreview extends LitElement {
                       </div>` : ''}
                     </div>
                   </div>
-                ` : html`
+                ` : this.page === 4 ? html`
                   <div class="page page4">
                     <div class="stats-grid">
                       ${this.editConfig.custom5_entity ? html`
@@ -253,22 +267,49 @@ class CYDPreview extends LitElement {
                       </div>` : ''}
                     </div>
                   </div>
+                ` : html`
+                  <div class="page page5">
+                    <div class="stats-grid">
+                      ${this.editConfig.mining1_entity ? html`
+                      <div class="stat-item" style="border-left: 4px solid #ff9800;">
+                          <div class="label" style="color: #ff9800;">${m1_n}</div>
+                          <div class="value">${m1_v}</div>
+                      </div>` : ''}
+                      ${this.editConfig.mining2_entity ? html`
+                      <div class="stat-item" style="border-left: 4px solid #ff9800;">
+                          <div class="label" style="color: #ff9800;">${m2_n}</div>
+                          <div class="value">${m2_v}</div>
+                      </div>` : ''}
+                      ${this.editConfig.mining3_entity ? html`
+                      <div class="stat-item" style="border-left: 4px solid #ff9800;">
+                          <div class="label" style="color: #ff9800;">${m3_n}</div>
+                          <div class="value">${m3_v}</div>
+                      </div>` : ''}
+                      ${this.editConfig.mining4_entity ? html`
+                      <div class="stat-item" style="border-left: 4px solid #ff9800;">
+                          <div class="label" style="color: #ff9800;">${m4_n}</div>
+                          <div class="value">${m4_v}</div>
+                      </div>` : ''}
+                    </div>
+                  </div>
                 `}
 
                 <div class="footer">
                   <div class="dots">
-                    <div class="dot ${this.page === 1 ? 'active' : ''}"></div>
-                    <div class="dot ${this.page === 2 ? 'active' : ''}"></div>
+                    ${hasPage1 ? html`<div class="dot ${this.page === 1 ? 'active' : ''}"></div>` : ''}
+                    ${hasPage2 ? html`<div class="dot ${this.page === 2 ? 'active' : ''}"></div>` : ''}
                     ${hasPage3 ? html`<div class="dot ${this.page === 3 ? 'active' : ''}"></div>` : ''}
                     ${hasPage4 ? html`<div class="dot ${this.page === 4 ? 'active' : ''}"></div>` : ''}
+                    ${hasPage5 ? html`<div class="dot ${this.page === 5 ? 'active' : ''}"></div>` : ''}
                   </div>
                 </div>
               </div>
               <div class="cyd-controls">
-                <button @click="${() => this.page = 1}">P1</button>
-                <button @click="${() => this.page = 2}">P2</button>
+                ${hasPage1 ? html`<button @click="${() => this.page = 1}">P1</button>` : ''}
+                ${hasPage2 ? html`<button @click="${() => this.page = 2}">P2</button>` : ''}
                 ${hasPage3 ? html`<button @click="${() => this.page = 3}">P3</button>` : ''}
                 ${hasPage4 ? html`<button @click="${() => this.page = 4}">P4</button>` : ''}
+                ${hasPage5 ? html`<button @click="${() => this.page = 5}">P5</button>` : ''}
               </div>
             </div>
           </div>
@@ -280,12 +321,24 @@ class CYDPreview extends LitElement {
     const sensorOptions = this.getEntitiesByDomain('sensor');
 
     return html`
-      <div class="card edit-card">
+  < div class="card edit-card" >
         <h2>🛠️ Sensoren & Konfiguration</h2>
         <p style="color:#aaa; font-size:14px; margin-bottom: 25px;">Verknüpfe hier deine Home Assistant Sensoren, die auf dem ESP32 Display angezeigt werden sollen.</p>
         
         <div class="tech-box">
-            <h3 style="color: #fdd835; margin-top: 0;">⚡ Kern-Sensoren (Live in Watt)</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #fdd835; margin-top: 0;">⚡ Kern-Sensoren (Live) - Seite 1</h3>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #fff;">
+                    <input type="checkbox" name="enable_page1" .checked="${this.editConfig.enable_page1 !== false}" @change="${this.handleFormInput}" style="width: 18px; height: 18px; accent-color: #fdd835;">
+                    Aktivieren
+                </label>
+            </div>
+            
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #fff; margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 4px; width: fit-content;">
+                <input type="checkbox" name="show_kw" .checked="${this.editConfig.show_kw === true}" @change="${this.handleFormInput}" style="width: 16px; height: 16px; accent-color: #fdd835;">
+                Leistung in Kilowatt (kW) anzeigen anstatt in Watt (W)
+            </label>
+
             <div class="form-row">
                 <div class="form-group flex-1">
                   <label>Solar Leistung (W)</label>
@@ -300,8 +353,8 @@ class CYDPreview extends LitElement {
                     <option value="" ?selected="${!this.editConfig.grid_entity}">-- Sensor wählen --</option>
                     ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.grid_entity === opt.id}">${opt.name}</option>`)}
                   </select >
-                </div>
-            </div>
+                </div >
+            </div >
 
   <div class="form-row">
     <div class="form-group flex-1">
@@ -310,15 +363,15 @@ class CYDPreview extends LitElement {
       <option value="" ?selected="${!this.editConfig.house_entity}">-- Sensor wählen --</option>
     ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.house_entity === opt.id}">${opt.name}</option>`)}
   </select>
-                </div>
+                </div >
   <div class="form-group flex-1">
     <label>Batterie Leistung (W)</label>
     <select name="battery_entity" @change="${this.handleFormInput}">
     <option value="" ?selected="${!this.editConfig.battery_entity}">-- Sensor wählen --</option>
                     ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.battery_entity === opt.id}">${opt.name}</option>`)}
                   </select >
-                </div>
-            </div>
+                </div >
+            </div >
 
   <div class="form-group" style="width: 50%;">
     <label>Batterie Füllstand (%)</label>
@@ -326,11 +379,17 @@ class CYDPreview extends LitElement {
     <option value="" ?selected="${!this.editConfig.battery_soc_entity}">-- Sensor wählen --</option>
                 ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.battery_soc_entity === opt.id}">${opt.name}</option>`)}
                 </select >
-            </div>
-        </div>
+            </div >
+        </div >
 
         <div class="tech-box" style="margin-top: 20px; border-color: rgba(52, 152, 219, 0.4);">
-            <h3 style="color: #3498db; margin-top: 0;">📊 Statistik-Sensoren (kWh) - Für Seite 2</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #3498db; margin-top: 0;">📊 Statistik-Sensoren (kWh) - Seite 2</h3>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #fff;">
+                    <input type="checkbox" name="enable_page2" .checked="${this.editConfig.enable_page2 !== false}" @change="${this.handleFormInput}" style="width: 18px; height: 18px; accent-color: #3498db;">
+                    Aktivieren
+                </label>
+            </div>
             <div class="form-row">
                 <div class="form-group flex-1">
                   <label>Ertrag Heute (kWh)</label>
@@ -345,8 +404,8 @@ class CYDPreview extends LitElement {
                     <option value="" ?selected="${!this.editConfig.yield_month_entity}">-- Sensor wählen --</option>
                     ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.yield_month_entity === opt.id}">${opt.name}</option>`)}
                   </select >
-                </div>
-            </div>
+                </div >
+            </div >
   <div class="form-row">
     <div class="form-group flex-1">
       <label>Ertrag Laufendes Jahr (kWh)</label>
@@ -354,16 +413,16 @@ class CYDPreview extends LitElement {
       <option value="" ?selected="${!this.editConfig.yield_year_entity}">-- Sensor wählen --</option>
     ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.yield_year_entity === opt.id}">${opt.name}</option>`)}
   </select>
-                </div>
+                </div >
   <div class="form-group flex-1">
     <label>Gesamtertrag (Lifelime) (kWh)</label>
     <select name="yield_total_entity" @change="${this.handleFormInput}">
     <option value="" ?selected="${!this.editConfig.yield_total_entity}">-- Sensor wählen --</option>
                     ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.yield_total_entity === opt.id}">${opt.name}</option>`)}
                   </select >
-                </div>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
 
   <div class="tech-box" style="margin-top: 20px; border-color: #00f3ff;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -503,6 +562,74 @@ class CYDPreview extends LitElement {
             ` : ''}
         </div>
         
+        <div class="tech-box" style="margin-top: 20px; border-color: #ff9800;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="color: #ff9800; margin-top: 0;">⛏️ Mining Sensoren (Seite 5)</h3>
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #fff;">
+                  <input type="checkbox" name="enable_page5" .checked="${this.editConfig.enable_page5 !== false}" @change="${this.handleFormInput}" style="width: 18px; height: 18px; accent-color: #ff9800;">
+                  Aktivieren
+              </label>
+            </div>
+            
+            ${this.editConfig.enable_page5 !== false ? html`
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 1 (z.B. Hashrate)</label>
+                <input type="text" name="mining1_name" .value="${this.editConfig.mining1_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 1</label>
+                <select name="mining1_entity" @change="${this.handleFormInput}">
+                <option value="" ?selected="${!this.editConfig.mining1_entity}">-- Sensor wählen --</option>
+              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.mining1_entity === opt.id}">${opt.name}</option>`)}
+            </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 2 (z.B. Temp)</label>
+                <input type="text" name="mining2_name" .value="${this.editConfig.mining2_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 2</label>
+                <select name="mining2_entity" @change="${this.handleFormInput}">
+                <option value="" ?selected="${!this.editConfig.mining2_entity}">-- Sensor wählen --</option>
+              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.mining2_entity === opt.id}">${opt.name}</option>`)}
+            </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 3</label>
+                <input type="text" name="mining3_name" .value="${this.editConfig.mining3_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 3</label>
+                <select name="mining3_entity" @change="${this.handleFormInput}">
+                <option value="" ?selected="${!this.editConfig.mining3_entity}">-- Sensor wählen --</option>
+              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.mining3_entity === opt.id}">${opt.name}</option>`)}
+            </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 4</label>
+                <input type="text" name="mining4_name" .value="${this.editConfig.mining4_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 4</label>
+                <select name="mining4_entity" @change="${this.handleFormInput}">
+                <option value="" ?selected="${!this.editConfig.mining4_entity}">-- Sensor wählen --</option>
+              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.mining4_entity === opt.id}">${opt.name}</option>`)}
+            </select>
+              </div>
+            </div>
+            ` : ''}
+        </div>
+
         <div class="tech-box" style="margin-top: 20px; border-color: rgba(155, 89, 182, 0.4);">
             <h3 style="color: #9b59b6; margin-top: 0;">⚙️ Allgemeine Eigenschaften</h3>
             
@@ -522,8 +649,8 @@ class CYDPreview extends LitElement {
 
         <div class="form-actions" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; text-align: right;">
             <button class="btn-save" @click="${this.saveConfig}">💾 Konfiguration Speichern & Anwenden</button>
-        </div>
-      </div>
+        </div >
+      </div >
   `;
   }
 
@@ -547,7 +674,7 @@ class CYDPreview extends LitElement {
             <li><strong style="color:#ddd;">4. Los gehts:</strong> Die Sensoren werden nun im gewählten Intervall an das Display gepusht! Viel Spaß.</li>
           </ul>
         </div>
-      </div>
+      </div >
   `;
   }
 
@@ -556,31 +683,31 @@ class CYDPreview extends LitElement {
       :host {
   display: block;
   color: #e1e1e1;
-  font-family: 'Roboto', 'Inter', sans-serif;
+  font - family: 'Roboto', 'Inter', sans - serif;
   background: #111111;
-  min-height: 100vh;
+  min - height: 100vh;
   padding: 20px;
-  box-sizing: border-box;
+  box - sizing: border - box;
 }
       
-      .main-wrapper {
-  max-width: 900px;
+      .main - wrapper {
+  max - width: 900px;
   margin: 0 auto;
 }
 
-      .header-main {
-  text-align: center;
-  margin-bottom: 30px;
+      .header - main {
+  text - align: center;
+  margin - bottom: 30px;
 }
-      .header-main h1 {
+      .header - main h1 {
   margin: 0;
-  font-size: 2.5em;
+  font - size: 2.5em;
   color: #fff;
-  text-shadow: 0 0 20px rgba(253, 216, 53, 0.4);
+  text - shadow: 0 0 20px rgba(253, 216, 53, 0.4);
 }
-      .header-main.subtitle {
+      .header - main.subtitle {
   color: #888;
-  font-size: 1.1em;
+  font - size: 1.1em;
   margin: 5px 0 0;
 }
 
@@ -588,18 +715,18 @@ class CYDPreview extends LitElement {
       .tabs {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #333;
-  padding-bottom: 10px;
+  margin - bottom: 20px;
+  border - bottom: 2px solid #333;
+  padding - bottom: 10px;
 }
       .tab {
   padding: 10px 20px;
-  border-radius: 8px;
+  border - radius: 8px;
   cursor: pointer;
   background: #222;
   color: #aaa;
-  font-weight: 600;
-  transition: all 0.2s ease-in-out;
+  font - weight: 600;
+  transition: all 0.2s ease -in -out;
 }
       .tab:hover {
   background: #333;
@@ -608,218 +735,218 @@ class CYDPreview extends LitElement {
       .tab.active {
   background: #fdd835;
   color: #000;
-  box-shadow: 0 4px 15px rgba(253, 216, 53, 0.3);
+  box - shadow: 0 4px 15px rgba(253, 216, 53, 0.3);
 }
 
       /* CONTENT CARDS */
       .card {
   background: #1a1a1c;
-  border-radius: 12px;
+  border - radius: 12px;
   padding: 25px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  box - shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
   border: 1px solid #333;
 }
       
       .card h2 {
-  margin-top: 0;
+  margin - top: 0;
   color: #fff;
 }
 
       /* CYD PREVIEW LAYOUT */
-      .cyd-container {
+      .cyd - container {
   display: flex;
-  justify-content: center;
-  margin-top: 20px;
+  justify - content: center;
+  margin - top: 20px;
 }
-      .cyd-frame {
+      .cyd - frame {
   width: 340px;
   height: 260px;
   background: #2b2b2b;
-  border-radius: 12px;
+  border - radius: 12px;
   padding: 10px;
   position: relative;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 1), 0 10px 30px rgba(0, 0, 0, 0.5);
+  box - shadow: inset 0 0 10px rgba(0, 0, 0, 1), 0 10px 30px rgba(0, 0, 0, 0.5);
   border: 2px solid #444;
 }
-      .cyd-screen {
+      .cyd - screen {
   width: 320px;
   height: 240px;
   background: #000;
   overflow: hidden;
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex - direction: column;
 }
       .header {
   display: flex;
-  justify-content: space-between;
+  justify - content: space - between;
   padding: 5px 10px;
-  font-size: 10px;
+  font - size: 10px;
   background: #222;
   color: #aaa;
 }
       .footer {
   position: absolute;
   bottom: 5px;
-  width: 100%;
+  width: 100 %;
   display: flex;
-  justify-content: center;
+  justify - content: center;
 }
       .dots { display: flex; gap: 5px; }
-      .dot { width: 4px; height: 4px; border-radius: 50%; background: #555; }
+      .dot { width: 4px; height: 4px; border - radius: 50 %; background: #555; }
       .dot.active { background: #fdd835; }
 
-      .page { flex: 1; padding: 10px; display: flex; flex-direction: column; }
+      .page { flex: 1; padding: 10px; display: flex; flex - direction: column; }
       
-      .flow-layout {
+      .flow - layout {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  flex - direction: column;
+  justify - content: space - between;
   height: 185px;
 }
       
       .box {
   background: #111;
-  border-radius: 6px;
+  border - radius: 6px;
   padding: 4px;
-  text-align: center;
+  text - align: center;
   border: 1px solid #333;
 }
-      .solar { color: #fdd835; box-shadow: inset 0 0 15px rgba(253, 216, 53, 0.1); }
-      .house { color: #4fc3f7; box-shadow: inset 0 0 15px rgba(79, 195, 247, 0.1); }
-      .grid.export { color: #66bb6a; box-shadow: inset 0 0 15px rgba(102, 187, 106, 0.1); }
-      .grid.import { color: #ef5350; box-shadow: inset 0 0 15px rgba(239, 83, 80, 0.1); }
+      .solar { color: #fdd835; box - shadow: inset 0 0 15px rgba(253, 216, 53, 0.1); }
+      .house { color: #4fc3f7; box - shadow: inset 0 0 15px rgba(79, 195, 247, 0.1); }
+      .grid.export { color: #66bb6a; box - shadow: inset 0 0 15px rgba(102, 187, 106, 0.1); }
+      .grid.import { color: #ef5350; box - shadow: inset 0 0 15px rgba(239, 83, 80, 0.1); }
       
-      .value { font-size: 20px; font-weight: bold; line-height: 1.2; }
-      .value span { font-size: 10px; margin-left: 2px; }
-      .value.small { font-size: 12px; }
+      .value { font - size: 20px; font - weight: bold; line - height: 1.2; }
+      .value span { font - size: 10px; margin - left: 2px; }
+      .value.small { font - size: 12px; }
 
-      .middle-row {
+      .middle - row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify - content: space - between;
+  align - items: center;
   margin: 0;
 }
 
-      .soc-ring {
+      .soc - ring {
   width: 34px;
   height: 34px;
-  border-radius: 50%;
-  background: conic-gradient(#4caf50 var(--perc), #333 0);
+  border - radius: 50 %;
+  background: conic - gradient(#4caf50 var(--perc), #333 0);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align - items: center;
+  justify - content: center;
   margin: 0 auto 3px;
 }
-      .soc-ring.inner {
+      .soc - ring.inner {
   width: 26px;
   height: 26px;
   background: #111;
-  border-radius: 50%;
-  font-size: 9px;
+  border - radius: 50 %;
+  font - size: 9px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align - items: center;
+  justify - content: center;
 }
 
-      .stats-grid {
+      .stats - grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid - template - columns: 1fr 1fr;
   gap: 10px;
-  height: 100%;
+  height: 100 %;
 }
-      .stat-item {
+      .stat - item {
   background: #111;
-  border-radius: 8px;
+  border - radius: 8px;
   padding: 10px;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex - direction: column;
+  justify - content: center;
   border: 1px solid #333;
 }
-      .stat-item.label { font-size: 10px; color: #888; text-transform: uppercase; }
+      .stat - item.label { font - size: 10px; color: #888; text - transform: uppercase; }
       
-      .cyd-controls {
+      .cyd - controls {
   position: absolute;
   right: -55px;
   top: 20px;
   display: flex;
-  flex-direction: column;
+  flex - direction: column;
   gap: 10px;
 }
-      .cyd-controls button {
+      .cyd - controls button {
   background: #444;
   color: white;
   border: none;
   padding: 6px 12px;
-  border-radius: 6px;
+  border - radius: 6px;
   cursor: pointer;
-  font-weight: bold;
+  font - weight: bold;
 }
-      .cyd-controls button:hover { background: #555; }
+      .cyd - controls button:hover { background: #555; }
       
-      .cyd-info { margin-bottom: 25px; text-align: center; color: #aaa; }
-      .cyd-info h3 { margin: 0; color: #4fc3f7; font-size: 16px; }
-      .cyd-info p { margin: 5px 0 0; font-size: 12px; }
+      .cyd - info { margin - bottom: 25px; text - align: center; color: #aaa; }
+      .cyd - info h3 { margin: 0; color: #4fc3f7; font - size: 16px; }
+      .cyd - info p { margin: 5px 0 0; font - size: 12px; }
 
       /* FORMS & SETTINGS */
-      .tech-box {
+      .tech - box {
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid #333;
-  border-radius: 10px;
+  border - radius: 10px;
   padding: 20px;
 }
-      .form-row {
+      .form - row {
   display: flex;
   gap: 15px;
-  margin-bottom: 15px;
+  margin - bottom: 15px;
 }
-      .flex-1 { flex: 1; }
+      .flex - 1 { flex: 1; }
       
-      .form-group {
+      .form - group {
   display: flex;
-  flex-direction: column;
-  margin-bottom: 15px;
+  flex - direction: column;
+  margin - bottom: 15px;
 }
-      .form-group label {
-  font-size: 0.9em;
+      .form - group label {
+  font - size: 0.9em;
   color: #bbb;
-  margin-bottom: 6px;
-  font-weight: 500;
+  margin - bottom: 6px;
+  font - weight: 500;
 }
-      .form-group select, .form-group input[type = "text"], .form-group input[type = "number"] {
+      .form - group select, .form - group input[type = "text"], .form - group input[type = "number"] {
   background: #111;
   color: #fff;
   border: 1px solid #444;
   padding: 10px;
-  border-radius: 6px;
-  font-size: 1em;
+  border - radius: 6px;
+  font - size: 1em;
   outline: none;
-  width: 100%;
-  box-sizing: border-box;
+  width: 100 %;
+  box - sizing: border - box;
 }
-      .form-group select: focus, .form-group input:focus {
-  border-color: #fdd835;
+      .form - group select: focus, .form - group input:focus {
+  border - color: #fdd835;
 }
-      .form-group small {
+      .form - group small {
   color: #aaa;
-  margin-top: 5px;
-  font-size: 0.85em;
+  margin - top: 5px;
+  font - size: 0.85em;
 }
 
-      .btn-save {
+      .btn - save {
   background: #4caf50;
   color: white;
   border: none;
   padding: 12px 30px;
-  border-radius: 8px;
-  font-size: 1.1em;
-  font-weight: bold;
+  border - radius: 8px;
+  font - size: 1.1em;
+  font - weight: bold;
   cursor: pointer;
   transition: background 0.2s;
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+  box - shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
 }
-      .btn-save:hover {
+      .btn - save:hover {
   background: #43a047;
 }
 `;

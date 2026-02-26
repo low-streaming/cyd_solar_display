@@ -41,6 +41,18 @@ from .const import (
     CONF_CUSTOM7_ENTITY,
     CONF_CUSTOM8_NAME,
     CONF_CUSTOM8_ENTITY,
+    CONF_ENABLE_PAGE1,
+    CONF_ENABLE_PAGE2,
+    CONF_ENABLE_PAGE5,
+    CONF_MINING1_NAME,
+    CONF_MINING1_ENTITY,
+    CONF_MINING2_NAME,
+    CONF_MINING2_ENTITY,
+    CONF_MINING3_NAME,
+    CONF_MINING3_ENTITY,
+    CONF_MINING4_NAME,
+    CONF_MINING4_ENTITY,
+    CONF_SHOW_KW,
     CONF_AUTO_PAGE_SWITCH,
     CONF_PAGE_INTERVAL
 )
@@ -132,14 +144,32 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "c7_v": get_custom_val(self.entry.options.get(CONF_CUSTOM7_ENTITY)),
             "c8_n": self.entry.options.get(CONF_CUSTOM8_NAME, "Custom 8"),
             "c8_v": get_custom_val(self.entry.options.get(CONF_CUSTOM8_ENTITY)),
+            
+            "c9_n": self.entry.options.get(CONF_MINING1_NAME, "Mining 1"),
+            "c9_v": get_custom_val(self.entry.options.get(CONF_MINING1_ENTITY)),
+            "c10_n": self.entry.options.get(CONF_MINING2_NAME, "Mining 2"),
+            "c10_v": get_custom_val(self.entry.options.get(CONF_MINING2_ENTITY)),
+            "c11_n": self.entry.options.get(CONF_MINING3_NAME, "Mining 3"),
+            "c11_v": get_custom_val(self.entry.options.get(CONF_MINING3_ENTITY)),
+            "c12_n": self.entry.options.get(CONF_MINING4_NAME, "Mining 4"),
+            "c12_v": get_custom_val(self.entry.options.get(CONF_MINING4_ENTITY)),
         }
 
-        # Handle Page Switching (Always auto-switch over enabled pages)
+        # Handle Page Switching
+        enable_p1 = self.entry.options.get(CONF_ENABLE_PAGE1, True)
+        enable_p2 = self.entry.options.get(CONF_ENABLE_PAGE2, True)
         enable_p3 = self.entry.options.get(CONF_ENABLE_PAGE3, True)
         enable_p4 = self.entry.options.get(CONF_ENABLE_PAGE4, True)
-        enabled_pages = [1, 2]
+        enable_p5 = self.entry.options.get(CONF_ENABLE_PAGE5, True)
+        
+        enabled_pages = []
+        if enable_p1: enabled_pages.append(1)
+        if enable_p2: enabled_pages.append(2)
         if enable_p3: enabled_pages.append(3)
         if enable_p4: enabled_pages.append(4)
+        if enable_p5: enabled_pages.append(5)
+        
+        if not enabled_pages: enabled_pages = [1]
         
         try:
             interval = int(self.entry.options.get("page_interval", 10))
@@ -181,6 +211,7 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "page_num": int(self.current_page),
             "page_idx": int(page_idx),
             "page_total": int(page_total),
+            "show_kw": bool(self.entry.options.get(CONF_SHOW_KW, False)),
             "c1_n": str(payload["c1_n"] or " "),
             "c1_v": str(payload["c1_v"] or " "),
             "c2_n": str(payload["c2_n"] or " "),
@@ -197,6 +228,14 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "c7_v": str(payload["c7_v"] or " "),
             "c8_n": str(payload["c8_n"] or " "),
             "c8_v": str(payload["c8_v"] or " "),
+            "c9_n": str(payload["c9_n"] or " "),
+            "c9_v": str(payload["c9_v"] or " "),
+            "c10_n": str(payload["c10_n"] or " "),
+            "c10_v": str(payload["c10_v"] or " "),
+            "c11_n": str(payload["c11_n"] or " "),
+            "c11_v": str(payload["c11_v"] or " "),
+            "c12_n": str(payload["c12_n"] or " "),
+            "c12_v": str(payload["c12_v"] or " "),
         }
         
         # Call the ESPHome Service

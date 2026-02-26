@@ -57,6 +57,15 @@ api:
         c7_v: string
         c8_n: string
         c8_v: string
+        show_kw: boolean
+        c9_n: string
+        c9_v: string
+        c10_n: string
+        c10_v: string
+        c11_n: string
+        c11_v: string
+        c12_n: string
+        c12_v: string
       then:
         - lambda: |-
             id(solar_w).publish_state(solar);
@@ -89,6 +98,15 @@ api:
             id(custom7_v).publish_state(c7_v);
             id(custom8_n).publish_state(c8_n);
             id(custom8_v).publish_state(c8_v);
+            id(show_kw).publish_state(show_kw);
+            id(custom9_n).publish_state(c9_n);
+            id(custom9_v).publish_state(c9_v);
+            id(custom10_n).publish_state(c10_n);
+            id(custom10_v).publish_state(c10_v);
+            id(custom11_n).publish_state(c11_n);
+            id(custom11_v).publish_state(c11_v);
+            id(custom12_n).publish_state(c12_n);
+            id(custom12_v).publish_state(c12_v);
 
 ota:
   - platform: esphome
@@ -155,6 +173,10 @@ color:
     red: 100%
     green: 20%
     blue: 20%
+  - id: color_bat_full
+    red: 0%
+    green: 100%
+    blue: 50%
 
 # Fonts
 font:
@@ -274,6 +296,30 @@ text_sensor:
   - platform: template
     name: "Custom 8 Value"
     id: custom8_v
+  - platform: template
+    name: "Custom 9 Name"
+    id: custom9_n
+  - platform: template
+    name: "Custom 9 Value"
+    id: custom9_v
+  - platform: template
+    name: "Custom 10 Name"
+    id: custom10_n
+  - platform: template
+    name: "Custom 10 Value"
+    id: custom10_v
+  - platform: template
+    name: "Custom 11 Name"
+    id: custom11_n
+  - platform: template
+    name: "Custom 11 Value"
+    id: custom11_v
+  - platform: template
+    name: "Custom 12 Name"
+    id: custom12_n
+  - platform: template
+    name: "Custom 12 Value"
+    id: custom12_v
 switch:
   - platform: template
     name: "Live-Daten in kW anzeigen"
@@ -285,21 +331,21 @@ number:
     name: "Current Page"
     id: current_page
     min_value: 1
-    max_value: 4
+    max_value: 5
     step: 1
     optimistic: true
   - platform: template
     name: "Page Index"
     id: page_display_idx
     min_value: 1
-    max_value: 4
+    max_value: 5
     step: 1
     optimistic: true
   - platform: template
     name: "Page Total"
     id: page_display_total
     min_value: 1
-    max_value: 4
+    max_value: 5
     step: 1
     optimistic: true
 
@@ -360,6 +406,7 @@ display:
         auto curr_bat_color = id(color_bat);
         if (soc <= 20) curr_bat_color = id(color_bat_low);
         else if (soc <= 50) curr_bat_color = id(color_bat_mid);
+        else if (soc >= 95) curr_bat_color = id(color_bat_full);
 
         // 3. BATTERIE (Bottom Left)
         it.filled_rectangle(10, 132, 145, 80, id(color_panel));
@@ -489,6 +536,40 @@ display:
           it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
           it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom8_n).state.c_str());
           it.printf(237, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom8_v).state.c_str()); 
+        }
+      } else if (page == 5) {
+        // PAGE 5 (MINING SENSORS)
+        
+        // M1
+        if (id(custom9_v).state.length() > 0 && id(custom9_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 42, 4, 80, id(color_bat_mid)); 
+          it.print(22, 50, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom9_n).state.c_str());
+          it.printf(82, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom9_v).state.c_str());
+        }
+        
+        // M2
+        if (id(custom10_v).state.length() > 0 && id(custom10_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 42, 4, 80, id(color_bat_mid));
+          it.print(177, 50, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom10_n).state.c_str());
+          it.printf(237, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom10_v).state.c_str());
+        }
+
+        // M3
+        if (id(custom11_v).state.length() > 0 && id(custom11_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 132, 4, 80, id(color_bat_mid));
+          it.print(22, 140, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom11_n).state.c_str());
+          it.printf(82, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom11_v).state.c_str());
+        }
+
+        // M4
+        if (id(custom12_v).state.length() > 0 && id(custom12_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 132, 4, 80, id(color_bat_mid));
+          it.print(177, 140, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom12_n).state.c_str());
+          it.printf(237, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom12_v).state.c_str()); 
         }
       }
 

@@ -13,6 +13,8 @@ from .const import (
     CONF_HOUSE_ENTITY,
     CONF_BATTERY_ENTITY,
     CONF_BATTERY_SOC_ENTITY,
+    CONF_ENABLE_PAGE1,
+    CONF_ENABLE_PAGE2,
     CONF_YIELD_TODAY_ENTITY,
     CONF_YIELD_MONTH_ENTITY,
     CONF_YIELD_YEAR_ENTITY,
@@ -35,8 +37,19 @@ from .const import (
     CONF_CUSTOM6_ENTITY,
     CONF_CUSTOM7_NAME,
     CONF_CUSTOM7_ENTITY,
+    CONF_CUSTOM7_ENTITY,
     CONF_CUSTOM8_NAME,
     CONF_CUSTOM8_ENTITY,
+    CONF_ENABLE_PAGE5,
+    CONF_MINING1_NAME,
+    CONF_MINING1_ENTITY,
+    CONF_MINING2_NAME,
+    CONF_MINING2_ENTITY,
+    CONF_MINING3_NAME,
+    CONF_MINING3_ENTITY,
+    CONF_MINING4_NAME,
+    CONF_MINING4_ENTITY,
+    CONF_SHOW_KW,
     CONF_AUTO_PAGE_SWITCH,
     CONF_PAGE_INTERVAL,
 )
@@ -88,6 +101,7 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
             step_id="init",
             data_schema=vol.Schema({
                 # Core Entities
+                vol.Optional(CONF_ENABLE_PAGE1, default=self.config_entry.options.get(CONF_ENABLE_PAGE1, True)): bool,
                 vol.Optional(CONF_SOLAR_ENTITY, default=self.config_entry.options.get(CONF_SOLAR_ENTITY)): selector.EntitySelector(),
                 vol.Optional(CONF_GRID_ENTITY, default=self.config_entry.options.get(CONF_GRID_ENTITY)): selector.EntitySelector(),
                 vol.Optional(CONF_HOUSE_ENTITY, default=self.config_entry.options.get(CONF_HOUSE_ENTITY)): selector.EntitySelector(),
@@ -95,6 +109,7 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_BATTERY_SOC_ENTITY, default=self.config_entry.options.get(CONF_BATTERY_SOC_ENTITY)): selector.EntitySelector(),
                 
                 # Page 2
+                vol.Optional(CONF_ENABLE_PAGE2, default=self.config_entry.options.get(CONF_ENABLE_PAGE2, True)): bool,
                 vol.Optional(CONF_YIELD_TODAY_ENTITY, default=self.config_entry.options.get(CONF_YIELD_TODAY_ENTITY)): selector.EntitySelector(),
                 vol.Optional(CONF_YIELD_MONTH_ENTITY, default=self.config_entry.options.get(CONF_YIELD_MONTH_ENTITY)): selector.EntitySelector(),
                 vol.Optional(CONF_YIELD_YEAR_ENTITY, default=self.config_entry.options.get(CONF_YIELD_YEAR_ENTITY)): selector.EntitySelector(),
@@ -124,7 +139,19 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_CUSTOM8_NAME, default=self.config_entry.options.get(CONF_CUSTOM8_NAME, "Custom 8")): str,
                 vol.Optional(CONF_CUSTOM8_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM8_ENTITY)): selector.EntitySelector(),
                 
+                # Page 5 (Mining Sensors)
+                vol.Optional(CONF_ENABLE_PAGE5, default=self.config_entry.options.get(CONF_ENABLE_PAGE5, True)): bool,
+                vol.Optional(CONF_MINING1_NAME, default=self.config_entry.options.get(CONF_MINING1_NAME, "Mining 1")): str,
+                vol.Optional(CONF_MINING1_ENTITY, default=self.config_entry.options.get(CONF_MINING1_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_MINING2_NAME, default=self.config_entry.options.get(CONF_MINING2_NAME, "Mining 2")): str,
+                vol.Optional(CONF_MINING2_ENTITY, default=self.config_entry.options.get(CONF_MINING2_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_MINING3_NAME, default=self.config_entry.options.get(CONF_MINING3_NAME, "Mining 3")): str,
+                vol.Optional(CONF_MINING3_ENTITY, default=self.config_entry.options.get(CONF_MINING3_ENTITY)): selector.EntitySelector(),
+                vol.Optional(CONF_MINING4_NAME, default=self.config_entry.options.get(CONF_MINING4_NAME, "Mining 4")): str,
+                vol.Optional(CONF_MINING4_ENTITY, default=self.config_entry.options.get(CONF_MINING4_ENTITY)): selector.EntitySelector(),
+
                 # Settings
+                vol.Optional(CONF_SHOW_KW, default=self.config_entry.options.get(CONF_SHOW_KW, False)): bool,
                 vol.Optional("update_interval", default=self.config_entry.options.get("update_interval", 5)): int,
                 vol.Optional(CONF_PAGE_INTERVAL, default=self.config_entry.options.get(CONF_PAGE_INTERVAL, 10)): int,
             })

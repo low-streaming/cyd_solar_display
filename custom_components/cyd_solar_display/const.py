@@ -13,6 +13,9 @@ CONF_HOUSE_ENTITY = "house_entity"
 CONF_BATTERY_ENTITY = "battery_entity"
 CONF_BATTERY_SOC_ENTITY = "battery_soc_entity"
 
+# Page 1
+CONF_ENABLE_PAGE1 = "enable_page1"
+
 # Page 2 Entities
 CONF_ENABLE_PAGE2 = "enable_page2"
 CONF_YIELD_TODAY_ENTITY = "yield_today_entity"
@@ -44,7 +47,19 @@ CONF_CUSTOM7_ENTITY = "custom7_entity"
 CONF_CUSTOM8_NAME = "custom8_name"
 CONF_CUSTOM8_ENTITY = "custom8_entity"
 
+# Page 5 (Mining Sensors)
+CONF_ENABLE_PAGE5 = "enable_page5"
+CONF_MINING1_NAME = "mining1_name"
+CONF_MINING1_ENTITY = "mining1_entity"
+CONF_MINING2_NAME = "mining2_name"
+CONF_MINING2_ENTITY = "mining2_entity"
+CONF_MINING3_NAME = "mining3_name"
+CONF_MINING3_ENTITY = "mining3_entity"
+CONF_MINING4_NAME = "mining4_name"
+CONF_MINING4_ENTITY = "mining4_entity"
+
 # Meta
+CONF_SHOW_KW = "show_kw"
 CONF_AUTO_PAGE_SWITCH = "auto_page_switch"
 CONF_PAGE_INTERVAL = "page_interval"
 CONF_THEME_COLOR = "theme_color"
