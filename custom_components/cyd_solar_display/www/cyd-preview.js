@@ -874,6 +874,8 @@ class CYDPreview extends LitElement {
   border: 1px solid #333;
 }
       .stat-item .label { font-size: 10px; color: #888; text-transform: uppercase; }
+      .stat-item .value { font-size: 20px; font-weight: bold; line-height: 1.2; margin-top: 5px; }
+      .stat-item .value span { font-size: 10px; margin-left: 2px; }
       
       .cyd-controls {
   position: absolute;
