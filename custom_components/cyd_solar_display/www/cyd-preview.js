@@ -684,7 +684,7 @@ class CYDPreview extends LitElement {
   display: block;
   color: #e1e1e1;
   font-family: 'Roboto', 'Inter', sans-serif;
-  background: #111111;
+  background: radial-gradient(circle at 15% 15%, #232031 0%, #111111 40%, #080808 100%);
   min-height: 100vh;
   padding: 20px;
   box-sizing: border-box;
@@ -738,13 +738,14 @@ class CYDPreview extends LitElement {
   box-shadow: 0 4px 15px rgba(253, 216, 53, 0.3);
 }
 
-      /* CONTENT CARDS */
       .card {
-  background: #1a1a1c;
+  background: rgba(26, 26, 28, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 12px;
   padding: 25px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-  border: 1px solid #333;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
       
       .card h2 {
