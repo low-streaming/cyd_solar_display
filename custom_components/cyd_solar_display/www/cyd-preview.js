@@ -668,8 +668,12 @@ class CYDPreview extends LitElement {
         <div class="tech-box" style="margin-top: 15px;">
           <h3 style="margin-top:0; color:#4fc3f7;">🚀 Flashing & Einrichtung</h3>
           <ul style="color:#bbb; line-height:1.6; padding-left:20px;">
-            <li><strong style="color:#ddd;">1. Hardware:</strong> Du benötigst das ESP32 CYD (Modell 2432S028).</li>
-            <li><strong style="color:#ddd;">2. ESPHome Code:</strong> Verwende die ESPHome YAML des CYD_Solar_Displays und flashe deinen ESP32 (z.B. über web.esphome.io).</li>
+            <li><strong style="color:#ddd;">1. Hardware:</strong> Du benötigst das ESP32 CYD (Modell 2432S028).
+              <ul style="margin: 4px 0 8px 0;">
+                <li>🛒 Die Hardware verkaufen wir hier: <a href="https://solarmodule-gladbeck.de/produkt/ok_display/" target="_blank" style="color:#4fc3f7; text-decoration:none;">solarmodule-gladbeck.de/produkt/ok_display/</a></li>
+              </ul>
+            </li>
+            <li><strong style="color:#ddd;">2. ESPHome Code:</strong> Verwende die ESPHome YAML des CYD_Solar_Displays und flashe deinen ESP32 (z.B. über <a href="https://web.esphome.io" target="_blank" style="color:#4fc3f7; text-decoration:none;">web.esphome.io</a>).</li>
             <li><strong style="color:#ddd;">3. WLAN & mDNS:</strong> Nach dem Flashen verbindet sich das Display mit deinem Netzwerk. Home Assistant sollte es automatisch über mDNS finden.</li>
             <li><strong style="color:#ddd;">4. Konfiguration:</strong> Sobald der ESP32 in HA als Gerät "cyd_solar_display" (Standard) registriert ist, verknüpfe unter "Einstellungen" (in diesem Panel) deine Sensoren.</li>
             <li><strong style="color:#ddd;">5. Optionen:</strong> Aktiviere oder deaktiviere einzelne Seiten (z.B. Mining Sensoren) oder die kW-Anzeige ganz nach deinem Geschmack.</li>
