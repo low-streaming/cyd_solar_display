@@ -170,29 +170,26 @@ class CYDPreview extends LitElement {
                 
                 ${this.page === 1 ? html`
                   <div class="page page1">
-                    <div class="flow-layout">
-                      <div class="box solar" style="margin: 0 auto; width: 120px;">
-                        <div class="icon">☀️</div>
-                        <div class="value">${pVal(solar_w)}<span>${pUnit}</span></div>
+                    <div class="quad-grid">
+                      <div class="quad-box q-solar">
+                        <div class="q-label">SOLAR</div>
+                        <div class="q-value">${pVal(solar_w)}<span>${pUnit}</span></div>
                       </div>
-
-                      <div class="middle-row">
-                          <div class="box battery" style="width: 70px;">
-                              <div class="soc-ring" style="--perc: ${battery_soc}%">
-                                  <div class="inner">${battery_soc}%</div>
-                              </div>
-                              <div class="value small">${pVal(battery_w)}${pUnit}</div>
-                          </div>
-                          <div class="box house" style="width: 70px;">
-                              <div class="icon">🏠</div>
-                              <div class="value">${pVal(house_w)}<span>${pUnit}</span></div>
-                          </div>
+                      <div class="quad-box q-house">
+                        <div class="q-label">HAUSVERBRAUCH</div>
+                        <div class="q-value">${pVal(house_w)}<span>${pUnit}</span></div>
                       </div>
-
-                      <div class="box grid ${isNegative ? 'export' : 'import'}" style="margin: 0 auto; width: 120px;">
-                        <div class="icon">⚡</div>
-                        <div class="value">${pVal(Math.abs(grid_w))}<span>${pUnit}</span></div>
-                        <div class="label" style="font-size: 10px;">${isNegative ? 'Einspeisung' : 'Netzbezug'}</div>
+                      <div class="quad-box q-batt">
+                        <div class="q-label">BATTERIE</div>
+                        <div class="q-batt-val">${battery_soc}%</div>
+                        <div class="q-batt-bar">
+                          <div style="width: ${battery_soc}%; background: ${battery_soc <= 20 ? '#ef5350' : (battery_soc <= 50 ? '#ff9800' : '#4caf50')}"></div>
+                        </div>
+                        <div class="q-batt-w">${pVal(battery_w)} ${pUnit}</div>
+                      </div>
+                      <div class="quad-box q-grid ${isNegative ? 'export' : 'import'}">
+                        <div class="q-label">${isNegative ? 'EINSPEISUNG' : 'NETZBEZUG'}</div>
+                        <div class="q-value">${pVal(Math.abs(grid_w))}<span>${pUnit}</span></div>
                       </div>
                     </div>
                   </div>
@@ -803,56 +800,63 @@ class CYDPreview extends LitElement {
 
       .page { flex: 1; padding: 10px; display: flex; flex-direction: column; }
       
-      .flow-layout {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 185px;
-}
+      .quad-grid {
+        display: grid;
+        grid-template-columns: 145px 145px;
+        grid-template-rows: 80px 80px;
+        gap: 10px;
+        justify-content: center;
+        align-content: center;
+      }
+      .quad-box {
+        background: #111;
+        border-radius: 4px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      .quad-box.q-solar { border-left: 4px solid #fdd835; color: #fdd835; }
+      .quad-box.q-house { border-left: 4px solid #4fc3f7; color: #4fc3f7; }
+      .quad-box.q-batt { border-left: 4px solid #4caf50; color: #4caf50; }
+      .quad-box.q-grid.export { border-left: 4px solid #66bb6a; color: #66bb6a; }
+      .quad-box.q-grid.import { border-left: 4px solid #ef5350; color: #ef5350; }
       
-      .box {
-  background: #111;
-  border-radius: 6px;
-  padding: 4px;
-  text-align: center;
-  border: 1px solid #333;
-}
-      .solar { color: #fdd835; box-shadow: inset 0 0 15px rgba(253, 216, 53, 0.1); }
-      .house { color: #4fc3f7; box-shadow: inset 0 0 15px rgba(79, 195, 247, 0.1); }
-      .grid.export { color: #66bb6a; box-shadow: inset 0 0 15px rgba(102, 187, 106, 0.1); }
-      .grid.import { color: #ef5350; box-shadow: inset 0 0 15px rgba(239, 83, 80, 0.1); }
+      .q-label {
+        position: absolute;
+        top: 6px;
+        left: 8px;
+        font-size: 8px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+      }
+      .q-value {
+        font-size: 20px;
+        font-weight: bold;
+        color: #fff;
+        margin-top: 5px;
+        line-height: 1.2;
+      }
+      .q-value span { font-size: 10px; margin-left: 2px; }
       
-      .value { font-size: 20px; font-weight: bold; line-height: 1.2; }
-      .value span { font-size: 10px; margin-left: 2px; }
-      .value.small { font-size: 12px; }
-
-      .middle-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 0;
-}
-
-      .soc-ring {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: conic-gradient(#4caf50 var(--perc), #333 0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 3px;
-}
-      .soc-ring.inner {
-  width: 26px;
-  height: 26px;
-  background: #111;
-  border-radius: 50%;
-  font-size: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+      .q-batt-val { font-size: 20px; font-weight: bold; color: #fff; margin-top: 10px; line-height: 1; }
+      .q-batt-bar {
+        width: 75px;
+        height: 10px;
+        border: 1px solid #777;
+        margin-top: 5px;
+        padding: 1px;
+        border-radius: 2px;
+      }
+      .q-batt-bar div { height: 100%; border-radius: 1px; }
+      .q-batt-w {
+        position: absolute;
+        bottom: 8px;
+        left: 65px;
+        font-size: 10px;
+        color: #fff;
+      }
 
       .stats-grid {
   display: grid;

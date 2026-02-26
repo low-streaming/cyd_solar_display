@@ -114,6 +114,11 @@ ota:
 logger:
   level: DEBUG
 
+time:
+  - platform: homeassistant
+    id: current_time
+    timezone: Europe/Berlin
+
 # Hardware Setup (CYD)
 spi:
   clk_pin: 14
@@ -379,7 +384,7 @@ display:
       // HEADER
       it.filled_rectangle(0, 0, 320, 32, id(color_panel));
       it.print(10, 16, id(font_title), id(color_solar), TextAlign::CENTER_LEFT, "Solar");
-      it.print(310, 16, id(font_title), id(color_text), TextAlign::CENTER_RIGHT, "Live Daten");
+      it.print(310, 16, id(font_title), id(color_text), TextAlign::CENTER_RIGHT, id(current_time).now().strftime("%H:%M").c_str());
       it.line(0, 32, 320, 32, id(color_text));
 
       if (page == 1) {
