@@ -39,13 +39,15 @@ Wir greifen im Hintergrund auf die ultrastarke **`homeassistant.services.async_c
 
 Das Display reagiert passiv (wird also mit Daten "befeuert") und führt alle Layout-Renderings als autarker Lambda-Code selbst durch.
 
-## 🗺️ Roadmap & Zukunftspläne
-Wir entwickeln die Integration aktiv weiter, um das OpenKairo Systemdesign auszureizen. 
+## 🗺️ Status & Wartung
+Das CYD Solar Display Projekt wird aktuell als **Feature-Complete (Closed)** angesehen. Das bedeutet, das Panel hat alle Kernfunktionen, die für das OpenKairo Ökosystem geplant waren, erfolgreich erreicht. 
 
-- [ ] **Touch-Steuerung Level 2:** Einbindung echter Buttons auf Seite 1, um angeschlossene Relais (z.B. den Local Grow Box Miner) über das CYD-Display mit dem Finger auszulösen.
-- [ ] **Grafisches Tuning:** Weiterentwicklung der Farbverlaufs-Balken, damit sich z.B. der Batterie-Balken auf dem Display bei einer Ladung physikalisch mit neon-grüner Farbe nach oben hin füllt.
-- [ ] **Smart Switch:** Erkennung und rote Flash-Warnungen auf dem Screen, sofern unvorhergesehene extreme Stromspitzen generiert werden.
-- [ ] **Auto-Helligkeit:** Nachts dunkelt sich das Cyberpunk-Interface ab, um nicht zu blenden (evtl. via LDR-Sensor auf der CYD-Rückseite).
+Die zukünftige Entwicklung fokussiert sich rein auf:
+- 🛠️ **Wartung & Bugfixes:** Sicherstellen der Kompatibilität mit neuen Home Assistant Core- und ESPHome-Updates.
+- 🎨 **Feintuning:** Kleinere optische Anpassungen am bestehenden Cyberpunk-Theme.
+- 🚦 **Stabilisierung:** Optimierung der Auslastung und Laufzeitstabilität des ESP32.
+
+Wir danken allen Nutzerinnen und Nutzern für das umfangreiche Feedback während der Entwicklungsphase!
 
 ---
 
