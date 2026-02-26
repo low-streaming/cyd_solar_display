@@ -669,10 +669,28 @@ class CYDPreview extends LitElement {
           <h3 style="margin-top:0; color:#4fc3f7;">🚀 Flashing & Einrichtung</h3>
           <ul style="color:#bbb; line-height:1.6; padding-left:20px;">
             <li><strong style="color:#ddd;">1. Hardware:</strong> Du benötigst das ESP32 CYD (Modell 2432S028).</li>
-            <li><strong style="color:#ddd;">2. ESPHome Code:</strong> Verwende die ESPHome YAML des CYD_Solar_Displays und flashe deinen ESP32.</li>
-            <li><strong style="color:#ddd;">3. Konfiguration:</strong> Sobald der ESP32 geflasht und per ESPHome in HA als Gerät "cyd_solar_display" (Standard) registriert ist, verknüpfe unter "Einstellungen" (in diesem Panel) deine Sensoren.</li>
-            <li><strong style="color:#ddd;">4. Los gehts:</strong> Die Sensoren werden nun im gewählten Intervall an das Display gepusht! Viel Spaß.</li>
+            <li><strong style="color:#ddd;">2. ESPHome Code:</strong> Verwende die ESPHome YAML des CYD_Solar_Displays und flashe deinen ESP32 (z.B. über web.esphome.io).</li>
+            <li><strong style="color:#ddd;">3. WLAN & mDNS:</strong> Nach dem Flashen verbindet sich das Display mit deinem Netzwerk. Home Assistant sollte es automatisch über mDNS finden.</li>
+            <li><strong style="color:#ddd;">4. Konfiguration:</strong> Sobald der ESP32 in HA als Gerät "cyd_solar_display" (Standard) registriert ist, verknüpfe unter "Einstellungen" (in diesem Panel) deine Sensoren.</li>
+            <li><strong style="color:#ddd;">5. Optionen:</strong> Aktiviere oder deaktiviere einzelne Seiten (z.B. Mining Sensoren) oder die kW-Anzeige ganz nach deinem Geschmack.</li>
+            <li><strong style="color:#ddd;">6. Automatisierung:</strong> Das System arbeitet passiv. Die ausgewählten Sensordaten werden nun vom Panel aus im Intervall (z.B. 5s) intelligent an das Display gepusht! Viel Spaß.</li>
           </ul>
+        </div>
+
+        <div class="tech-box" style="margin-top: 15px; border-color: rgba(0, 168, 255, 0.3); background: rgba(0, 69, 124, 0.1);">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+            <div style="flex: 1; min-width: 300px;">
+              <h3 style="margin-top:0; color:#00a8ff;">☕ Support & Spenden</h3>
+              <p style="color:#bbb; line-height:1.6; margin-top: 5px;">Dir gefällt das Projekt und du möchtest die Weiterentwicklung unterstützen? Ich freue mich riesig über jeden noch so kleinen Betrag für die nächste Tasse Kaffee!</p>
+              <p style="color:#888; font-size: 12px; margin-top: 5px;">📧 info@low-streaming.de</p>
+            </div>
+            <div>
+              <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=info@low-streaming.de&currency_code=EUR" target="_blank" style="display: inline-flex; align-items: center; justify-content: center; background: #00457C; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-size: 16px; font-weight: bold; border: 1px solid #00569c; box-shadow: 0 4px 15px rgba(0, 69, 124, 0.4); transition: transform 0.2s, background 0.2s;">
+                <svg viewBox="0 0 24 24" width="22" height="22" style="margin-right: 10px; fill: white;"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a2.058 2.058 0 0 0-2.029 1.737l-1.36 8.617h3.336c.451 0 .835-.333.905-.78l.412-2.613a1.144 1.144 0 0 1 1.128-.964h.473c4.14 0 7.37-1.554 8.24-6.024.34-1.748.156-3.136-.5-4.102-.271-.4-.68-.847-1.164-1.298l.535-1.487z"/></svg>
+                Spenden via PayPal
+              </a>
+            </div>
+          </div>
         </div>
       </div>
   `;
