@@ -57,7 +57,7 @@ api:
         c7_v: string
         c8_n: string
         c8_v: string
-        show_kw: boolean
+        show_kw: bool
         c9_n: string
         c9_v: string
         c10_n: string
@@ -98,7 +98,7 @@ api:
             id(custom7_v).publish_state(c7_v);
             id(custom8_n).publish_state(c8_n);
             id(custom8_v).publish_state(c8_v);
-            id(show_kw).publish_state(show_kw);
+            id(show_kw_switch).publish_state(show_kw);
             id(custom9_n).publish_state(c9_n);
             id(custom9_v).publish_state(c9_v);
             id(custom10_n).publish_state(c10_n);
@@ -323,7 +323,7 @@ text_sensor:
 switch:
   - platform: template
     name: "Live-Daten in kW anzeigen"
-    id: show_kw
+    id: show_kw_switch
     optimistic: true
 
 number:
@@ -387,14 +387,14 @@ display:
         it.filled_rectangle(10, 42, 145, 80, id(color_panel));
         it.filled_rectangle(10, 42, 4, 80, id(color_solar));
         it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SOLAR");
-        if (id(show_kw).state) it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", id(solar_w).state / 1000.0);
+        if (id(show_kw_switch).state) it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", id(solar_w).state / 1000.0);
         else it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", id(solar_w).state);
         
         // 2. HAUSVERBRAUCH (Top Right)
         it.filled_rectangle(165, 42, 145, 80, id(color_panel));
         it.filled_rectangle(165, 42, 4, 80, id(color_house));
         it.print(177, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, "HAUSVERBRAUCH");
-        if (id(show_kw).state) it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", id(house_w).state / 1000.0);
+        if (id(show_kw_switch).state) it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", id(house_w).state / 1000.0);
         else it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", id(house_w).state);
         
         // Battery Gauge Logic & Colors
@@ -428,7 +428,7 @@ display:
         }
         
         // Watt Text next to gauge
-        if (id(show_kw).state) {
+        if (id(show_kw_switch).state) {
           it.printf(104, 193, id(font_label), id(color_text), TextAlign::CENTER_LEFT, "%.2f kW", id(battery_w).state / 1000.0);
         } else {
           it.printf(104, 193, id(font_label), id(color_text), TextAlign::CENTER_LEFT, "%.0f W", id(battery_w).state);
@@ -441,7 +441,7 @@ display:
         it.filled_rectangle(165, 132, 145, 80, id(color_panel));
         it.filled_rectangle(165, 132, 4, 80, g_color);
         it.print(177, 140, id(font_label), g_color, TextAlign::TOP_LEFT, g_label);
-        if (id(show_kw).state) it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", abs(g_val) / 1000.0);
+        if (id(show_kw_switch).state) it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", abs(g_val) / 1000.0);
         else it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", abs(g_val));
       } else if (page == 2) {
         // PAGE 2 (STATISTICS) - OPENKAIRO STYLE
