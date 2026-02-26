@@ -15,9 +15,8 @@ Eine maßgeschneiderte Home Assistant Integration für das **Cheap Yellow Displa
 
 ## 🛒 Hardware & Voraussetzungen
 
-1. **Hardware:** Du benötigst das ESP32 CYD (Modell 2432S028).
-   - 🛒 Die Hardware verkaufen wir **fertig geflasht (Plug & Play)** hier: [solarmodule-gladbeck.de/produkt/ok_display/](https://solarmodule-gladbeck.de/produkt/ok_display/). Wenn du dieses kaufst, musst du es **nicht mehr flashen** (Punkt 2 entfällt).
-2. **ESPHome Code (nur für Eigenbau):** Verwende die ESPHome YAML des CYD_Solar_Displays und flashe deinen ESP32 (z.B. über [web.esphome.io](https://web.esphome.io)).
+1. **Hardware:** Du benötigst das fertig geflashte ESP32 CYD (Modell 2432S028).
+   - 🛒 Die Hardware verkaufen wir **fertig geflasht (Plug & Play)** hier: [solarmodule-gladbeck.de/produkt/ok_display/](https://solarmodule-gladbeck.de/produkt/ok_display/).
 
 ## 🛠️ Installation
 
@@ -36,7 +35,6 @@ Eine maßgeschneiderte Home Assistant Integration für das **Cheap Yellow Displa
 1. Gehe in Home Assistant zu **Einstellungen > Geräte & Dienste**.
 2. Klicke auf **Integration hinzufügen** und suche nach `CYD Solar Display`.
 3. Gib deine Daten ein (im CYD Monitor Sidebar-Panel kannst du alles später bequem anpassen).
-4. **Flashe dein ESP32 (CYD) Display** mithilfe der beiliegenden `cyd_solar_display.yaml` über das ESPHome Dashboard. Lass hierbei Home Assistant die IP Adresse via mDNS auflösen.
 
 ## 📡 Funktionsweise (ESPHome API / Native API)
 Anders als viele simple Displays pusht diese Integration keine stummen JSON-Texte über MQTT oder langsame HTTP-Endpunkte. 
