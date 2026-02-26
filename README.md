@@ -13,6 +13,12 @@ Eine maßgeschneiderte Home Assistant Integration für das **Cheap Yellow Displa
 - **Smarte Seitenverwaltung:** Alle Seiten (1, 2, 3/4, 5) lassen sich in den Einstellungen einzeln aktivieren oder deaktivieren. Das Display überspringt deaktivierte Seiten beim automatischen Durchblättern nahtlos. 
 - **Integriertes Dashboard-Panel:** Richte die Integration komfortabel über ein voll animiertes, interaktives "CYD Monitor" Sidebar-Panel in Home Assistant ein, welches das Layout deines ESP32 1:1 im Browser live rendert.
 
+## 🛒 Hardware & Voraussetzungen
+
+1. **Hardware:** Du benötigst das ESP32 CYD (Modell 2432S028).
+   - 🛒 Die Hardware verkaufen wir hier: [solarmodule-gladbeck.de/produkt/ok_display/](https://solarmodule-gladbeck.de/produkt/ok_display/)
+2. **ESPHome Code:** Verwende die ESPHome YAML des CYD_Solar_Displays und flashe deinen ESP32 (z.B. über [web.esphome.io](https://web.esphome.io)).
+
 ## 🛠️ Installation
 
 ### Methode 1: HACS (Empfohlen)
