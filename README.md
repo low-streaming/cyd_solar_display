@@ -16,8 +16,8 @@ Eine maßgeschneiderte Home Assistant Integration für das **Cheap Yellow Displa
 ## 🛒 Hardware & Voraussetzungen
 
 1. **Hardware:** Du benötigst das ESP32 CYD (Modell 2432S028).
-   - 🛒 Die Hardware verkaufen wir hier: [solarmodule-gladbeck.de/produkt/ok_display/](https://solarmodule-gladbeck.de/produkt/ok_display/)
-2. **ESPHome Code:** Verwende die ESPHome YAML des CYD_Solar_Displays und flashe deinen ESP32 (z.B. über [web.esphome.io](https://web.esphome.io)).
+   - 🛒 Die Hardware verkaufen wir **fertig geflasht (Plug & Play)** hier: [solarmodule-gladbeck.de/produkt/ok_display/](https://solarmodule-gladbeck.de/produkt/ok_display/). Wenn du dieses kaufst, musst du es **nicht mehr flashen** (Punkt 2 entfällt).
+2. **ESPHome Code (nur für Eigenbau):** Verwende die ESPHome YAML des CYD_Solar_Displays und flashe deinen ESP32 (z.B. über [web.esphome.io](https://web.esphome.io)).
 
 ## 🛠️ Installation
 

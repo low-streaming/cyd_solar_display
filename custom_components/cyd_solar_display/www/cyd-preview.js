@@ -670,10 +670,10 @@ class CYDPreview extends LitElement {
           <ul style="color:#bbb; line-height:1.6; padding-left:20px;">
             <li><strong style="color:#ddd;">1. Hardware:</strong> Du benötigst das ESP32 CYD (Modell 2432S028).
               <ul style="margin: 4px 0 8px 0;">
-                <li>🛒 Die Hardware verkaufen wir hier: <a href="https://solarmodule-gladbeck.de/produkt/ok_display/" target="_blank" style="color:#4fc3f7; text-decoration:none;">solarmodule-gladbeck.de/produkt/ok_display/</a></li>
+                <li>🛒 Die Hardware verkaufen wir <strong>fertig geflasht (Plug & Play)</strong> hier: <a href="https://solarmodule-gladbeck.de/produkt/ok_display/" target="_blank" style="color:#4fc3f7; text-decoration:none;">solarmodule-gladbeck.de/produkt/ok_display/</a>. Wenn du dieses kaufst, musst du es <strong>nicht mehr flashen</strong> (Schritt 2 entfällt).</li>
               </ul>
             </li>
-            <li><strong style="color:#ddd;">2. ESPHome Code:</strong> Verwende die ESPHome YAML des CYD_Solar_Displays und flashe deinen ESP32 (z.B. über <a href="https://web.esphome.io" target="_blank" style="color:#4fc3f7; text-decoration:none;">web.esphome.io</a>).</li>
+            <li><strong style="color:#ddd;">2. ESPHome Code (nur für Eigenbau):</strong> Verwende die ESPHome YAML des CYD_Solar_Displays und flashe deinen ESP32 (z.B. über <a href="https://web.esphome.io" target="_blank" style="color:#4fc3f7; text-decoration:none;">web.esphome.io</a>).</li>
             <li><strong style="color:#ddd;">3. WLAN & mDNS:</strong> Nach dem Flashen verbindet sich das Display mit deinem Netzwerk. Home Assistant sollte es automatisch über mDNS finden.</li>
             <li><strong style="color:#ddd;">4. Konfiguration:</strong> Sobald der ESP32 in HA als Gerät "cyd_solar_display" (Standard) registriert ist, verknüpfe unter "Einstellungen" (in diesem Panel) deine Sensoren.</li>
             <li><strong style="color:#ddd;">5. Optionen:</strong> Aktiviere oder deaktiviere einzelne Seiten (z.B. Mining Sensoren) oder die kW-Anzeige ganz nach deinem Geschmack.</li>
