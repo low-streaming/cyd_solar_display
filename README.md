@@ -1,51 +1,49 @@
-# CYD Solar Display for Home Assistant
+# CYD Solar Display - OpenKairo Edition für Home Assistant
 
-Custom Home Assistant integration for the **Cheap Yellow Display (CYD)** ESP32. It provides a live solar dashboard with real-time values from your home energy system.
+![OpenKairo Logo](https://img.shields.io/badge/OpenKairo-Cyberpunk_Design-00f3ff?style=for-the-badge) ![HACS](https://img.shields.io/badge/HACS-Custom_Integration-orange?style=for-the-badge)
 
-## 🚀 Features
-- **Live Updates**: Pushes power flow data (Solar, Grid, Battery, House) to the display every few seconds.
-- **Dual Pages**: Support for 2 pages (Live Flow & Daily Stats).
-- **Auto-Switch**: Automatically toggle between pages.
-- **Frontend Preview**: Visualise your display layout directly in Home Assistant.
+Eine maßgeschneiderte Home Assistant Integration für das **Cheap Yellow Display (CYD)** (ESP32). Sie liefert ein atemberaubendes Live-Solar-Dashboard im neon-durchfluteten **OpenKairo Cyberpunk Design** – alles komplett lokal und in Echtzeit aus deinem Hausenergiesystem direkt auf den Schreibtisch gestreamt.
+
+## 🚀 Kern-Features
+- **Live Energiefluss-Dashboard (Seite 1):** Zeigt Solarerzeugung, Batteriestand, Hausverbrauch und den exakten Netzaustausch (Bezug/Einspeisung) mithilfe von dynamischen Cyberpunk-Graphen.
+- **Ertrags-Statistiken (Seite 2):** Tages-, Monats-, Jahres- und Gesamt-PV-Erträge werden sauber und aufgeräumt visualisiert.
+- **Vollständig anpassbare Sensoren (Seite 3 & 4):** Definiere selbst bis zu 8 komplett freie Sensoren (wie Temperaturen, Luftfeuchtigkeit, Growbox-Werte) direkt aus Home Assistant.
+- **Smarte Ghost-Seiten:** Hast du weniger eigene Sensoren definiert oder Seiten deaktiviert, überspringt das Display diese leeren Ansichten beim automatischen Durchblättern nahtlos. 
+- **Integriertes Dashboard-Panel:** Richte die Integration komfortabel über ein voll animiertes, interaktives "CYD Monitor" Sidebar-Panel in Home Assistant ein, welches das Layout deines ESP32 1:1 im Browser live rendert.
 
 ## 🛠️ Installation
-1. Copy the `cyd_solar_display` folder into your `custom_components` directory.
-2. Restart Home Assistant.
-3. Go to **Settings > Devices & Services > Add Integration** and search for `CYD Solar Display`.
-4. Enter the IP of your CYD device.
 
-## 🖥️ ESP32 (CYD) API Specification
-The integration sends a JSON payload via HTTP POST to `http://<device_ip>/state`.
+### Methode 1: HACS (Empfohlen)
+1. Öffne HACS in Home Assistant.
+2. Gehe auf **Integrationen** -> **Benutzerdefinierte Repositories**.
+3. Füge die URL dieses Repositories als "Integration" hinzu.
+4. Klicke auf "Herunterladen" und starte Home Assistant neu.
 
-### Example Payload
-```json
-{
-  "solar_w": 4500.5,
-  "grid_w": -1200.0,
-  "house_w": 3300.5,
-  "battery_w": 0.0,
-  "battery_soc": 85.0,
-  "yield_today_kwh": 12.4,
-  "grid_import_kwh": 2.1,
-  "grid_export_kwh": 5.8,
-  "page": 1,
-  "timestamp": "2024-05-21T14:30:00"
-}
-```
+### Methode 2: Manuelle Installation
+1. Lade dir dieses Repository herunter.
+2. Kopiere den Ordner `custom_components/cyd_solar_display` in das `custom_components` Verzeichnis deiner Home Assistant Installation.
+3. Starte Home Assistant neu.
 
-### ESP32 Example (Arduino/ESP-IDF)
-Your ESP32 should run a web server that listens for `POST /state`.
-```cpp
-// Pseudocode
-server.on("/state", HTTP_POST, [](AsyncWebServerRequest *request) {
-  // Handle JSON and update TFT display
-  request->send(200, "application/json", "{\"status\":\"ok\"}");
-});
-```
+## ⚙️ Einrichtung
+1. Gehe in Home Assistant zu **Einstellungen > Geräte & Dienste**.
+2. Klicke auf **Integration hinzufügen** und suche nach `CYD Solar Display`.
+3. Gib deine Daten ein (im CYD Monitor Sidebar-Panel kannst du alles später bequem anpassen).
+4. **Flashe dein ESP32 (CYD) Display** mithilfe der beiliegenden `cyd_solar_display.yaml` über das ESPHome Dashboard. Lass hierbei Home Assistant die IP Adresse via mDNS auflösen.
 
-## 🎨 Preview
-Once configured, you can view the live preview in the Integration Options.
-_Note: Ensure the frontend modules are loaded by checking the developer console for `cyd-preview.js`._
+## 📡 Funktionsweise (ESPHome API / Native API)
+Anders als viele simple Displays pusht diese Integration keine stummen JSON-Texte über MQTT oder langsame HTTP-Endpunkte. 
+
+Wir greifen im Hintergrund auf die ultrastarke **`homeassistant.services.async_call`** Systemarchitektur zurück und feuern die Sensordaten per direkter C++ Funktionsausführung in die Native API des ESPHome-Geräts. Dies gewährt extrem niedrige Latenzen und entlastet das WLAN, während das Python-Backend intelligent mittels `DataUpdateCoordinator` das ESP32 dirigiert. 
+
+Das Display reagiert passiv (wird also mit Daten "befeuert") und führt alle Layout-Renderings als autarker Lambda-Code selbst durch.
+
+## 🗺️ Roadmap & Zukunftspläne
+Wir entwickeln die Integration aktiv weiter, um das OpenKairo Systemdesign auszureizen. 
+
+- [ ] **Touch-Steuerung Level 2:** Einbindung echter Buttons auf Seite 1, um angeschlossene Relais (z.B. den Local Grow Box Miner) über das CYD-Display mit dem Finger auszulösen.
+- [ ] **Grafisches Tuning:** Weiterentwicklung der Farbverlaufs-Balken, damit sich z.B. der Batterie-Balken auf dem Display bei einer Ladung physikalisch mit neon-grüner Farbe nach oben hin füllt.
+- [ ] **Smart Switch:** Erkennung und rote Flash-Warnungen auf dem Screen, sofern unvorhergesehene extreme Stromspitzen generiert werden.
+- [ ] **Auto-Helligkeit:** Nachts dunkelt sich das Cyberpunk-Interface ab, um nicht zu blenden (evtl. via LDR-Sensor auf der CYD-Rückseite).
 
 ---
-**Developed with ♥ for the HA Community.**
+**Powered by [OpenKairo](https://openkairo.de) - Developed with ♥ for the HA Community.**

@@ -124,29 +124,37 @@ color:
     green: 100%
     blue: 100%
   - id: color_panel
-    red: 6%
-    green: 6%
-    blue: 8% 
+    red: 12%
+    green: 12%
+    blue: 15% 
   - id: color_solar
-    red: 98%
-    green: 93%
-    blue: 3%
+    red: 100%
+    green: 85%
+    blue: 0%
   - id: color_house
     red: 0%
-    green: 95%
+    green: 80%
     blue: 100%
   - id: color_grid_in
     red: 100%
-    green: 0%
-    blue: 23%
+    green: 20%
+    blue: 20%
   - id: color_grid_out
-    red: 0%
+    red: 20%
     green: 100%
-    blue: 45%
+    blue: 20%
   - id: color_bat
-    red: 69%
-    green: 15%
+    red: 70%
+    green: 20%
     blue: 100%
+  - id: color_bat_mid
+    red: 100%
+    green: 65%
+    blue: 0%
+  - id: color_bat_low
+    red: 100%
+    green: 20%
+    blue: 20%
 
 # Fonts
 font:
@@ -266,6 +274,11 @@ text_sensor:
   - platform: template
     name: "Custom 8 Value"
     id: custom8_v
+switch:
+  - platform: template
+    name: "Live-Daten in kW anzeigen"
+    id: show_kw
+    optimistic: true
 
 number:
   - platform: template
@@ -319,130 +332,163 @@ display:
 
       // HEADER
       it.filled_rectangle(0, 0, 320, 32, id(color_panel));
-      it.print(10, 6, id(font_title), id(color_solar), TextAlign::TOP_LEFT, "Solar");
-      it.print(310, 6, id(font_title), id(color_text), TextAlign::TOP_RIGHT, "Live Daten");
+      it.print(10, 16, id(font_title), id(color_solar), TextAlign::CENTER_LEFT, "Solar");
+      it.print(310, 16, id(font_title), id(color_text), TextAlign::CENTER_RIGHT, "Live Daten");
       it.line(0, 32, 320, 32, id(color_text));
 
       if (page == 1) {
-        // 1. SOLAR (Top Center)
-        it.rectangle(100, 42, 120, 55, id(color_panel)); 
-        it.filled_rectangle(100, 42, 3, 10, id(color_solar)); // Cyberpunk Accent
-        it.print(160, 50, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "SOLAR");
-        it.printf(160, 67, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.0f W", id(solar_w).state);
+        // 1. SOLAR (Top Left)
+        it.filled_rectangle(10, 42, 145, 80, id(color_panel));
+        it.filled_rectangle(10, 42, 4, 80, id(color_solar));
+        it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SOLAR");
+        if (id(show_kw).state) it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", id(solar_w).state / 1000.0);
+        else it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", id(solar_w).state);
         
-        // 2. BATTERIE (Middle Left)
-        it.rectangle(15, 107, 110, 45, id(color_panel));
-        it.filled_rectangle(15, 107, 3, 10, id(color_bat)); // Cyberpunk Accent
-        it.print(70, 113, id(font_label), id(color_bat), TextAlign::TOP_CENTER, "BATTERIE");
-        it.printf(70, 128, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%.0f%% / %.0fW", id(battery_soc).state, id(battery_w).state);
+        // 2. HAUSVERBRAUCH (Top Right)
+        it.filled_rectangle(165, 42, 145, 80, id(color_panel));
+        it.filled_rectangle(165, 42, 4, 80, id(color_house));
+        it.print(177, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, "HAUSVERBRAUCH");
+        if (id(show_kw).state) it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", id(house_w).state / 1000.0);
+        else it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", id(house_w).state);
         
-        // 3. HAUS (Middle Right)
-        it.rectangle(195, 107, 110, 45, id(color_panel));
-        it.filled_rectangle(195, 107, 3, 10, id(color_house)); // Cyberpunk Accent
-        it.print(250, 113, id(font_label), id(color_house), TextAlign::TOP_CENTER, "HAUSVERBRAUCH");
-        it.printf(250, 128, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%.0f W", id(house_w).state);
+        // Battery Gauge Logic & Colors
+        float soc = id(battery_soc).state;
+        if (std::isnan(soc)) soc = 0;
+        else if (soc > 100) soc = 100;
+        else if (soc < 0) soc = 0;
         
-        // 4. NETZ (Bottom Center)
+        auto curr_bat_color = id(color_bat);
+        if (soc <= 20) curr_bat_color = id(color_bat_low);
+        else if (soc <= 50) curr_bat_color = id(color_bat_mid);
+
+        // 3. BATTERIE (Bottom Left)
+        it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+        it.filled_rectangle(10, 132, 4, 80, curr_bat_color);
+        it.print(22, 140, id(font_label), curr_bat_color, TextAlign::TOP_LEFT, "BATTERIE");
+        
+        // Large Percentage Display
+        it.printf(82, 166, id(font_value), id(color_text), TextAlign::CENTER, "%.0f %%", soc);
+        
+        // Battery Icon Outline
+        it.rectangle(20, 186, 75, 14, id(color_text));
+        // Battery Tip
+        it.filled_rectangle(95, 190, 3, 6, id(color_text));
+        
+        // Battery Fill
+        int fill_w = (int)((soc / 100.0) * 71.0);
+        if (fill_w > 0) {
+          it.filled_rectangle(22, 188, fill_w, 10, curr_bat_color);
+        }
+        
+        // Watt Text next to gauge
+        if (id(show_kw).state) {
+          it.printf(104, 193, id(font_label), id(color_text), TextAlign::CENTER_LEFT, "%.2f kW", id(battery_w).state / 1000.0);
+        } else {
+          it.printf(104, 193, id(font_label), id(color_text), TextAlign::CENTER_LEFT, "%.0f W", id(battery_w).state);
+        }
+        
+        // 4. NETZ (Bottom Right)
         auto g_val = id(grid_w).state;
         auto g_color = (g_val <= 0) ? id(color_grid_out) : id(color_grid_in);
         const char* g_label = (g_val <= 0) ? "EINSPEISUNG" : "NETZBEZUG";
-        it.rectangle(100, 162, 120, 55, id(color_panel));
-        it.filled_rectangle(100, 162, 3, 10, g_color); // Cyberpunk Accent
-        it.print(160, 170, id(font_label), g_color, TextAlign::TOP_CENTER, g_label);
-        it.printf(160, 187, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.0f W", abs(g_val));
+        it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+        it.filled_rectangle(165, 132, 4, 80, g_color);
+        it.print(177, 140, id(font_label), g_color, TextAlign::TOP_LEFT, g_label);
+        if (id(show_kw).state) it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", abs(g_val) / 1000.0);
+        else it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", abs(g_val));
       } else if (page == 2) {
         // PAGE 2 (STATISTICS) - OPENKAIRO STYLE
         
         // 1. ERTRAG TAG
-        it.rectangle(15, 50, 140, 65, id(color_panel));
-        it.filled_rectangle(15, 50, 4, 15, id(color_solar));
-        it.print(85, 60, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "ERTRAG TAG");
-        it.printf(85, 82, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(yield_today).state);
+        it.filled_rectangle(10, 42, 145, 80, id(color_panel));
+        it.filled_rectangle(10, 42, 4, 80, id(color_solar));
+        it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG TAG");
+        it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.1f", id(yield_today).state);
         
         // 2. ERTRAG MONAT
-        it.rectangle(165, 50, 140, 65, id(color_panel));
-        it.filled_rectangle(165, 50, 4, 15, id(color_solar));
-        it.print(235, 60, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "ERTRAG MONAT");
-        it.printf(235, 82, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(yield_month).state);
+        it.filled_rectangle(165, 42, 145, 80, id(color_panel));
+        it.filled_rectangle(165, 42, 4, 80, id(color_solar));
+        it.print(177, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG MONAT");
+        it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.1f", id(yield_month).state);
 
         // 3. ERTRAG JAHR
-        it.rectangle(15, 125, 140, 65, id(color_panel));
-        it.filled_rectangle(15, 125, 4, 15, id(color_solar));
-        it.print(85, 135, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "ERTRAG JAHR");
-        it.printf(85, 157, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(yield_year).state);
+        it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+        it.filled_rectangle(10, 132, 4, 80, id(color_solar));
+        it.print(22, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG JAHR");
+        it.printf(82, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.1f", id(yield_year).state);
 
         // 4. GESAMTERTRAG
-        it.rectangle(165, 125, 140, 65, id(color_panel));
-        it.filled_rectangle(165, 125, 4, 15, id(color_solar));
-        it.print(235, 135, id(font_label), id(color_solar), TextAlign::TOP_CENTER, "GESAMTERTRAG");
-        it.printf(235, 157, id(font_value), id(color_text), TextAlign::TOP_CENTER, "%.1f", id(yield_total).state); 
+        it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+        it.filled_rectangle(165, 132, 4, 80, id(color_solar));
+        it.print(177, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "GESAMTERTRAG");
+        it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.1f", id(yield_total).state); 
       } else if (page == 3) {
         // PAGE 3 (CUSTOM OPENKAIRO SENSORS)
         
         // C1
-        if (id(custom1_v).state.length() > 1) {
-          it.rectangle(15, 50, 140, 65, id(color_panel));
-          it.filled_rectangle(15, 50, 4, 15, id(color_house)); 
-          it.print(85, 60, id(font_label), id(color_house), TextAlign::TOP_CENTER, id(custom1_n).state.c_str());
-          it.printf(85, 82, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom1_v).state.c_str());
+        if (id(custom1_v).state.length() > 0 && id(custom1_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
+          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom1_n).state.c_str());
+          it.printf(82, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom1_v).state.c_str());
         }
         
         // C2
-        if (id(custom2_v).state.length() > 1) {
-          it.rectangle(165, 50, 140, 65, id(color_panel));
-          it.filled_rectangle(165, 50, 4, 15, id(color_grid_out));
-          it.print(235, 60, id(font_label), id(color_grid_out), TextAlign::TOP_CENTER, id(custom2_n).state.c_str());
-          it.printf(235, 82, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom2_v).state.c_str());
+        if (id(custom2_v).state.length() > 0 && id(custom2_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
+          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom2_n).state.c_str());
+          it.printf(237, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom2_v).state.c_str());
         }
 
         // C3
-        if (id(custom3_v).state.length() > 1) {
-          it.rectangle(15, 125, 140, 65, id(color_panel));
-          it.filled_rectangle(15, 125, 4, 15, id(color_bat));
-          it.print(85, 135, id(font_label), id(color_bat), TextAlign::TOP_CENTER, id(custom3_n).state.c_str());
-          it.printf(85, 157, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom3_v).state.c_str());
+        if (id(custom3_v).state.length() > 0 && id(custom3_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
+          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom3_n).state.c_str());
+          it.printf(82, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom3_v).state.c_str());
         }
 
         // C4
-        if (id(custom4_v).state.length() > 1) {
-          it.rectangle(165, 125, 140, 65, id(color_panel));
-          it.filled_rectangle(165, 125, 4, 15, id(color_grid_in));
-          it.print(235, 135, id(font_label), id(color_grid_in), TextAlign::TOP_CENTER, id(custom4_n).state.c_str());
-          it.printf(235, 157, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom4_v).state.c_str()); 
+        if (id(custom4_v).state.length() > 0 && id(custom4_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
+          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom4_n).state.c_str());
+          it.printf(237, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom4_v).state.c_str()); 
         }
       } else if (page == 4) {
         // PAGE 4 (CUSTOM OPENKAIRO SENSORS VOL 2)
         
         // C5
-        if (id(custom5_v).state.length() > 1) {
-          it.rectangle(15, 50, 140, 65, id(color_panel));
-          it.filled_rectangle(15, 50, 4, 15, id(color_house)); 
-          it.print(85, 60, id(font_label), id(color_house), TextAlign::TOP_CENTER, id(custom5_n).state.c_str());
-          it.printf(85, 82, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom5_v).state.c_str());
+        if (id(custom5_v).state.length() > 0 && id(custom5_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
+          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom5_n).state.c_str());
+          it.printf(82, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom5_v).state.c_str());
         }
         
         // C6
-        if (id(custom6_v).state.length() > 1) {
-          it.rectangle(165, 50, 140, 65, id(color_panel));
-          it.filled_rectangle(165, 50, 4, 15, id(color_grid_out));
-          it.print(235, 60, id(font_label), id(color_grid_out), TextAlign::TOP_CENTER, id(custom6_n).state.c_str());
-          it.printf(235, 82, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom6_v).state.c_str());
+        if (id(custom6_v).state.length() > 0 && id(custom6_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
+          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom6_n).state.c_str());
+          it.printf(237, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom6_v).state.c_str());
         }
 
         // C7
-        if (id(custom7_v).state.length() > 1) {
-          it.rectangle(15, 125, 140, 65, id(color_panel));
-          it.filled_rectangle(15, 125, 4, 15, id(color_bat));
-          it.print(85, 135, id(font_label), id(color_bat), TextAlign::TOP_CENTER, id(custom7_n).state.c_str());
-          it.printf(85, 157, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom7_v).state.c_str());
+        if (id(custom7_v).state.length() > 0 && id(custom7_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
+          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom7_n).state.c_str());
+          it.printf(82, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom7_v).state.c_str());
         }
 
         // C8
-        if (id(custom8_v).state.length() > 1) {
-          it.rectangle(165, 125, 140, 65, id(color_panel));
-          it.filled_rectangle(165, 125, 4, 15, id(color_grid_in));
-          it.print(235, 135, id(font_label), id(color_grid_in), TextAlign::TOP_CENTER, id(custom8_n).state.c_str());
-          it.printf(235, 157, id(font_title), id(color_text), TextAlign::TOP_CENTER, "%s", id(custom8_v).state.c_str()); 
+        if (id(custom8_v).state.length() > 0 && id(custom8_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
+          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom8_n).state.c_str());
+          it.printf(237, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom8_v).state.c_str()); 
         }
       }
 
@@ -450,7 +496,7 @@ display:
       it.filled_rectangle(0, 222, 320, 18, id(color_panel));
       it.line(0, 222, 320, 222, id(color_text));
       
-      it.printf(160, 225, id(font_label), id(color_house), TextAlign::TOP_CENTER, "SEITE %d / %d", (int)id(page_display_idx).state, (int)id(page_display_total).state);
+      it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, "SEITE %d / %d", (int)id(page_display_idx).state, (int)id(page_display_total).state);
 
 # Touchscreen Setup
 touchscreen:
