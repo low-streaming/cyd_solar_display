@@ -6,9 +6,11 @@ Eine maßgeschneiderte Home Assistant Integration für das **Cheap Yellow Displa
 
 ## 🚀 Kern-Features
 - **Live Energiefluss-Dashboard (Seite 1):** Zeigt Solarerzeugung, Batteriestand, Hausverbrauch und den exakten Netzaustausch (Bezug/Einspeisung) mithilfe von dynamischen Cyberpunk-Graphen.
+- **kW / Watt Umschaltung:** Über das Dashboard kann jederzeit eingestellt werden, ob Werte in Watt oder Kilowatt angezeigt werden.
 - **Ertrags-Statistiken (Seite 2):** Tages-, Monats-, Jahres- und Gesamt-PV-Erträge werden sauber und aufgeräumt visualisiert.
 - **Vollständig anpassbare Sensoren (Seite 3 & 4):** Definiere selbst bis zu 8 komplett freie Sensoren (wie Temperaturen, Luftfeuchtigkeit, Growbox-Werte) direkt aus Home Assistant.
-- **Smarte Ghost-Seiten:** Hast du weniger eigene Sensoren definiert oder Seiten deaktiviert, überspringt das Display diese leeren Ansichten beim automatischen Durchblättern nahtlos. 
+- **Mining Sensoren (Seite 5):** Spezielle Seite im auffälligen Orange-Theme für bis zu 4 eigene Variablen (z.B. Hashrate, Temperatur, Ertrag, Verbrauch).
+- **Smarte Seitenverwaltung:** Alle Seiten (1, 2, 3/4, 5) lassen sich in den Einstellungen einzeln aktivieren oder deaktivieren. Das Display überspringt deaktivierte Seiten beim automatischen Durchblättern nahtlos. 
 - **Integriertes Dashboard-Panel:** Richte die Integration komfortabel über ein voll animiertes, interaktives "CYD Monitor" Sidebar-Panel in Home Assistant ein, welches das Layout deines ESP32 1:1 im Browser live rendert.
 
 ## 🛠️ Installation
@@ -44,6 +46,16 @@ Wir entwickeln die Integration aktiv weiter, um das OpenKairo Systemdesign auszu
 - [ ] **Grafisches Tuning:** Weiterentwicklung der Farbverlaufs-Balken, damit sich z.B. der Batterie-Balken auf dem Display bei einer Ladung physikalisch mit neon-grüner Farbe nach oben hin füllt.
 - [ ] **Smart Switch:** Erkennung und rote Flash-Warnungen auf dem Screen, sofern unvorhergesehene extreme Stromspitzen generiert werden.
 - [ ] **Auto-Helligkeit:** Nachts dunkelt sich das Cyberpunk-Interface ab, um nicht zu blenden (evtl. via LDR-Sensor auf der CYD-Rückseite).
+
+---
+
+## ☕ Support & Spenden
+
+Dir gefällt das Projekt und du möchtest die Weiterentwicklung unterstützen? Ich freue mich riesig über jeden noch so kleinen Betrag für die nächste Tasse Kaffee!
+
+[![Spenden via PayPal](https://img.shields.io/badge/PayPal-Spenden-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=info@low-streaming.de&currency_code=EUR)
+
+📧 **Kontakt / PayPal-Adresse direkt:** `info@low-streaming.de`
 
 ---
 **Powered by [OpenKairo](https://openkairo.de) - Developed with ♥ for the HA Community.**

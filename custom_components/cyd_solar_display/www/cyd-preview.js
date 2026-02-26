@@ -684,7 +684,11 @@ class CYDPreview extends LitElement {
   display: block;
   color: #e1e1e1;
   font-family: 'Roboto', 'Inter', sans-serif;
-  background: radial-gradient(circle at 15% 15%, #232031 0%, #111111 40%, #080808 100%);
+  background-color: #0d0d12;
+  background-image: 
+    radial-gradient(circle at 15% 0%, rgba(90, 40, 120, 0.35) 0%, transparent 50%),
+    radial-gradient(circle at 85% 100%, rgba(20, 130, 140, 0.25) 0%, transparent 50%);
+  background-attachment: fixed;
   min-height: 100vh;
   padding: 20px;
   box-sizing: border-box;
