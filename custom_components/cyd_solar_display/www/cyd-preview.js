@@ -97,8 +97,11 @@ class CYDPreview extends LitElement {
             ${this.activeTab === 'info' ? this.renderInfo() : ''}
           </div>
           
-          <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #666;">
-            powered by <a href="https://openkairo.de" target="_blank" style="color: #9b59b6; text-decoration: none; font-weight: bold;">openkairo</a>
+          <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+            <span style="font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 2px;">powered by</span><br>
+            <a href="https://openkairo.de" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 900; color: #fff; text-decoration: none; text-transform: uppercase; letter-spacing: 3px; border: 1px solid rgba(0, 243, 255, 0.3); padding: 8px 20px; border-radius: 6px; background: linear-gradient(90deg, rgba(0,243,255,0.05) 0%, rgba(176,38,255,0.05) 100%); box-shadow: 0 0 15px rgba(0, 243, 255, 0.15), inset 0 0 10px rgba(176, 38, 255, 0.1); text-shadow: 0 0 8px rgba(0, 243, 255, 0.6); transition: all 0.3s ease;">
+              OPEN<span style="color: #00f3ff;">KAIRO</span>
+            </a>
           </div>
       </div>
     `;
