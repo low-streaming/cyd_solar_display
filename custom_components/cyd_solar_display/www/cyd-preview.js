@@ -63,6 +63,11 @@ class CYDPreview extends LitElement {
       });
   }
 
+  handlePickerInput(e, name) {
+    this.editConfig = { ...this.editConfig, [name]: e.detail.value };
+    this.requestUpdate();
+  }
+
   handleFormInput(e) {
     const { name, value, type, checked } = e.target;
     this.editConfig = { ...this.editConfig, [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value) };
@@ -347,10 +352,13 @@ class CYDPreview extends LitElement {
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
                     </span>
                   </label>
-                  <select name="solar_entity" @change="${this.handleFormInput}">
-                    <option value="" ?selected="${!this.editConfig.solar_entity}">-- Sensor wählen --</option>
-                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.solar_entity === opt.id}">${opt.name}</option>`)}
-                  </select>
+                  <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.solar_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'solar_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
                 </div>
                 <div class="form-group flex-1">
                   <label style="display: flex; align-items: center;">
@@ -359,36 +367,48 @@ class CYDPreview extends LitElement {
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
                     </span>
                   </label>
-                  <select name="grid_entity" @change="${this.handleFormInput}">
-                    <option value="" ?selected="${!this.editConfig.grid_entity}">-- Sensor wählen --</option>
-                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.grid_entity === opt.id}">${opt.name}</option>`)}
-                  </select >
+                  <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.grid_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'grid_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
                 </div>
             </div>
 
   <div class="form-row">
     <div class="form-group flex-1">
       <label>Hausverbrauch (W)</label>
-      <select name="house_entity" @change="${this.handleFormInput}">
-      <option value="" ?selected="${!this.editConfig.house_entity}">-- Sensor wählen --</option>
-    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.house_entity === opt.id}">${opt.name}</option>`)}
-  </select>
+      <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.house_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'house_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
                 </div>
   <div class="form-group flex-1">
     <label>Batterie Leistung (W)</label>
-    <select name="battery_entity" @change="${this.handleFormInput}">
-    <option value="" ?selected="${!this.editConfig.battery_entity}">-- Sensor wählen --</option>
-                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.battery_entity === opt.id}">${opt.name}</option>`)}
-                  </select >
+    <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.battery_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'battery_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
                 </div>
             </div>
 
   <div class="form-group" style="width: 50%;">
     <label>Batterie Füllstand (%)</label>
-    <select name="battery_soc_entity" @change="${this.handleFormInput}">
-    <option value="" ?selected="${!this.editConfig.battery_soc_entity}">-- Sensor wählen --</option>
-                ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.battery_soc_entity === opt.id}">${opt.name}</option>`)}
-                </select >
+    <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.battery_soc_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'battery_soc_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
             </div>
         </div>
 
@@ -403,33 +423,45 @@ class CYDPreview extends LitElement {
             <div class="form-row">
                 <div class="form-group flex-1">
                   <label>Ertrag Heute (kWh)</label>
-                  <select name="yield_today_entity" @change="${this.handleFormInput}">
-                    <option value="" ?selected="${!this.editConfig.yield_today_entity}">-- Sensor wählen --</option>
-                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.yield_today_entity === opt.id}">${opt.name}</option>`)}
-                  </select>
+                  <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.yield_today_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'yield_today_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
                 </div>
                 <div class="form-group flex-1">
                   <label>Ertrag Laufender Monat (kWh)</label>
-                  <select name="yield_month_entity" @change="${this.handleFormInput}">
-                    <option value="" ?selected="${!this.editConfig.yield_month_entity}">-- Sensor wählen --</option>
-                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.yield_month_entity === opt.id}">${opt.name}</option>`)}
-                  </select >
+                  <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.yield_month_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'yield_month_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
                 </div>
             </div>
   <div class="form-row">
     <div class="form-group flex-1">
       <label>Ertrag Laufendes Jahr (kWh)</label>
-      <select name="yield_year_entity" @change="${this.handleFormInput}">
-      <option value="" ?selected="${!this.editConfig.yield_year_entity}">-- Sensor wählen --</option>
-    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.yield_year_entity === opt.id}">${opt.name}</option>`)}
-  </select>
+      <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.yield_year_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'yield_year_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
                 </div>
   <div class="form-group flex-1">
     <label>Gesamtertrag (Lifelime) (kWh)</label>
-    <select name="yield_total_entity" @change="${this.handleFormInput}">
-    <option value="" ?selected="${!this.editConfig.yield_total_entity}">-- Sensor wählen --</option>
-                    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.yield_total_entity === opt.id}">${opt.name}</option>`)}
-                  </select >
+    <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.yield_total_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'yield_total_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
                 </div>
             </div>
         </div>
@@ -453,10 +485,13 @@ class CYDPreview extends LitElement {
       </div>
       <div class="form-group flex-1">
         <label>Sensor 1</label>
-        <select name="custom1_entity" @change="${this.handleFormInput}">
-        <option value="" ?selected="${!this.editConfig.custom1_entity}">-- Sensor wählen --</option>
-      ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom1_entity === opt.id}">${opt.name}</option>`)}
-    </select>
+        <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.custom1_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'custom1_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
   </div>
             </div>
 
@@ -467,10 +502,13 @@ class CYDPreview extends LitElement {
     </div>
     <div class="form-group flex-1">
       <label>Sensor 2</label>
-      <select name="custom2_entity" @change="${this.handleFormInput}">
-      <option value="" ?selected="${!this.editConfig.custom2_entity}">-- Sensor wählen --</option>
-    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom2_entity === opt.id}">${opt.name}</option>`)}
-  </select>
+      <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.custom2_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'custom2_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
                 </div>
             </div>
 
@@ -481,10 +519,13 @@ class CYDPreview extends LitElement {
     </div>
     <div class="form-group flex-1">
       <label>Sensor 3</label>
-      <select name="custom3_entity" @change="${this.handleFormInput}">
-      <option value="" ?selected="${!this.editConfig.custom3_entity}">-- Sensor wählen --</option>
-    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom3_entity === opt.id}">${opt.name}</option>`)}
-  </select>
+      <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.custom3_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'custom3_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
                 </div>
             </div>
 
@@ -495,10 +536,13 @@ class CYDPreview extends LitElement {
     </div>
     <div class="form-group flex-1">
       <label>Sensor 4</label>
-      <select name="custom4_entity" @change="${this.handleFormInput}">
-      <option value="" ?selected="${!this.editConfig.custom4_entity}">-- Sensor wählen --</option>
-    ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom4_entity === opt.id}">${opt.name}</option>`)}
-  </select>
+      <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.custom4_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'custom4_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
                 </div>
             </div>
             ` : ''}
@@ -521,10 +565,13 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 5</label>
-                <select name="custom5_entity" @change="${this.handleFormInput}">
-                <option value="" ?selected="${!this.editConfig.custom5_entity}">-- Sensor wählen --</option>
-              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom5_entity === opt.id}">${opt.name}</option>`)}
-            </select>
+                <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.custom5_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'custom5_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
               </div>
             </div>
 
@@ -535,10 +582,13 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 6</label>
-                <select name="custom6_entity" @change="${this.handleFormInput}">
-                <option value="" ?selected="${!this.editConfig.custom6_entity}">-- Sensor wählen --</option>
-              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom6_entity === opt.id}">${opt.name}</option>`)}
-            </select>
+                <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.custom6_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'custom6_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
               </div>
             </div>
 
@@ -549,10 +599,13 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 7</label>
-                <select name="custom7_entity" @change="${this.handleFormInput}">
-                <option value="" ?selected="${!this.editConfig.custom7_entity}">-- Sensor wählen --</option>
-              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom7_entity === opt.id}">${opt.name}</option>`)}
-            </select>
+                <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.custom7_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'custom7_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
               </div>
             </div>
 
@@ -563,10 +616,13 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 8</label>
-                <select name="custom8_entity" @change="${this.handleFormInput}">
-                <option value="" ?selected="${!this.editConfig.custom8_entity}">-- Sensor wählen --</option>
-              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.custom8_entity === opt.id}">${opt.name}</option>`)}
-            </select>
+                <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.custom8_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'custom8_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
               </div>
             </div>
             ` : ''}
@@ -589,10 +645,13 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 1</label>
-                <select name="mining1_entity" @change="${this.handleFormInput}">
-                <option value="" ?selected="${!this.editConfig.mining1_entity}">-- Sensor wählen --</option>
-              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.mining1_entity === opt.id}">${opt.name}</option>`)}
-            </select>
+                <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.mining1_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'mining1_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
               </div>
             </div>
 
@@ -603,10 +662,13 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 2</label>
-                <select name="mining2_entity" @change="${this.handleFormInput}">
-                <option value="" ?selected="${!this.editConfig.mining2_entity}">-- Sensor wählen --</option>
-              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.mining2_entity === opt.id}">${opt.name}</option>`)}
-            </select>
+                <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.mining2_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'mining2_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
               </div>
             </div>
 
@@ -617,10 +679,13 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 3</label>
-                <select name="mining3_entity" @change="${this.handleFormInput}">
-                <option value="" ?selected="${!this.editConfig.mining3_entity}">-- Sensor wählen --</option>
-              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.mining3_entity === opt.id}">${opt.name}</option>`)}
-            </select>
+                <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.mining3_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'mining3_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
               </div>
             </div>
 
@@ -631,10 +696,13 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 4</label>
-                <select name="mining4_entity" @change="${this.handleFormInput}">
-                <option value="" ?selected="${!this.editConfig.mining4_entity}">-- Sensor wählen --</option>
-              ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.mining4_entity === opt.id}">${opt.name}</option>`)}
-            </select>
+                <ha-entity-picker
+                    .hass=${this.hass}
+                    .value=${this.editConfig.mining4_entity || ""}
+                    .includeDomains=${['sensor', 'input_number']}
+                    @value-changed=${(e) => this.handlePickerInput(e, 'mining4_entity')}
+                    allow-custom-entity
+                  ></ha-entity-picker>
               </div>
             </div>
             ` : ''}
