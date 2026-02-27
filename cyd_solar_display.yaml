@@ -482,7 +482,7 @@ display:
           it.filled_rectangle(10, 42, 145, 80, id(color_panel));
           it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
           it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom1_n).state.c_str());
-          it.printf(82, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom1_v).state.c_str());
+          it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom1_v).state.c_str());
         }
         
         // C2
@@ -490,7 +490,7 @@ display:
           it.filled_rectangle(165, 42, 145, 80, id(color_panel));
           it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
           it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom2_n).state.c_str());
-          it.printf(237, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom2_v).state.c_str());
+          it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom2_v).state.c_str());
         }
 
         // C3
@@ -498,7 +498,7 @@ display:
           it.filled_rectangle(10, 132, 145, 80, id(color_panel));
           it.filled_rectangle(10, 132, 4, 80, id(color_bat));
           it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom3_n).state.c_str());
-          it.printf(82, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom3_v).state.c_str());
+          it.printf(82, 172, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom3_v).state.c_str());
         }
 
         // C4
@@ -506,7 +506,7 @@ display:
           it.filled_rectangle(165, 132, 145, 80, id(color_panel));
           it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
           it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom4_n).state.c_str());
-          it.printf(237, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom4_v).state.c_str()); 
+          it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom4_v).state.c_str()); 
         }
       } else if (page == 4) {
         // PAGE 4 (CUSTOM OPENKAIRO SENSORS VOL 2)
@@ -516,7 +516,7 @@ display:
           it.filled_rectangle(10, 42, 145, 80, id(color_panel));
           it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
           it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom5_n).state.c_str());
-          it.printf(82, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom5_v).state.c_str());
+          it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom5_v).state.c_str());
         }
         
         // C6
@@ -524,7 +524,7 @@ display:
           it.filled_rectangle(165, 42, 145, 80, id(color_panel));
           it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
           it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom6_n).state.c_str());
-          it.printf(237, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom6_v).state.c_str());
+          it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom6_v).state.c_str());
         }
 
         // C7
@@ -532,7 +532,7 @@ display:
           it.filled_rectangle(10, 132, 145, 80, id(color_panel));
           it.filled_rectangle(10, 132, 4, 80, id(color_bat));
           it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom7_n).state.c_str());
-          it.printf(82, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom7_v).state.c_str());
+          it.printf(82, 172, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom7_v).state.c_str());
         }
 
         // C8
@@ -540,7 +540,7 @@ display:
           it.filled_rectangle(165, 132, 145, 80, id(color_panel));
           it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
           it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom8_n).state.c_str());
-          it.printf(237, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom8_v).state.c_str()); 
+          it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom8_v).state.c_str()); 
         }
       } else if (page == 5) {
         // PAGE 5 (MINING SENSORS)
@@ -550,7 +550,7 @@ display:
           it.filled_rectangle(10, 42, 145, 80, id(color_panel));
           it.filled_rectangle(10, 42, 4, 80, id(color_bat_mid)); 
           it.print(22, 50, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom9_n).state.c_str());
-          it.printf(82, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom9_v).state.c_str());
+          it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom9_v).state.c_str());
         }
         
         // M2
@@ -558,7 +558,7 @@ display:
           it.filled_rectangle(165, 42, 145, 80, id(color_panel));
           it.filled_rectangle(165, 42, 4, 80, id(color_bat_mid));
           it.print(177, 50, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom10_n).state.c_str());
-          it.printf(237, 82, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom10_v).state.c_str());
+          it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom10_v).state.c_str());
         }
 
         // M3
@@ -566,7 +566,7 @@ display:
           it.filled_rectangle(10, 132, 145, 80, id(color_panel));
           it.filled_rectangle(10, 132, 4, 80, id(color_bat_mid));
           it.print(22, 140, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom11_n).state.c_str());
-          it.printf(82, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom11_v).state.c_str());
+          it.printf(82, 172, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom11_v).state.c_str());
         }
 
         // M4
@@ -574,7 +574,7 @@ display:
           it.filled_rectangle(165, 132, 145, 80, id(color_panel));
           it.filled_rectangle(165, 132, 4, 80, id(color_bat_mid));
           it.print(177, 140, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom12_n).state.c_str());
-          it.printf(237, 172, id(font_title), id(color_text), TextAlign::CENTER, "%s", id(custom12_v).state.c_str()); 
+          it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%s", id(custom12_v).state.c_str()); 
         }
       }
 
