@@ -99,8 +99,8 @@ class CYDPreview extends LitElement {
           
           <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
             <span style="font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 2px;">powered by</span><br>
-            <a href="https://openkairo.de" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 900; color: #fff; text-decoration: none; text-transform: uppercase; letter-spacing: 3px; border: 1px solid rgba(0, 243, 255, 0.3); padding: 8px 20px; border-radius: 6px; background: linear-gradient(90deg, rgba(0,243,255,0.05) 0%, rgba(176,38,255,0.05) 100%); box-shadow: 0 0 15px rgba(0, 243, 255, 0.15), inset 0 0 10px rgba(176, 38, 255, 0.1); text-shadow: 0 0 8px rgba(0, 243, 255, 0.6); transition: all 0.3s ease;">
-              OPEN<span style="color: #00f3ff;">KAIRO</span>
+            <a href="https://openkairo.de" target="_blank" style="display: inline-block; margin-top: 15px; border-radius: 12px; transition: transform 0.3s ease, filter 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'; this.style.filter='brightness(1.2)'; this.style.boxShadow='0 10px 30px rgba(0, 243, 255, 0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)'; this.style.boxShadow='none'">
+              <img src="/cyd_solar_display/${this.panel.config.entry_id}/logo.png" alt="OpenKairo / Low-Streaming" style="max-height: 120px; width: auto; border-radius: 12px; object-fit: contain;">
             </a>
           </div>
       </div>
@@ -341,14 +341,24 @@ class CYDPreview extends LitElement {
 
             <div class="form-row">
                 <div class="form-group flex-1">
-                  <label>Solar Leistung (W)</label>
+                  <label style="display: flex; align-items: center;">
+                    Solar Leistung (W)
+                    <span class="tooltip" data-tooltip="Dein aktueller PV-Ertrag. Das sollte ein Sensor sein, der die momentane Leistung ausgibt (in Watt).">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
+                    </span>
+                  </label>
                   <select name="solar_entity" @change="${this.handleFormInput}">
                     <option value="" ?selected="${!this.editConfig.solar_entity}">-- Sensor wählen --</option>
                     ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.solar_entity === opt.id}">${opt.name}</option>`)}
                   </select>
                 </div>
                 <div class="form-group flex-1">
-                  <label>Netz Leistung (W) [Einspeisung = negativ]</label>
+                  <label style="display: flex; align-items: center;">
+                    Netz Leistung (W)
+                    <span class="tooltip" data-tooltip="Dein Momentanverbrauch vom Stromzähler (meist in Watt). Achtung: Die Einspeisung ins Netz muss als negativer Wert vom Sensor kommen!">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
+                    </span>
+                  </label>
                   <select name="grid_entity" @change="${this.handleFormInput}">
                     <option value="" ?selected="${!this.editConfig.grid_entity}">-- Sensor wählen --</option>
                     ${sensorOptions.map(opt => html`<option value="${opt.id}" ?selected="${this.editConfig.grid_entity === opt.id}">${opt.name}</option>`)}
@@ -683,6 +693,31 @@ class CYDPreview extends LitElement {
           </ul>
         </div>
 
+        <div class="tech-box faq-box" style="margin-top: 15px; border-color: rgba(255, 152, 0, 0.3);">
+          <h3 style="margin-top:0; color:#ff9800;">❓ Häufige Fragen (FAQ)</h3>
+          
+          <details class="faq-item">
+            <summary>Mein Display wird nicht von Home Assistant (mDNS) gefunden, was tun?</summary>
+            <div class="faq-content">
+              Prüfe, ob du beim Setup im WLAN-Portal des Displays dein richtiges 2,4 GHz WLAN und Passwort eingegeben hast. Manchmal blockieren Router mDNS (Bonjour). In diesem Fall kannst du die IP-Adresse des Displays in deinem Router auslesen und manuell über "Integration hinzufügen -> ESPHome" in Home Assistant eintragen.
+            </div>
+          </details>
+          
+          <details class="faq-item" open>
+            <summary>Meine Sensoren auf dem Display zeigen nur 0 an</summary>
+            <div class="faq-content">
+              Stelle sicher, dass du unter "Einstellungen" (in diesem Panel) Sensoren ausgewählt und gespeichert hast. Es dauert nach dem Speichern bis zu 10 Sekunden (je nach eingestelltem Update Intervall), bis der ESP32 die ersten neuen Werte empfängt.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Was ist der Unterschied zwischen Watt (W) und Kilowatt (kW)?</summary>
+            <div class="faq-content">
+              Wähle als Sensoren nach Möglichkeit immer die <strong>Watt-Werte</strong> aus deinem System. Wenn dir die angezeigten Zahlen auf dem Display zu groß sind, setze den Haken bei "Leistung in Kilowatt (kW) anzeigen". Das Display konvertiert die originalen Watt-Werte dann für dich automatisch auf dem Bildschirm in kW (z.B. 2400W -> 2.4kW).
+            </div>
+          </details>
+        </div>
+
         <div class="tech-box" style="margin-top: 15px; border-color: rgba(0, 168, 255, 0.3); background: rgba(0, 69, 124, 0.1);">
           <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
             <div style="flex: 1; min-width: 300px;">
@@ -987,6 +1022,94 @@ class CYDPreview extends LitElement {
       .btn-save:hover {
   background: #43a047;
 }
+
+      /* TOOLTIPS */
+      .tooltip {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        margin-left: 6px;
+        color: #888;
+        cursor: help;
+        vertical-align: middle;
+      }
+      .tooltip:hover {
+        color: #4fc3f7;
+      }
+      .tooltip::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(20, 20, 25, 0.98);
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: normal;
+        white-space: pre-wrap;
+        width: max-content;
+        max-width: 280px;
+        text-align: center;
+        border: 1px solid rgba(79, 195, 247, 0.4);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy pop-in */
+        z-index: 100;
+        pointer-events: none;
+      }
+      .tooltip:hover::after {
+        opacity: 1;
+        visibility: visible;
+        bottom: 140%;
+      }
+
+      /* FAQ ACCORDION */
+      .faq-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        margin-bottom: 10px;
+        overflow: hidden;
+      }
+      .faq-item summary {
+        padding: 12px 15px;
+        cursor: pointer;
+        font-weight: 500;
+        color: #ddd;
+        outline: none;
+        transition: background 0.2s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        list-style: none; /* Hide default arrow */
+      }
+      .faq-item summary::-webkit-details-marker {
+        display: none;
+      }
+      .faq-item summary::after {
+        content: '▼';
+        font-size: 10px;
+        color: #888;
+        transition: transform 0.2s;
+      }
+      .faq-item[open] summary::after {
+        transform: rotate(180deg);
+        color: #ff9800;
+      }
+      .faq-item summary:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .faq-content {
+        padding: 15px;
+        color: #bbb;
+        font-size: 14px;
+        line-height: 1.5;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(0, 0, 0, 0.2);
+      }
 `;
   }
 }
