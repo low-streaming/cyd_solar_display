@@ -99,8 +99,8 @@ class CYDPreview extends LitElement {
           
           <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
             <span style="font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 2px;">powered by</span><br>
-            <a href="https://openkairo.de" target="_blank" style="display: inline-block; margin-top: 15px; border-radius: 12px; transition: transform 0.3s ease, filter 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'; this.style.filter='brightness(1.2)'; this.style.boxShadow='0 10px 30px rgba(0, 243, 255, 0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)'; this.style.boxShadow='none'">
-              <img src="/cyd_solar_display/${this.panel.config.entry_id}/logo.png" alt="OpenKairo / Low-Streaming" style="max-height: 120px; width: auto; border-radius: 12px; object-fit: contain;">
+            <a href="https://openkairo.de" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 900; color: #fff; text-decoration: none; text-transform: uppercase; letter-spacing: 3px; border: 1px solid rgba(0, 243, 255, 0.3); padding: 8px 20px; border-radius: 6px; background: linear-gradient(90deg, rgba(0,243,255,0.05) 0%, rgba(176,38,255,0.05) 100%); box-shadow: 0 0 15px rgba(0, 243, 255, 0.15), inset 0 0 10px rgba(176, 38, 255, 0.1); text-shadow: 0 0 8px rgba(0, 243, 255, 0.6); transition: all 0.3s ease;">
+              OPEN<span style="color: #00f3ff;">KAIRO</span>
             </a>
           </div>
       </div>
