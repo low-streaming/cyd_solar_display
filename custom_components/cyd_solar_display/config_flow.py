@@ -54,6 +54,12 @@ from .const import (
     CONF_PAGE_INTERVAL,
 )
 
+# Shorthand for entity selector (sensor + input_number domains)
+def _entity_selector():
+    return selector.EntitySelector(
+        selector.EntitySelectorConfig(domain=["sensor", "input_number"])
+    )
+
 class CYDSolarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for CYD Solar Display."""
 
@@ -89,70 +95,79 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
 
     def __init__(self, config_entry) -> None:
         """Initialize options flow."""
-        pass
+        self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        # Entity selection schema
+        opt = self.config_entry.options
+        data = self.config_entry.data
+
+        def get_val(key):
+            val = opt.get(key, data.get(key))
+            if val is None:
+                return vol.UNDEFINED
+            return val
+
+        # Entity selection schema – using description/suggested_value like local_growbox
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema({
                 # Core Entities
-                vol.Optional(CONF_ENABLE_PAGE1, default=self.config_entry.options.get(CONF_ENABLE_PAGE1, True)): bool,
-                vol.Optional(CONF_SOLAR_ENTITY, default=self.config_entry.options.get(CONF_SOLAR_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_GRID_ENTITY, default=self.config_entry.options.get(CONF_GRID_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_HOUSE_ENTITY, default=self.config_entry.options.get(CONF_HOUSE_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_BATTERY_ENTITY, default=self.config_entry.options.get(CONF_BATTERY_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_BATTERY_SOC_ENTITY, default=self.config_entry.options.get(CONF_BATTERY_SOC_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                
+                vol.Optional(CONF_ENABLE_PAGE1, default=opt.get(CONF_ENABLE_PAGE1, True)): bool,
+                vol.Optional(CONF_SOLAR_ENTITY, description={"suggested_value": get_val(CONF_SOLAR_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_GRID_ENTITY, description={"suggested_value": get_val(CONF_GRID_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_HOUSE_ENTITY, description={"suggested_value": get_val(CONF_HOUSE_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_BATTERY_ENTITY, description={"suggested_value": get_val(CONF_BATTERY_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_BATTERY_SOC_ENTITY, description={"suggested_value": get_val(CONF_BATTERY_SOC_ENTITY)}): _entity_selector(),
+
                 # Page 2
-                vol.Optional(CONF_ENABLE_PAGE2, default=self.config_entry.options.get(CONF_ENABLE_PAGE2, True)): bool,
-                vol.Optional(CONF_YIELD_TODAY_ENTITY, default=self.config_entry.options.get(CONF_YIELD_TODAY_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_YIELD_MONTH_ENTITY, default=self.config_entry.options.get(CONF_YIELD_MONTH_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_YIELD_YEAR_ENTITY, default=self.config_entry.options.get(CONF_YIELD_YEAR_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_YIELD_TOTAL_ENTITY, default=self.config_entry.options.get(CONF_YIELD_TOTAL_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_GRID_IMPORT_ENTITY, default=self.config_entry.options.get(CONF_GRID_IMPORT_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_GRID_EXPORT_ENTITY, default=self.config_entry.options.get(CONF_GRID_EXPORT_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                
+                vol.Optional(CONF_ENABLE_PAGE2, default=opt.get(CONF_ENABLE_PAGE2, True)): bool,
+                vol.Optional(CONF_YIELD_TODAY_ENTITY, description={"suggested_value": get_val(CONF_YIELD_TODAY_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_YIELD_MONTH_ENTITY, description={"suggested_value": get_val(CONF_YIELD_MONTH_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_YIELD_YEAR_ENTITY, description={"suggested_value": get_val(CONF_YIELD_YEAR_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_YIELD_TOTAL_ENTITY, description={"suggested_value": get_val(CONF_YIELD_TOTAL_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_GRID_IMPORT_ENTITY, description={"suggested_value": get_val(CONF_GRID_IMPORT_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_GRID_EXPORT_ENTITY, description={"suggested_value": get_val(CONF_GRID_EXPORT_ENTITY)}): _entity_selector(),
+
                 # Page 3 (Custom Sensors)
-                vol.Optional(CONF_ENABLE_PAGE3, default=self.config_entry.options.get(CONF_ENABLE_PAGE3, True)): bool,
-                vol.Optional(CONF_CUSTOM1_NAME, default=self.config_entry.options.get(CONF_CUSTOM1_NAME, "Custom 1")): str,
-                vol.Optional(CONF_CUSTOM1_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM1_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_CUSTOM2_NAME, default=self.config_entry.options.get(CONF_CUSTOM2_NAME, "Custom 2")): str,
-                vol.Optional(CONF_CUSTOM2_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM2_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_CUSTOM3_NAME, default=self.config_entry.options.get(CONF_CUSTOM3_NAME, "Custom 3")): str,
-                vol.Optional(CONF_CUSTOM3_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM3_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_CUSTOM4_NAME, default=self.config_entry.options.get(CONF_CUSTOM4_NAME, "Custom 4")): str,
-                vol.Optional(CONF_CUSTOM4_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM4_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                
+                vol.Optional(CONF_ENABLE_PAGE3, default=opt.get(CONF_ENABLE_PAGE3, True)): bool,
+                vol.Optional(CONF_CUSTOM1_NAME, default=opt.get(CONF_CUSTOM1_NAME, "Custom 1")): str,
+                vol.Optional(CONF_CUSTOM1_ENTITY, description={"suggested_value": get_val(CONF_CUSTOM1_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_CUSTOM2_NAME, default=opt.get(CONF_CUSTOM2_NAME, "Custom 2")): str,
+                vol.Optional(CONF_CUSTOM2_ENTITY, description={"suggested_value": get_val(CONF_CUSTOM2_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_CUSTOM3_NAME, default=opt.get(CONF_CUSTOM3_NAME, "Custom 3")): str,
+                vol.Optional(CONF_CUSTOM3_ENTITY, description={"suggested_value": get_val(CONF_CUSTOM3_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_CUSTOM4_NAME, default=opt.get(CONF_CUSTOM4_NAME, "Custom 4")): str,
+                vol.Optional(CONF_CUSTOM4_ENTITY, description={"suggested_value": get_val(CONF_CUSTOM4_ENTITY)}): _entity_selector(),
+
                 # Page 4 (More Custom Sensors)
-                vol.Optional(CONF_ENABLE_PAGE4, default=self.config_entry.options.get(CONF_ENABLE_PAGE4, True)): bool,
-                vol.Optional(CONF_CUSTOM5_NAME, default=self.config_entry.options.get(CONF_CUSTOM5_NAME, "Custom 5")): str,
-                vol.Optional(CONF_CUSTOM5_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM5_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_CUSTOM6_NAME, default=self.config_entry.options.get(CONF_CUSTOM6_NAME, "Custom 6")): str,
-                vol.Optional(CONF_CUSTOM6_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM6_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_CUSTOM7_NAME, default=self.config_entry.options.get(CONF_CUSTOM7_NAME, "Custom 7")): str,
-                vol.Optional(CONF_CUSTOM7_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM7_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_CUSTOM8_NAME, default=self.config_entry.options.get(CONF_CUSTOM8_NAME, "Custom 8")): str,
-                vol.Optional(CONF_CUSTOM8_ENTITY, default=self.config_entry.options.get(CONF_CUSTOM8_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                
+                vol.Optional(CONF_ENABLE_PAGE4, default=opt.get(CONF_ENABLE_PAGE4, True)): bool,
+                vol.Optional(CONF_CUSTOM5_NAME, default=opt.get(CONF_CUSTOM5_NAME, "Custom 5")): str,
+                vol.Optional(CONF_CUSTOM5_ENTITY, description={"suggested_value": get_val(CONF_CUSTOM5_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_CUSTOM6_NAME, default=opt.get(CONF_CUSTOM6_NAME, "Custom 6")): str,
+                vol.Optional(CONF_CUSTOM6_ENTITY, description={"suggested_value": get_val(CONF_CUSTOM6_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_CUSTOM7_NAME, default=opt.get(CONF_CUSTOM7_NAME, "Custom 7")): str,
+                vol.Optional(CONF_CUSTOM7_ENTITY, description={"suggested_value": get_val(CONF_CUSTOM7_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_CUSTOM8_NAME, default=opt.get(CONF_CUSTOM8_NAME, "Custom 8")): str,
+                vol.Optional(CONF_CUSTOM8_ENTITY, description={"suggested_value": get_val(CONF_CUSTOM8_ENTITY)}): _entity_selector(),
+
                 # Page 5 (Mining Sensors)
-                vol.Optional(CONF_ENABLE_PAGE5, default=self.config_entry.options.get(CONF_ENABLE_PAGE5, True)): bool,
-                vol.Optional(CONF_MINING1_NAME, default=self.config_entry.options.get(CONF_MINING1_NAME, "Mining 1")): str,
-                vol.Optional(CONF_MINING1_ENTITY, default=self.config_entry.options.get(CONF_MINING1_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_MINING2_NAME, default=self.config_entry.options.get(CONF_MINING2_NAME, "Mining 2")): str,
-                vol.Optional(CONF_MINING2_ENTITY, default=self.config_entry.options.get(CONF_MINING2_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_MINING3_NAME, default=self.config_entry.options.get(CONF_MINING3_NAME, "Mining 3")): str,
-                vol.Optional(CONF_MINING3_ENTITY, default=self.config_entry.options.get(CONF_MINING3_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
-                vol.Optional(CONF_MINING4_NAME, default=self.config_entry.options.get(CONF_MINING4_NAME, "Mining 4")): str,
-                vol.Optional(CONF_MINING4_ENTITY, default=self.config_entry.options.get(CONF_MINING4_ENTITY)): selector.selector({"entity": {"domain": "sensor"}}),
+                vol.Optional(CONF_ENABLE_PAGE5, default=opt.get(CONF_ENABLE_PAGE5, True)): bool,
+                vol.Optional(CONF_MINING1_NAME, default=opt.get(CONF_MINING1_NAME, "Mining 1")): str,
+                vol.Optional(CONF_MINING1_ENTITY, description={"suggested_value": get_val(CONF_MINING1_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_MINING2_NAME, default=opt.get(CONF_MINING2_NAME, "Mining 2")): str,
+                vol.Optional(CONF_MINING2_ENTITY, description={"suggested_value": get_val(CONF_MINING2_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_MINING3_NAME, default=opt.get(CONF_MINING3_NAME, "Mining 3")): str,
+                vol.Optional(CONF_MINING3_ENTITY, description={"suggested_value": get_val(CONF_MINING3_ENTITY)}): _entity_selector(),
+                vol.Optional(CONF_MINING4_NAME, default=opt.get(CONF_MINING4_NAME, "Mining 4")): str,
+                vol.Optional(CONF_MINING4_ENTITY, description={"suggested_value": get_val(CONF_MINING4_ENTITY)}): _entity_selector(),
 
                 # Settings
-                vol.Optional(CONF_SHOW_KW, default=self.config_entry.options.get(CONF_SHOW_KW, False)): bool,
-                vol.Optional("update_interval", default=self.config_entry.options.get("update_interval", 5)): int,
-                vol.Optional(CONF_PAGE_INTERVAL, default=self.config_entry.options.get(CONF_PAGE_INTERVAL, 10)): int,
+                vol.Optional(CONF_SHOW_KW, default=opt.get(CONF_SHOW_KW, False)): bool,
+                vol.Optional("update_interval", default=opt.get("update_interval", 5)): int,
+                vol.Optional(CONF_PAGE_INTERVAL, default=opt.get(CONF_PAGE_INTERVAL, 10)): int,
             })
         )
