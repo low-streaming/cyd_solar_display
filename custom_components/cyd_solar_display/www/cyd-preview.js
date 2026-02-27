@@ -12,7 +12,8 @@ class CYDPreview extends LitElement {
       panel: { type: Object },
       page: { type: Number },
       activeTab: { type: String },
-      editConfig: { type: Object }
+      editConfig: { type: Object },
+      _pickerSearch: { type: Object }
     };
   }
 
@@ -21,6 +22,7 @@ class CYDPreview extends LitElement {
     this.page = 1;
     this.activeTab = 'overview';
     this.editConfig = {};
+    this._pickerSearch = {};
   }
 
   firstUpdated() {
@@ -94,15 +96,58 @@ class CYDPreview extends LitElement {
     const domainList = Array.isArray(domains) ? domains : [domains];
     const entities = this.getEntitiesByDomain(domainList);
     const currentVal = (this.editConfig && this.editConfig[configKey]) ? this.editConfig[configKey] : '';
-    const opts = entities.map(ent => {
-      const sel = ent.id === currentVal ? 'selected' : '';
-      return `<option value="${ent.id}" ${sel}>${ent.name}</option>`;
-    }).join('');
-    const selectHtml = `<select data-key="${configKey}" class="entity-select" style="background:#111;color:#fff;border:1px solid #444;padding:10px;border-radius:6px;font-size:1em;width:100%;box-sizing:border-box;">
-      <option value="">-- Sensor wählen --</option>
-      ${opts}
-    </select>`;
-    return html`${unsafeHTML(selectHtml)}`;
+    const currentEnt = entities.find(e => e.id === currentVal);
+    const displayName = currentEnt ? currentEnt.name : currentVal;
+    const searchTerm = (this._pickerSearch[configKey] !== undefined) ? this._pickerSearch[configKey] : null;
+    const isOpen = searchTerm !== null;
+
+    const filtered = isOpen
+      ? entities.filter(e =>
+        e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.id.toLowerCase().includes(searchTerm.toLowerCase())
+      ).slice(0, 50)
+      : [];
+
+    return html`
+      <div class="entity-picker" style="position:relative;">
+        <input
+          type="text"
+          class="picker-input"
+          placeholder="${displayName || '-- Sensor wählen --'}"
+          .value=${isOpen ? searchTerm : ''}
+          @focus=${() => { this._pickerSearch = { ...this._pickerSearch, [configKey]: '' }; this.requestUpdate(); }}
+          @input=${(e) => { this._pickerSearch = { ...this._pickerSearch, [configKey]: e.target.value }; this.requestUpdate(); }}
+          @blur=${() => setTimeout(() => { const s = { ...this._pickerSearch }; delete s[configKey]; this._pickerSearch = s; this.requestUpdate(); }, 200)}
+          style="background:#111;color:#fff;border:1px solid ${currentVal ? '#fdd835' : '#444'};padding:10px;border-radius:6px;font-size:0.9em;width:100%;box-sizing:border-box;cursor:text;"
+        />
+        ${isOpen ? html`
+          <div class="picker-dropdown" style="position:absolute;z-index:100;background:#1a1a1a;border:1px solid #555;border-radius:6px;width:100%;max-height:220px;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,0.6);">
+            ${filtered.length === 0 ? html`
+              <div style="padding:10px;color:#888;font-size:0.85em;">Kein Sensor gefunden</div>
+            ` : filtered.map(ent => html`
+              <div
+                class="picker-item"
+                style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #333;font-size:0.85em;color:${ent.id === currentVal ? '#fdd835' : '#eee'};"
+                @mousedown=${(e) => {
+        e.preventDefault();
+        this.editConfig = { ...this.editConfig, [configKey]: ent.id };
+        const s = { ...this._pickerSearch }; delete s[configKey]; this._pickerSearch = s;
+        this.requestUpdate();
+      }}
+              >
+                <div style="font-weight:500">${ent.name.replace(/ \(.*\)$/, '')}</div>
+                <div style="color:#888;font-size:0.8em;">${ent.id}</div>
+              </div>
+            `)}
+          </div>
+        ` : ''}
+        ${currentVal ? html`
+          <div style="margin-top:3px;font-size:0.75em;color:#888;padding-left:2px;">
+            ✅ ${currentVal}
+          </div>
+        ` : ''}
+      </div>
+    `;
   }
 
   handleFormInput(e) {
