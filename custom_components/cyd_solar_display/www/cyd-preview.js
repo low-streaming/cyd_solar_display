@@ -1,4 +1,4 @@
-import {
+﻿import {
   LitElement,
   html,
   css,
@@ -66,6 +66,29 @@ class CYDPreview extends LitElement {
   handlePickerInput(e, name) {
     this.editConfig = { ...this.editConfig, [name]: e.detail.value };
     this.requestUpdate();
+  }
+
+  handleSelectChange(e, name) {
+    this.editConfig = { ...this.editConfig, [name]: e.target.value };
+    this.requestUpdate();
+  }
+
+  renderEntitySelect(configKey, domains) {
+    const domainList = Array.isArray(domains) ? domains : [domains];
+    const entities = this.getEntitiesByDomain(domainList);
+    const currentVal = this.editConfig[configKey] || '';
+    return html`
+      <select
+        class="entity-select"
+        .value=${currentVal}
+        @change=${(e) => this.handleSelectChange(e, configKey)}
+      >
+        <option value="">-- Sensor wählen --</option>
+        ${entities.map(e => html`
+          <option value=${e.id} ?selected=${e.id === currentVal}>${e.name}</option>
+        `)}
+      </select>
+    `;
   }
 
   handleFormInput(e) {
@@ -323,8 +346,6 @@ class CYDPreview extends LitElement {
   }
 
   renderSettings() {
-    const sensorOptions = this.getEntitiesByDomain('sensor');
-
     return html`
   <div class="card edit-card" >
         <h2>🛠️ Sensoren & Konfiguration</h2>
@@ -352,13 +373,7 @@ class CYDPreview extends LitElement {
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
                     </span>
                   </label>
-                  <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.solar_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'solar_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                  ${this.renderEntitySelect('solar_entity', ['sensor', 'input_number'])}
                 </div>
                 <div class="form-group flex-1">
                   <label style="display: flex; align-items: center;">
@@ -367,48 +382,24 @@ class CYDPreview extends LitElement {
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
                     </span>
                   </label>
-                  <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.grid_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'grid_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                  ${this.renderEntitySelect('grid_entity', ['sensor', 'input_number'])}
                 </div>
             </div>
 
   <div class="form-row">
     <div class="form-group flex-1">
       <label>Hausverbrauch (W)</label>
-      <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.house_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'house_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+      ${this.renderEntitySelect('house_entity', ['sensor', 'input_number'])}
                 </div>
   <div class="form-group flex-1">
     <label>Batterie Leistung (W)</label>
-    <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.battery_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'battery_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+    ${this.renderEntitySelect('battery_entity', ['sensor', 'input_number'])}
                 </div>
             </div>
 
   <div class="form-group" style="width: 50%;">
     <label>Batterie Füllstand (%)</label>
-    <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.battery_soc_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'battery_soc_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+    ${this.renderEntitySelect('battery_soc_entity', ['sensor', 'input_number'])}
             </div>
         </div>
 
@@ -423,45 +414,21 @@ class CYDPreview extends LitElement {
             <div class="form-row">
                 <div class="form-group flex-1">
                   <label>Ertrag Heute (kWh)</label>
-                  <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.yield_today_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'yield_today_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                  ${this.renderEntitySelect('yield_today_entity', ['sensor', 'input_number'])}
                 </div>
                 <div class="form-group flex-1">
                   <label>Ertrag Laufender Monat (kWh)</label>
-                  <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.yield_month_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'yield_month_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                  ${this.renderEntitySelect('yield_month_entity', ['sensor', 'input_number'])}
                 </div>
             </div>
   <div class="form-row">
     <div class="form-group flex-1">
       <label>Ertrag Laufendes Jahr (kWh)</label>
-      <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.yield_year_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'yield_year_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+      ${this.renderEntitySelect('yield_year_entity', ['sensor', 'input_number'])}
                 </div>
   <div class="form-group flex-1">
     <label>Gesamtertrag (Lifelime) (kWh)</label>
-    <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.yield_total_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'yield_total_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+    ${this.renderEntitySelect('yield_total_entity', ['sensor', 'input_number'])}
                 </div>
             </div>
         </div>
@@ -485,13 +452,7 @@ class CYDPreview extends LitElement {
       </div>
       <div class="form-group flex-1">
         <label>Sensor 1</label>
-        <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.custom1_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'custom1_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+        ${this.renderEntitySelect('custom1_entity', ['sensor', 'input_number'])}
   </div>
             </div>
 
@@ -502,13 +463,7 @@ class CYDPreview extends LitElement {
     </div>
     <div class="form-group flex-1">
       <label>Sensor 2</label>
-      <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.custom2_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'custom2_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+      ${this.renderEntitySelect('custom2_entity', ['sensor', 'input_number'])}
                 </div>
             </div>
 
@@ -519,13 +474,7 @@ class CYDPreview extends LitElement {
     </div>
     <div class="form-group flex-1">
       <label>Sensor 3</label>
-      <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.custom3_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'custom3_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+      ${this.renderEntitySelect('custom3_entity', ['sensor', 'input_number'])}
                 </div>
             </div>
 
@@ -536,13 +485,7 @@ class CYDPreview extends LitElement {
     </div>
     <div class="form-group flex-1">
       <label>Sensor 4</label>
-      <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.custom4_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'custom4_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+      ${this.renderEntitySelect('custom4_entity', ['sensor', 'input_number'])}
                 </div>
             </div>
             ` : ''}
@@ -565,13 +508,7 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 5</label>
-                <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.custom5_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'custom5_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                ${this.renderEntitySelect('custom5_entity', ['sensor', 'input_number'])}
               </div>
             </div>
 
@@ -582,13 +519,7 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 6</label>
-                <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.custom6_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'custom6_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                ${this.renderEntitySelect('custom6_entity', ['sensor', 'input_number'])}
               </div>
             </div>
 
@@ -599,13 +530,7 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 7</label>
-                <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.custom7_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'custom7_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                ${this.renderEntitySelect('custom7_entity', ['sensor', 'input_number'])}
               </div>
             </div>
 
@@ -616,13 +541,7 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 8</label>
-                <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.custom8_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'custom8_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                ${this.renderEntitySelect('custom8_entity', ['sensor', 'input_number'])}
               </div>
             </div>
             ` : ''}
@@ -645,13 +564,7 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 1</label>
-                <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.mining1_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'mining1_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                ${this.renderEntitySelect('mining1_entity', ['sensor', 'input_number'])}
               </div>
             </div>
 
@@ -662,13 +575,7 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 2</label>
-                <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.mining2_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'mining2_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                ${this.renderEntitySelect('mining2_entity', ['sensor', 'input_number'])}
               </div>
             </div>
 
@@ -679,13 +586,7 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 3</label>
-                <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.mining3_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'mining3_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                ${this.renderEntitySelect('mining3_entity', ['sensor', 'input_number'])}
               </div>
             </div>
 
@@ -696,13 +597,7 @@ class CYDPreview extends LitElement {
               </div>
               <div class="form-group flex-1">
                 <label>Sensor 4</label>
-                <ha-entity-picker
-                    .hass=${this.hass}
-                    .value=${this.editConfig.mining4_entity || ""}
-                    .includeDomains=${['sensor', 'input_number']}
-                    @value-changed=${(e) => this.handlePickerInput(e, 'mining4_entity')}
-                    allow-custom-entity
-                  ></ha-entity-picker>
+                ${this.renderEntitySelect('mining4_entity', ['sensor', 'input_number'])}
               </div>
             </div>
             ` : ''}
@@ -1055,7 +950,7 @@ class CYDPreview extends LitElement {
   margin-bottom: 6px;
   font-weight: 500;
 }
-      .form-group select, .form-group input[type="text"], .form-group input[type="number"] {
+      .form-group select, .form-group input[type="text"], .form-group input[type="number"], .entity-select {
   background: #111;
   color: #fff;
   border: 1px solid #444;
@@ -1183,3 +1078,4 @@ class CYDPreview extends LitElement {
 }
 
 customElements.define("cyd-preview", CYDPreview);
+

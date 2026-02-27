@@ -102,6 +102,16 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
+        opt = getattr(self.config_entry, "options", {})
+        data_dict = getattr(self.config_entry, "data", {})
+
+        def get_opt(key):
+            val = opt.get(key, data_dict.get(key))
+            if val is None:
+                import voluptuous as vol
+                return vol.UNDEFINED
+            return val
+
         opt = self.config_entry.options
         data = self.config_entry.data
 
