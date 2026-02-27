@@ -3,6 +3,7 @@
   html,
   css,
 } from "https://unpkg.com/lit-element@2.4.0/lit-element.js?module";
+import { unsafeHTML } from "https://unpkg.com/lit-html@1.4.1/directives/unsafe-html.js?module";
 
 class CYDPreview extends LitElement {
   static get properties() {
@@ -34,6 +35,21 @@ class CYDPreview extends LitElement {
       this.editConfig = data.options || {};
       this.requestUpdate();
     } catch (e) { console.error("Failed to load config", e); }
+  }
+
+  updated() {
+    // Attach change listeners to selects rendered via unsafeHTML (they lose Lit event bindings)
+    const root = this.shadowRoot;
+    if (!root) return;
+    root.querySelectorAll('select[data-key]').forEach(sel => {
+      if (!sel._listenerAttached) {
+        sel._listenerAttached = true;
+        sel.addEventListener('change', (e) => {
+          const key = e.target.getAttribute('data-key');
+          if (key) this.handleSelectChange(e, key);
+        });
+      }
+    });
   }
 
   async saveConfig() {
@@ -74,21 +90,19 @@ class CYDPreview extends LitElement {
   }
 
   renderEntitySelect(configKey, domains) {
+    if (!this.hass) return html`<span style="color:#888;font-size:12px">Lade...</span>`;
     const domainList = Array.isArray(domains) ? domains : [domains];
     const entities = this.getEntitiesByDomain(domainList);
-    const currentVal = this.editConfig[configKey] || '';
-    return html`
-      <select
-        class="entity-select"
-        .value=${currentVal}
-        @change=${(e) => this.handleSelectChange(e, configKey)}
-      >
-        <option value="">-- Sensor wählen --</option>
-        ${entities.map(e => html`
-          <option value=${e.id} ?selected=${e.id === currentVal}>${e.name}</option>
-        `)}
-      </select>
-    `;
+    const currentVal = (this.editConfig && this.editConfig[configKey]) ? this.editConfig[configKey] : '';
+    const opts = entities.map(ent => {
+      const sel = ent.id === currentVal ? 'selected' : '';
+      return `<option value="${ent.id}" ${sel}>${ent.name}</option>`;
+    }).join('');
+    const selectHtml = `<select data-key="${configKey}" class="entity-select" style="background:#111;color:#fff;border:1px solid #444;padding:10px;border-radius:6px;font-size:1em;width:100%;box-sizing:border-box;">
+      <option value="">-- Sensor wählen --</option>
+      ${opts}
+    </select>`;
+    return html`${unsafeHTML(selectHtml)}`;
   }
 
   handleFormInput(e) {
