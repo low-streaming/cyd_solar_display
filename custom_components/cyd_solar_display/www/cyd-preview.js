@@ -669,9 +669,12 @@ class CYDPreview extends LitElement {
           <h3 style="margin-top:0; color:#4fc3f7;">🚀 Einrichtung</h3>
           <ul style="color:#bbb; line-height:1.6; padding-left:20px;">
             <li><strong style="color:#ddd;">1. Hardware:</strong> Du benötigst das fertig geflashte ESP32 CYD (Modell 2432S028).
-              <ul style="margin: 4px 0 8px 0;">
-                <li>🛒 Die Hardware verkaufen wir <strong>fertig geflasht (Plug & Play)</strong> hier: <a href="https://solarmodule-gladbeck.de/produkt/ok_display/" target="_blank" style="color:#4fc3f7; text-decoration:none;">solarmodule-gladbeck.de/produkt/ok_display/</a>.</li>
-              </ul>
+              <div style="margin: 12px 0 15px 0;">
+                <a href="https://solarmodule-gladbeck.de/produkt/ok_display/" target="_blank" style="display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(79, 195, 247, 0.2), rgba(79, 195, 247, 0.05)); color: #4fc3f7; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: bold; border: 1px solid rgba(79, 195, 247, 0.5); box-shadow: 0 4px 15px rgba(79, 195, 247, 0.2); transition: transform 0.2s, background 0.2s;">
+                  <svg viewBox="0 0 24 24" width="20" height="20" style="margin-right: 8px; fill: #4fc3f7;"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                  Hardware fertig geflasht kaufen (Plug & Play)
+                </a>
+              </div>
             </li>
             <li><strong style="color:#ddd;">2. WLAN & mDNS:</strong> Das Display verbindet sich mit deinem Netzwerk. Home Assistant sollte es automatisch über mDNS finden.</li>
             <li><strong style="color:#ddd;">3. Konfiguration:</strong> Sobald der ESP32 in HA als Gerät "cyd_solar_display" registriert ist, verknüpfe unter "Einstellungen" (in diesem Panel) deine Sensoren.</li>
