@@ -142,8 +142,15 @@ class CYDPreview extends LitElement {
           </div>
         ` : ''}
         ${currentVal ? html`
-          <div style="margin-top:3px;font-size:0.75em;color:#888;padding-left:2px;">
-            ✅ ${currentVal}
+          <div style="margin-top:8px;background:linear-gradient(135deg,rgba(253,216,53,0.12) 0%,rgba(253,216,53,0.05) 100%);border:1px solid rgba(253,216,53,0.4);border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+              <div style="width:10px;height:10px;border-radius:50%;background:#4caf50;box-shadow:0 0 6px #4caf50;flex-shrink:0;"></div>
+              <div style="min-width:0;">
+                <div style="font-size:0.9em;font-weight:600;color:#fdd835;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${currentEnt ? currentEnt.name.replace(/ \(.*\)$/, '') : currentVal}</div>
+                <div style="font-size:0.72em;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;">${currentVal}</div>
+              </div>
+            </div>
+            <div title="Auswahl entfernen" style="cursor:pointer;color:#888;font-size:1.1em;flex-shrink:0;padding:2px 6px;border-radius:4px;" @click=${() => { this.editConfig = { ...this.editConfig, [configKey]: '' }; this.requestUpdate(); }}>✕</div>
           </div>
         ` : ''}
       </div>
