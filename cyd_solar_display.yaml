@@ -144,7 +144,44 @@ globals:
 # AUTO-SEITEN-WECHSEL (lokal auf ESP32, alle 15 Sekunden)
 # Laeuft nur wenn kein Touch-Override aktiv!
 # =======================================================
+script:
+  - id: evaluate_dimming
+    then:
+      - lambda: |-
+          if (!id(current_time).is_valid()) return;
+          int h = id(current_time).now().hour;
+          int p_start = id(dim_start_time).state;
+          int p_end = id(dim_end_time).state;
+          if (std::isnan(p_start) || std::isnan(p_end)) return;
+          
+          bool should_dim = false;
+          if (p_start < p_end) {
+            should_dim = (h >= p_start && h < p_end);
+          } else {
+            should_dim = (h >= p_start || h < p_end);
+          }
+          
+          static bool is_dimmed = false;
+          static bool first_run = true;
+          static float last_b = -1.0;
+          float b = id(dim_brightness).state;
+          if (std::isnan(b)) b = 20.0;
+          
+          // Apply changes if it's the first run, the dim state changes, or the user changes the target brightness.
+          if (first_run || is_dimmed != should_dim || last_b != b) {
+            auto call = id(backlight).turn_on();
+            call.set_brightness(should_dim ? (b / 100.0) : 1.0);
+            call.perform();
+            is_dimmed = should_dim;
+            last_b = b;
+            first_run = false;
+          }
+
 interval:
+  - interval: 1min
+    then:
+      - script.execute: evaluate_dimming
+
   - interval: 15s
     then:
       - if:
@@ -382,6 +419,32 @@ switch:
 
 number:
   - platform: template
+    name: "Dimming Start Stunde"
+    id: dim_start_time
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    initial_value: 22
+  - platform: template
+    name: "Dimming Ende Stunde"
+    id: dim_end_time
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    initial_value: 6
+  - platform: template
+    name: "Dimming Helligkeit"
+    id: dim_brightness
+    min_value: 1
+    max_value: 100
+    step: 1
+    optimistic: true
+    initial_value: 20
+    unit_of_measurement: "%"
+
+  - platform: template
     name: "Current Page"
     id: current_page
     min_value: 1
@@ -456,7 +519,7 @@ display:
 
       // HEADER
       it.filled_rectangle(0, 0, 320, 32, id(color_panel));
-      it.print(10, 16, id(font_title), id(color_solar), TextAlign::CENTER_LEFT, "Solar");
+      it.print(10, 16, id(font_title), id(color_solar), TextAlign::CENTER_LEFT, "OpenKairo Display");
       it.print(310, 16, id(font_title), id(color_text), TextAlign::CENTER_RIGHT, id(current_time).now().strftime("%H:%M").c_str());
       it.line(0, 32, 320, 32, id(color_text));
 
