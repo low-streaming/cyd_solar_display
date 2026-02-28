@@ -162,11 +162,17 @@ time:
     id: current_time
     timezone: Europe/Berlin
 
-# Hardware Setup (CYD)
+# Hardware Setup (CYD 2432S028)
+# WICHTIG: Das CYD hat ZWEI separate SPI-Busse!
 spi:
-  clk_pin: 14
-  mosi_pin: 13
-  miso_pin: 12
+  - id: spi_display
+    clk_pin: 14
+    mosi_pin: 13
+    miso_pin: 12
+  - id: spi_touch
+    clk_pin: 25
+    mosi_pin: 32
+    miso_pin: 39
 
 output:
   - platform: ledc
@@ -402,6 +408,7 @@ display:
   - platform: ili9xxx
     model: ILI9341
     id: cyd_display
+    spi_id: spi_display
     cs_pin: 15
     dc_pin: 2
     invert_colors: false
@@ -667,12 +674,13 @@ display:
       }
 
 # =======================================================
-# TOUCHSCREEN Setup + Touch-Handler
-# Tippen = naechste Seite
+# TOUCHSCREEN Setup
 # =======================================================
 touchscreen:
   - platform: xpt2046
     id: my_touch
+    spi_id: spi_touch
+    display: cyd_display
     cs_pin: 33
     interrupt_pin: 36
     threshold: 400
@@ -685,15 +693,24 @@ touchscreen:
       mirror_x: true
       mirror_y: false
       swap_xy: true
-    on_touch:
-      - then:
-          - lambda: |-
-              // Naechste Seite lokal schalten
-              int total = id(local_page_total);
-              if (total < 1) total = 5;
-              id(local_page) = (id(local_page) % total) + 1;
-              // Touch-Flash fuer visuelle Rueckmeldung
-              id(touch_flash) = 3;
-              // Touch-Override fuer ~30 Display-Zyklen (ca. 30s bei 1s Refresh)
-              id(touch_override_ticks) = 30;
-              ESP_LOGI("touch", "Touch! Wechsel zu Seite %d / %d (Override aktiv)", id(local_page), total);
+
+# =======================================================
+# TOUCH BUTTON - GANZER BILDSCHIRM
+# Ueberall tippen = naechste Seite
+# =======================================================
+binary_sensor:
+  - platform: touchscreen
+    touchscreen_id: my_touch
+    name: "Display Touch Ueberall"
+    x_min: 0
+    x_max: 320
+    y_min: 0
+    y_max: 240
+    on_press:
+      - lambda: |-
+          int total = id(local_page_total);
+          if (total < 1) total = 5;
+          id(local_page) = (id(local_page) % total) + 1;
+          id(touch_flash) = 3;
+          id(touch_override_ticks) = 30;
+          ESP_LOGI("touch", "Touch! Seite %d / %d", id(local_page), total);

@@ -785,6 +785,82 @@ class CYDPreview extends LitElement {
               Wähle als Sensoren nach Möglichkeit immer die <strong>Watt-Werte</strong> aus deinem System. Wenn dir die angezeigten Zahlen auf dem Display zu groß sind, setze den Haken bei "Leistung in Kilowatt (kW) anzeigen". Das Display konvertiert die originalen Watt-Werte dann für dich automatisch auf dem Bildschirm in kW (z.B. 2400W -> 2.4kW).
             </div>
           </details>
+
+          <details class="faq-item">
+            <summary>Wie funktioniert der Touch-Seitenwechsel?</summary>
+            <div class="faq-content">
+              Das CYD-Display hat einen eingebauten Touchscreen. Tippe <strong>irgendwo auf das Display</strong>, um zur nächsten Seite zu wechseln. Der Wechsel erfolgt sofort – du musst nicht auf eine bestimmte Stelle tippen. Im Footer des Displays erscheint kurz ein <strong style="color:#fdd835;">[&gt;</strong> Symbol in Gelb, das bestätigt, dass dein Touch erkannt wurde.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Was ist der Seitenwechsel-Modus "Beides" – und warum ist er empfohlen?</summary>
+            <div class="faq-content">
+              Im Modus <strong>"Beides"</strong> läuft der automatische Seitenwechsel wie gewohnt. Wenn du aber den Bildschirm antippst, übernimmt der ESP32 für ca. <strong>30 Sekunden</strong> die Kontrolle – HA pausiert in dieser Zeit die Rotation. Danach kehrt der automatische Wechsel zurück.<br><br>
+              Das ist ideal, wenn du zwischendurch schnell eine bestimmte Seite prüfen möchtest, ohne den Automodus dauerhaft zu deaktivieren.
+            </div>
+          </details>
+        </div>
+
+        <!-- SEITENWECHSEL-MODUS ERKLAERUNG -->
+        <div class="tech-box" style="margin-top: 15px; border-color: rgba(155, 89, 182, 0.4);">
+          <h3 style="margin-top:0; color:#9b59b6;">🔄👆 Seitenwechsel-Modi im Überblick</h3>
+          <p style="color:#bbb; font-size:14px; margin-bottom: 18px; line-height:1.6;">
+            Du kannst unter <strong>Einstellungen → Allgemeine Eigenschaften</strong> wählen, wie das Display zwischen den Seiten wechselt.
+          </p>
+
+          <!-- Modus-Karten -->
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+            <div style="flex:1; min-width:160px; background:rgba(255,255,255,0.04); border:1px solid rgba(155,89,182,0.3); border-radius:10px; padding:16px;">
+              <div style="font-size:2em; text-align:center; margin-bottom:8px;">🔄</div>
+              <div style="font-weight:700; color:#b26ef7; text-align:center; margin-bottom:8px;">Automatisch</div>
+              <ul style="color:#bbb; font-size:0.82em; line-height:1.7; padding-left:16px; margin:0;">
+                <li>Home Assistant wechselt Seiten nach dem eingestellten Zeitintervall</li>
+                <li>Touch am Display hat <strong style="color:#fff;">keinen Effekt</strong></li>
+                <li>Ideal für reine Schau-Displays</li>
+              </ul>
+            </div>
+            <div style="flex:1; min-width:160px; background:rgba(255,255,255,0.04); border:1px solid rgba(155,89,182,0.3); border-radius:10px; padding:16px;">
+              <div style="font-size:2em; text-align:center; margin-bottom:8px;">👆</div>
+              <div style="font-weight:700; color:#b26ef7; text-align:center; margin-bottom:8px;">Nur Touch</div>
+              <ul style="color:#bbb; font-size:0.82em; line-height:1.7; padding-left:16px; margin:0;">
+                <li>Seiten wechseln <strong style="color:#fff;">nur</strong> durch Tippen auf das Display</li>
+                <li>Kein automatischer Wechsel</li>
+                <li>Das Intervall-Feld wird ignoriert</li>
+                <li>Ideal wenn du selbst bestimmst, was angezeigt wird</li>
+              </ul>
+            </div>
+            <div style="flex:1; min-width:160px; background:rgba(155,89,182,0.12); border:2px solid rgba(155,89,182,0.5); border-radius:10px; padding:16px; position:relative;">
+              <div style="position:absolute; top:-10px; right:12px; background:#9b59b6; color:#fff; font-size:0.65em; font-weight:700; padding:2px 8px; border-radius:10px; letter-spacing:1px;">EMPFOHLEN</div>
+              <div style="font-size:2em; text-align:center; margin-bottom:8px;">🔄👆</div>
+              <div style="font-weight:700; color:#b26ef7; text-align:center; margin-bottom:8px;">Beides</div>
+              <ul style="color:#bbb; font-size:0.82em; line-height:1.7; padding-left:16px; margin:0;">
+                <li>Auto-Rotation läuft wie normal</li>
+                <li>Tippen stoppt Auto für <strong style="color:#fff;">~30 Sek.</strong></li>
+                <li>Danach kehrt Auto automatisch zurück</li>
+                <li>Bestes aus beiden Welten ✨</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Visueller Footer-Indikator -->
+          <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:14px 16px; border:1px solid rgba(255,255,255,0.08);">
+            <div style="font-size:0.85em; font-weight:600; color:#ccc; margin-bottom:10px;">📺 Anzeige auf dem Display (Footer)</div>
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="background:#111; border:1px solid #333; border-radius:6px; padding:4px 10px; font-family:monospace; font-size:0.9em; color:#fdd835;">[&gt;</div>
+                <span style="color:#888; font-size:0.82em;">Gelb = Touch-Override aktiv (du hast gerade getippt)</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="background:#111; border:1px solid #333; border-radius:6px; padding:4px 10px; font-family:monospace; font-size:0.9em; color:#aaa;">[&gt;</div>
+                <span style="color:#888; font-size:0.82em;">Weiß/Grau = HA steuert automatisch</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="background:#111; border:1px solid #333; border-radius:6px; padding:4px 10px; font-family:monospace; font-size:0.9em; color:#fdd835;">&lt; &gt;</div>
+                <span style="color:#888; font-size:0.82em;">Blinkt kurz auf bei jedem Touch</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="tech-box" style="margin-top: 15px; border-color: rgba(0, 168, 255, 0.3); background: rgba(0, 69, 124, 0.1);">
