@@ -62,7 +62,12 @@ CONF_MINING4_ENTITY = "mining4_entity"
 CONF_SHOW_KW = "show_kw"
 CONF_AUTO_PAGE_SWITCH = "auto_page_switch"
 CONF_PAGE_INTERVAL = "page_interval"
+CONF_PAGE_SWITCH_MODE = "page_switch_mode"   # "auto" | "touch" | "both"
 CONF_THEME_COLOR = "theme_color"
+
+PAGE_SWITCH_AUTO  = "auto"
+PAGE_SWITCH_TOUCH = "touch"
+PAGE_SWITCH_BOTH  = "both"
 
 DEFAULT_PORT = 80
 DEFAULT_UPDATE_INTERVAL = 5

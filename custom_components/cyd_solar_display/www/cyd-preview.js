@@ -672,17 +672,57 @@ class CYDPreview extends LitElement {
         <div class="tech-box" style="margin-top: 20px; border-color: rgba(155, 89, 182, 0.4);">
             <h3 style="color: #9b59b6; margin-top: 0;">⚙️ Allgemeine Eigenschaften</h3>
             
+            <!-- Seitenwechsel-Modus -->
+            <div style="margin-bottom: 20px;">
+              <label style="display:block; margin-bottom: 10px; font-weight: 600; color: #ccc;">Seitenwechsel-Modus</label>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                ${['auto', 'touch', 'both'].map(mode => {
+      const labels = {
+        auto: { icon: '🔄', title: 'Automatisch', desc: 'HA wechselt Seiten nach Zeitintervall' },
+        touch: { icon: '👆', title: 'Nur Touch', desc: 'Manuell durch Tippen auf das Display' },
+        both: { icon: '🔄👆', title: 'Beides', desc: 'Auto + Touch-Override (empfohlen)' },
+      }[mode];
+      const isActive = (this.editConfig.page_switch_mode || 'auto') === mode;
+      return html`
+                    <div
+                      @click=${() => { this.editConfig = { ...this.editConfig, page_switch_mode: mode }; this.requestUpdate(); }}
+                      style="
+                        flex: 1; min-width: 130px; cursor: pointer; padding: 14px 12px;
+                        border-radius: 10px; border: 2px solid ${isActive ? '#9b59b6' : 'rgba(155,89,182,0.25)'};
+                        background: ${isActive ? 'rgba(155,89,182,0.18)' : 'rgba(255,255,255,0.03)'};
+                        transition: all 0.2s ease;
+                        box-shadow: ${isActive ? '0 0 15px rgba(155,89,182,0.35)' : 'none'};
+                        text-align: center;
+                      "
+                    >
+                      <div style="font-size: 1.8em; margin-bottom: 6px;">${labels.icon}</div>
+                      <div style="font-weight: 700; color: ${isActive ? '#b26ef7' : '#ddd'}; font-size: 0.95em;">${labels.title}</div>
+                      <div style="font-size: 0.72em; color: #888; margin-top: 4px; line-height: 1.4;">${labels.desc}</div>
+                    </div>
+                  `;
+    })}
+              </div>
+            </div>
+
             <div class="form-row">
                 <div class="form-group flex-1">
                   <label>Update Intervall (Sekunden)</label>
                   <input type="number" name="update_interval" min="1" .value="${this.editConfig.update_interval || 5}" @input="${this.handleFormInput}">
                   <small>Wie oft sollen Daten zum ESP32 gesendet werden?</small>
                 </div>
+                ${(this.editConfig.page_switch_mode || 'auto') !== 'touch' ? html`
                 <div class="form-group flex-1">
                   <label>Seitenwechsel Intervall (Sekunden)</label>
                   <input type="number" name="page_interval" min="5" .value="${this.editConfig.page_interval || 10}" @input="${this.handleFormInput}">
                   <small>Wie lange eine Seite auf dem LCD angezeigt wird.</small>
                 </div>
+                ` : html`
+                <div class="form-group flex-1" style="opacity:0.4; pointer-events:none;">
+                  <label>Seitenwechsel Intervall (Sekunden)</label>
+                  <input type="number" value="${this.editConfig.page_interval || 10}" disabled>
+                  <small>⚠️ Nicht aktiv im Touch-Modus</small>
+                </div>
+                `}
             </div>
         </div>
 

@@ -1,5 +1,6 @@
 # =======================================================
 # CYD SOLAR MONITOR - GROW BOX DESIGN V2
+# Touch + Auto-Page-Switch Edition
 # =======================================================
 substitutions:
   name: "cyd-solar-display"
@@ -113,6 +114,48 @@ ota:
 
 logger:
   level: DEBUG
+
+# =======================================================
+# GLOBALE VARIABLEN fuer lokale Seiten-Steuerung
+# =======================================================
+globals:
+  - id: local_page
+    type: int
+    restore_value: no
+    initial_value: '1'
+  - id: auto_switch_enabled
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+  - id: local_page_total
+    type: int
+    restore_value: no
+    initial_value: '5'
+  - id: touch_flash
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: touch_override_ticks
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+# =======================================================
+# AUTO-SEITEN-WECHSEL (lokal auf ESP32, alle 15 Sekunden)
+# Laeuft nur wenn kein Touch-Override aktiv!
+# =======================================================
+interval:
+  - interval: 15s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(auto_switch_enabled) && (id(touch_override_ticks) <= 0);'
+          then:
+            - lambda: |-
+                int total = id(local_page_total);
+                if (total < 1) total = 5;
+                id(local_page) = (id(local_page) % total) + 1;
+                id(touch_flash) = 0;
 
 time:
   - platform: homeassistant
@@ -379,7 +422,30 @@ display:
         return;
       }
 
-      int page = (int)id(current_page).state;
+      // Synchronisiere total-Seiten aus HA-Wert
+      if (!std::isnan(id(page_display_total).state)) {
+        id(local_page_total) = (int)id(page_display_total).state;
+      }
+      
+      // Hybrid-Steuerung: Wenn Touch-Override aktiv -> lokale Seite nutzen
+      // Sonst: HA-Seite (current_page) uebernehmen
+      if (id(touch_override_ticks) > 0) {
+        // Touch-Override: Countdown verringern
+        id(touch_override_ticks)--;
+      } else {
+        // HA steuert: current_page -> local_page synchronisieren
+        if (!std::isnan(id(current_page).state)) {
+          id(local_page) = (int)id(current_page).state;
+        }
+      }
+      
+      int page = id(local_page);
+      int total = id(local_page_total);
+      if (total < 1) total = 5;
+      if (page < 1 || page > total) {
+        id(local_page) = 1;
+        page = 1;
+      }
 
       // HEADER
       it.filled_rectangle(0, 0, 320, 32, id(color_panel));
@@ -582,11 +648,31 @@ display:
       it.filled_rectangle(0, 222, 320, 18, id(color_panel));
       it.line(0, 222, 320, 222, id(color_text));
       
-      it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, "SEITE %d / %d", (int)id(page_display_idx).state, (int)id(page_display_total).state);
+      // Touch-Flash: zeige Tippen-Symbol kurz an
+      if (id(touch_flash) > 0) {
+        id(touch_flash)--;
+        it.printf(5, 231, id(font_label), id(color_solar), TextAlign::CENTER_LEFT, "< >");
+      } else {
+        it.printf(5, 231, id(font_label), id(color_panel), TextAlign::CENTER_LEFT, "< >"); // unsichtbar
+      }
+      
+      // Seitenanzeige (lokal)
+      it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, "SEITE %d / %d", page, total);
+      
+      // Touch-Override-Anzeige rechts im Footer
+      if (id(touch_override_ticks) > 0) {
+        it.print(315, 231, id(font_label), id(color_solar), TextAlign::CENTER_RIGHT, "[>"); // aktiv
+      } else {
+        it.print(315, 231, id(font_label), id(color_text), TextAlign::CENTER_RIGHT, "[>"); // normal
+      }
 
-# Touchscreen Setup
+# =======================================================
+# TOUCHSCREEN Setup + Touch-Handler
+# Tippen = naechste Seite
+# =======================================================
 touchscreen:
   - platform: xpt2046
+    id: my_touch
     cs_pin: 33
     interrupt_pin: 36
     threshold: 400
@@ -599,3 +685,15 @@ touchscreen:
       mirror_x: true
       mirror_y: false
       swap_xy: true
+    on_touch:
+      - then:
+          - lambda: |-
+              // Naechste Seite lokal schalten
+              int total = id(local_page_total);
+              if (total < 1) total = 5;
+              id(local_page) = (id(local_page) % total) + 1;
+              // Touch-Flash fuer visuelle Rueckmeldung
+              id(touch_flash) = 3;
+              // Touch-Override fuer ~30 Display-Zyklen (ca. 30s bei 1s Refresh)
+              id(touch_override_ticks) = 30;
+              ESP_LOGI("touch", "Touch! Wechsel zu Seite %d / %d (Override aktiv)", id(local_page), total);

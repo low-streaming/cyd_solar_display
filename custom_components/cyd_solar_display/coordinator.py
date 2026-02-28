@@ -54,7 +54,11 @@ from .const import (
     CONF_MINING4_ENTITY,
     CONF_SHOW_KW,
     CONF_AUTO_PAGE_SWITCH,
-    CONF_PAGE_INTERVAL
+    CONF_PAGE_INTERVAL,
+    CONF_PAGE_SWITCH_MODE,
+    PAGE_SWITCH_AUTO,
+    PAGE_SWITCH_TOUCH,
+    PAGE_SWITCH_BOTH,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -171,6 +175,9 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         
         if not enabled_pages: enabled_pages = [1]
         
+        # Seitenwechsel-Modus auslesen
+        switch_mode = self.entry.options.get(CONF_PAGE_SWITCH_MODE, PAGE_SWITCH_AUTO)
+        
         try:
             interval = int(self.entry.options.get("page_interval", 10))
         except (ValueError, TypeError):
@@ -181,16 +188,23 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         if self.current_page not in enabled_pages:
             self.current_page = enabled_pages[0]
             
-        # Check if first launch OR time has passed
-        time_since = (datetime.now() - self.last_page_switch).total_seconds()
-        
-        if time_since >= interval or time_since > 31536000: # Over an interval, or last_switch was epoch
-            idx = enabled_pages.index(self.current_page)
-            # Only advance the page if this wasn't the very first call
-            if time_since < 31536000:
-                self.current_page = enabled_pages[(idx + 1) % len(enabled_pages)]
-                
-            self.last_page_switch = datetime.now()
+        if switch_mode == PAGE_SWITCH_TOUCH:
+            # Nur Touch-Modus: HA haelt Seite 1 fest
+            # Der ESP32 steuert Seitenwechsel vollstaendig per Touch-Override
+            self.current_page = enabled_pages[0]
+            self.last_page_switch = datetime.now()  # Intervall-Timer zuruecksetzen
+        else:
+            # Auto oder Both: HA rotiert Seiten nach Intervall
+            # Check if first launch OR time has passed
+            time_since = (datetime.now() - self.last_page_switch).total_seconds()
+            
+            if time_since >= interval or time_since > 31536000: # Over an interval, or last_switch was epoch
+                idx = enabled_pages.index(self.current_page)
+                # Only advance the page if this wasn't the very first call
+                if time_since < 31536000:
+                    self.current_page = enabled_pages[(idx + 1) % len(enabled_pages)]
+                    
+                self.last_page_switch = datetime.now()
             
         page_idx = enabled_pages.index(self.current_page) + 1
         page_total = len(enabled_pages)
