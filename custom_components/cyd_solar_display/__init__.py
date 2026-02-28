@@ -1,9 +1,7 @@
 import logging
-import os
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.components import frontend, panel_custom
-from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig, HomeAssistantView
 from aiohttp import web
 
@@ -21,29 +19,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    # Register API View for Panel Config
+    # Register API View for Panel Config (only once)
     if "api_registered" not in hass.data[DOMAIN]:
         hass.http.register_view(CYDConfigView(hass))
         hass.data[DOMAIN]["api_registered"] = True
 
-    # Register the preview component
-    # Using the modern async method for registering static paths
-    preview_url = f"/cyd_solar_display/{entry.entry_id}"
-    await hass.http.async_register_static_paths([
-        StaticPathConfig(
-            preview_url,
-            hass.config.path(f"custom_components/{DOMAIN}/www"),
-            False
-        )
-    ])
-    
-    # This makes the JS available for the entire UI, needed for our custom selector/preview
-    js_url = f"{preview_url}/cyd-preview.js"
-    add_extra_js_url(hass, js_url)
+    # Register static files with a FIXED path (no entry_id!)
+    # entry_id would change across restarts, breaking the panel URL
+    static_url = "/cyd_solar_display/static"
+    if "static_registered" not in hass.data[DOMAIN]:
+        await hass.http.async_register_static_paths([
+            StaticPathConfig(
+                static_url,
+                hass.config.path(f"custom_components/{DOMAIN}/www"),
+                False   # cache=False so updates are visible immediately
+            )
+        ])
+        hass.data[DOMAIN]["static_registered"] = True
 
-    # Register the Sidebar Panel
-    # Note: 'cyd-preview' is the custom element name defined in the JS file
-    if DOMAIN not in hass.data.get("frontend_panels", {}):
+    # Stable JS URL (no entry_id dependency)
+    js_url = f"{static_url}/cyd-preview.js"
+
+    # Register the Sidebar Panel (only once, guard by checking frontend_panels)
+    frontend_panels = hass.data.get("frontend_panels", {})
+    if DOMAIN not in frontend_panels:
         try:
             await panel_custom.async_register_panel(
                 hass,
@@ -56,7 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 config={"entry_id": entry.entry_id}
             )
         except Exception as err:
-            _LOGGER.error("Could not register panel: %s", err)
+            _LOGGER.warning("Panel already registered or error: %s", err)
 
     entry.async_on_unload(entry.add_update_listener(update_listener))
 
