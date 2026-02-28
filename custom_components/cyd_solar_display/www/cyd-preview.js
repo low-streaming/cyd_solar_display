@@ -250,20 +250,6 @@ class CYDPreview extends LitElement {
     const pVal = (w) => this.editConfig.show_kw ? (w / 1000).toFixed(2) : Math.round(w);
     const pUnit = this.editConfig.show_kw ? "kW" : "W";
 
-    const currentHour = new Date().getHours();
-    const dimStart = this.editConfig.dim_start_time !== undefined ? this.editConfig.dim_start_time : 22;
-    const dimEnd = this.editConfig.dim_end_time !== undefined ? this.editConfig.dim_end_time : 6;
-    const dimBrt = this.editConfig.dim_brightness !== undefined ? this.editConfig.dim_brightness : 20;
-
-    let isDimmed = false;
-    if (dimStart < dimEnd) {
-      isDimmed = (currentHour >= dimStart && currentHour < dimEnd);
-    } else {
-      isDimmed = (currentHour >= dimStart || currentHour < dimEnd);
-    }
-
-    const cydScreenStyle = isDimmed ? `filter: brightness(${dimBrt / 100});` : '';
-
     return html`
       <div class="card">
           <div class="cyd-info">
@@ -273,7 +259,7 @@ class CYDPreview extends LitElement {
           
           <div class="cyd-container">
             <div class="cyd-frame">
-              <div class="cyd-screen" style="${cydScreenStyle}">
+              <div class="cyd-screen">
                 <div class="header">
                   <span class="title">Solar Monitor</span>
                   <span class="time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -705,25 +691,6 @@ class CYDPreview extends LitElement {
                   <small>⚠️ Nicht aktiv im Touch-Modus</small>
                 </div>
                 `}
-            </div>
-
-            <div style="margin-top: 15px; margin-bottom: 20px;">
-              <h4 style="color: #bbb; margin-bottom: 15px;">🌙 Nacht-Dimming Anzeige (Preview)</h4>
-              <div class="form-row" style="margin-bottom: 0;">
-                <div class="form-group flex-1">
-                  <label>Start Stunde (0-23)</label>
-                  <input type="number" name="dim_start_time" min="0" max="23" .value="${this.editConfig.dim_start_time !== undefined ? this.editConfig.dim_start_time : 22}" @input="${this.handleFormInput}">
-                </div>
-                <div class="form-group flex-1">
-                  <label>Ende Stunde (0-23)</label>
-                  <input type="number" name="dim_end_time" min="0" max="23" .value="${this.editConfig.dim_end_time !== undefined ? this.editConfig.dim_end_time : 6}" @input="${this.handleFormInput}">
-                </div>
-                <div class="form-group flex-1">
-                  <label>Helligkeit (%)</label>
-                  <input type="number" name="dim_brightness" min="1" max="100" .value="${this.editConfig.dim_brightness !== undefined ? this.editConfig.dim_brightness : 20}" @input="${this.handleFormInput}">
-                </div>
-              </div>
-              <small style="color: #888;">Hinweis: Die echten Dimming-Werte stellst du in Home Assistant bei deinem CYD-Gerät ein. Diese Optionen hier dienen nur der Live-Vorschau in diesem Panel!</small>
             </div>
 
             <!-- Seitenwechsel-Modus -->
