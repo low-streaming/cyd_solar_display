@@ -250,6 +250,9 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "c11_v": str(payload["c11_v"] or " "),
             "c12_n": str(payload["c12_n"] or " "),
             "c12_v": str(payload["c12_v"] or " "),
+            "dim_start": int(self.entry.options.get("dim_start_time", 22)),
+            "dim_end": int(self.entry.options.get("dim_end_time", 6)),
+            "dim_brt": float(self.entry.options.get("dim_brightness", 20.0)),
         }
         
         # Call the ESPHome Service

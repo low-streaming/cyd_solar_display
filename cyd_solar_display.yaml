@@ -67,6 +67,9 @@ api:
         c11_v: string
         c12_n: string
         c12_v: string
+        dim_start: int
+        dim_end: int
+        dim_brt: float
       then:
         - lambda: |-
             id(solar_w).publish_state(solar);
@@ -108,6 +111,11 @@ api:
             id(custom11_v).publish_state(c11_v);
             id(custom12_n).publish_state(c12_n);
             id(custom12_v).publish_state(c12_v);
+            
+            id(dim_start_time) = dim_start;
+            id(dim_end_time) = dim_end;
+            id(dim_brightness) = dim_brt;
+            id(evaluate_dimming).execute();
 
 ota:
   - platform: esphome
@@ -139,6 +147,18 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
+  - id: dim_start_time
+    type: int
+    restore_value: no
+    initial_value: '22'
+  - id: dim_end_time
+    type: int
+    restore_value: no
+    initial_value: '6'
+  - id: dim_brightness
+    type: float
+    restore_value: no
+    initial_value: '20.0'
 
 # =======================================================
 # AUTO-SEITEN-WECHSEL (lokal auf ESP32, alle 15 Sekunden)
@@ -149,15 +169,10 @@ script:
     then:
       - lambda: |-
           if (!id(current_time).now().is_valid()) return;
-          float f_start = id(dim_start_time).state;
-          float f_end = id(dim_end_time).state;
-          float b = id(dim_brightness).state;
-          
-          if (std::isnan(f_start) || std::isnan(f_end) || std::isnan(b)) return;
-          
           int h = id(current_time).now().hour;
-          int p_start = (int)f_start;
-          int p_end = (int)f_end;
+          int p_start = id(dim_start_time);
+          int p_end = id(dim_end_time);
+          float b = id(dim_brightness);
           
           bool should_dim = false;
           if (p_start < p_end) {
@@ -421,40 +436,6 @@ switch:
     optimistic: true
 
 number:
-  - platform: template
-    name: "Dimming Start Stunde"
-    id: dim_start_time
-    min_value: 0
-    max_value: 23
-    step: 1
-    optimistic: true
-    initial_value: 22
-    on_value:
-      - script.execute: evaluate_dimming
-      
-  - platform: template
-    name: "Dimming Ende Stunde"
-    id: dim_end_time
-    min_value: 0
-    max_value: 23
-    step: 1
-    optimistic: true
-    initial_value: 6
-    on_value:
-      - script.execute: evaluate_dimming
-      
-  - platform: template
-    name: "Dimming Helligkeit"
-    id: dim_brightness
-    min_value: 1
-    max_value: 100
-    step: 1
-    optimistic: true
-    initial_value: 20
-    unit_of_measurement: "%"
-    on_value:
-      - script.execute: evaluate_dimming
-
   - platform: template
     name: "Current Page"
     id: current_page

@@ -693,6 +693,24 @@ class CYDPreview extends LitElement {
                 `}
             </div>
 
+            <div style="margin-top: 15px; margin-bottom: 20px;">
+              <h4 style="color: #bbb; margin-bottom: 15px;">🌙 Nacht-Dimming Anzeige</h4>
+              <div class="form-row" style="margin-bottom: 0;">
+                <div class="form-group flex-1">
+                  <label>Start Stunde (0-23)</label>
+                  <input type="number" name="dim_start_time" min="0" max="23" .value="${this.editConfig.dim_start_time !== undefined ? this.editConfig.dim_start_time : 22}" @input="${this.handleFormInput}">
+                </div>
+                <div class="form-group flex-1">
+                  <label>Ende Stunde (0-23)</label>
+                  <input type="number" name="dim_end_time" min="0" max="23" .value="${this.editConfig.dim_end_time !== undefined ? this.editConfig.dim_end_time : 6}" @input="${this.handleFormInput}">
+                </div>
+                <div class="form-group flex-1">
+                  <label>Helligkeit (%)</label>
+                  <input type="number" name="dim_brightness" min="1" max="100" .value="${this.editConfig.dim_brightness !== undefined ? this.editConfig.dim_brightness : 20}" @input="${this.handleFormInput}">
+                </div>
+              </div>
+            </div>
+
             <!-- Seitenwechsel-Modus -->
             <div style="margin-top: 20px;">
               <label style="display:block; margin-bottom: 10px; font-weight: 600; color: #ccc;">Seitenwechsel-Modus</label>
