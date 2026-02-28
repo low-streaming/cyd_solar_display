@@ -5,12 +5,12 @@
   "issue_tracker": "https://github.com/low-streaming/cyd_solar_display/issues",
   "dependencies": [],
   "codeowners": [
-    "@antigravity"
+    "@low-streaming"
   ],
   "requirements": [
     "aiohttp"
   ],
-  "version": "1.1.0",
+  "version": "1.0.0",
   "iot_class": "local_push",
   "config_flow": true
 }

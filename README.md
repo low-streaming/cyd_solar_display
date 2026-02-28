@@ -1,105 +1,185 @@
-# CYD Solar Display - OpenKairo Edition für Home Assistant
+# CYD Solar Display — OpenKairo Edition
 
-![Version](https://img.shields.io/github/v/release/low-streaming/cyd_solar_display?style=for-the-badge&color=fdd835) ![OpenKairo Logo](https://img.shields.io/badge/OpenKairo-Cyberpunk_Design-00f3ff?style=for-the-badge) ![HACS](https://img.shields.io/badge/HACS-Custom_Integration-orange?style=for-the-badge)
+![Version](https://img.shields.io/github/v/release/low-streaming/cyd_solar_display?style=for-the-badge&color=fdd835&label=Version)
+![HACS](https://img.shields.io/badge/HACS-Custom_Integration-orange?style=for-the-badge&logo=home-assistant)
+![ESPHome](https://img.shields.io/badge/ESPHome-Compatible-00b4d8?style=for-the-badge)
+![License](https://img.shields.io/github/license/low-streaming/cyd_solar_display?style=for-the-badge&color=green)
 
-Eine maßgeschneiderte Home Assistant Integration für das **Cheap Yellow Display (CYD)** (ESP32 2432S028). Sie liefert ein atemberaubendes Live-Solar-Dashboard im neon-durchfluteten **OpenKairo Cyberpunk Design** – alles komplett lokal und in Echtzeit aus deinem Hausenergiesystem direkt auf den Schreibtisch gestreamt.
-
----
-
-## 🚀 Kern-Features
-
-- **⚡ Live Energiefluss-Dashboard (Seite 1):** Solarerzeugung, Batteriestand, Hausverbrauch und den exakten Netzaustausch (Bezug/Einspeisung) in dynamischen Cyberpunk-Graphen.
-- **🔢 kW / Watt Umschaltung:** Jederzeit zwischen Watt und Kilowatt wechseln.
-- **📊 Ertrags-Statistiken (Seite 2):** Tages-, Monats-, Jahres- und Gesamt-PV-Erträge sauber visualisiert.
-- **🔮 Eigene Sensoren (Seite 3 & 4):** Bis zu 8 frei belegbare Sensoren aus Home Assistant (Temperaturen, Luftfeuchte, Growbox-Werte, etc.).
-- **⛏️ Mining Sensoren (Seite 5):** Spezielle Seite im auffälligen Orange-Theme für bis zu 4 Mining-Variablen (Hashrate, Temperatur, Ertrag, Verbrauch).
-- **🎛️ Smarte Seitenverwaltung:** Alle Seiten einzeln aktivierbar/deaktivierbar. Das Display überspringt deaktivierte Seiten nahtlos.
-- **🖥️ Integriertes Dashboard-Panel:** Voll animiertes, interaktives „CYD Monitor" Sidebar-Panel mit **1:1 Live-Simulation** und durchsuchbarem Sensor-Picker.
+> **Ein Live-Solar-Dashboard für das ESP32 Cheap Yellow Display (CYD 2432S028) im neon-durchfluteten OpenKairo Cyberpunk Design — vollständig in Home Assistant integriert.**
 
 ---
 
-## 🛒 Hardware & Voraussetzungen
+## 🚀 Features
+
+| Feature | Beschreibung |
+|--------|-------------|
+| ⚡ **Live Energiefluss** | Solar, Batterie, Haus & Netz in Echtzeit (Seite 1) |
+| 📊 **Ertrags-Statistiken** | Tag, Monat, Jahr & Gesamt PV-Ertrag (Seite 2) |
+| 🔮 **Eigene Sensoren** | 8 frei belegbare HA-Sensoren (Seite 3 & 4) |
+| ⛏️ **Mining Sensoren** | 4 Slots für Hashrate, Temp, Ertrag etc. (Seite 5) |
+| 👆 **Touch-Seitenwechsel** | Irgendwo tippen = nächste Seite |
+| 🔄 **Auto-Seitenwechsel** | HA rotiert Seiten nach konfigurierbarem Intervall |
+| 🔄👆 **Hybridmodus** | Auto + Touch-Override für ~30 Sekunden |
+| 🎛️ **Seiten aktivierbar** | Jede Seite einzeln ein-/ausschaltbar |
+| 🔢 **kW / Watt Modus** | Jederzeit zwischen W und kW umschalten |
+| 🖥️ **HA Panel** | Interaktives Sidebar-Panel mit 1:1 Live-Preview |
+
+---
+
+## 🛒 Hardware
 
 | # | Was | Details |
 |---|-----|---------|
-| 1 | **ESP32 CYD Hardware** | Modell **2432S028** (Cheap Yellow Display) |
-| 2 | **Home Assistant** | 2023.4 oder neuer |
+| 1 | **ESP32 CYD** | Modell **2432S028** (Cheap Yellow Display) |
+| 2 | **Home Assistant** | Version 2023.4.0 oder neuer |
 | 3 | **ESPHome Add-on** | Für die Native API Verbindung |
 
-> 🛒 Die Hardware gibt es **fertig geflasht (Plug & Play)** bei: [solarmodule-gladbeck.de/produkt/ok_display/](https://solarmodule-gladbeck.de/produkt/ok_display/)
+> 🛒 Die Hardware gibt es **fertig geflasht (Plug & Play)** bei:  
+> **[solarmodule-gladbeck.de/produkt/ok_display/](https://solarmodule-gladbeck.de/produkt/ok_display/)**
+
+### Hardware-Pinbelegung (CYD 2432S028)
+
+> ⚠️ Das CYD 2432S028 hat **zwei separate SPI-Busse** — einen für das Display und einen für den Touchscreen!
+
+| Komponente | Funktion | GPIO |
+|-----------|---------|------|
+| **Display** (ILI9341) | CLK | 14 |
+| | MOSI | 13 |
+| | MISO | 12 |
+| | CS | 15 |
+| | DC | 2 |
+| **Touchscreen** (XPT2046) | CLK | **25** |
+| | MOSI | **32** |
+| | MISO | **39** |
+| | CS | 33 |
+| | IRQ | 36 |
+| **Backlight** | PWM | 21 |
 
 ---
 
-## 🛠️ Installation
+## 📦 Installation via HACS (Empfohlen)
 
-### Methode 1: HACS (Empfohlen)
-1. Öffne HACS in Home Assistant.
-2. Gehe auf **Integrationen** → **Benutzerdefinierte Repositories**.
-3. Füge die URL dieses Repositories als „Integration" hinzu.
-4. Klicke auf **Herunterladen** und starte Home Assistant neu.
+HACS ermöglicht einfache Installation **und automatische Updates** bei neuen Versionen.
 
-### Methode 2: Manuelle Installation
-1. Lade dir dieses Repository herunter.
-2. Kopiere den Ordner `custom_components/cyd_solar_display` in das `custom_components`-Verzeichnis deiner Home Assistant Installation.
-3. Starte Home Assistant neu.
+### Schritt 1: Repository hinzufügen
+1. Öffne HACS in Home Assistant
+2. Klicke auf die **3 Punkte** (oben rechts) → **Benutzerdefinierte Repositories**
+3. Füge folgende URL ein:
+   ```
+   https://github.com/low-streaming/cyd_solar_display
+   ```
+4. Kategorie: **Integration**
+5. Klicke **Hinzufügen**
+
+### Schritt 2: Integration installieren
+1. Suche in HACS nach **"CYD Solar Display"**
+2. Klicke **Herunterladen**
+3. Starte Home Assistant neu
+
+### 🔄 Updates über HACS erhalten
+Wenn eine neue Version erscheint, zeigt HACS automatisch eine Update-Benachrichtigung an.  
+Einfach auf **Aktualisieren** klicken — fertig!
+
+---
+
+## 🔧 Manuelle Installation
+
+1. Lade das Repository als ZIP herunter
+2. Entpacke und kopiere `custom_components/cyd_solar_display` nach:
+   ```
+   /config/custom_components/cyd_solar_display/
+   ```
+3. Starte Home Assistant neu
 
 ---
 
 ## ⚙️ Einrichtung
 
-1. Gehe zu **Einstellungen → Geräte & Dienste**.
-2. Klicke auf **Integration hinzufügen** und suche nach `CYD Solar Display`.
-3. Gib die IP-Adresse oder den mDNS-Hostnamen deines ESP32 ein.
-4. Öffne das **CYD Monitor** Sidebar-Panel und verknüpfe deine Sensoren im Tab „Einstellungen".
+1. Gehe zu **Einstellungen → Geräte & Dienste → Integration hinzufügen**
+2. Suche nach **CYD Solar Display**
+3. Gib IP-Adresse oder mDNS-Hostname des ESP32 ein (`cyd-solar-display.local`)
+4. Öffne das **CYD Monitor** Sidebar-Panel
+5. Verknüpfe unter **Einstellungen** deine HA-Sensoren
+6. Klicke **Konfiguration Speichern & Anwenden**
 
 ---
 
-## 📡 Funktionsweise (ESPHome Native API)
+## 👆🔄 Seitenwechsel-Modi
 
-Diese Integration nutzt die **ESPHome Native API** über direkten C++ Funktionsaufruf – kein MQTT, kein HTTP-Polling. Die HA-Integration sendet Sensordaten mit einem einstellbaren Intervall (Standard: 5 Sekunden) aktiv an das ESP32. Das Display rendert alle Layouts autark als Lambda-Code.
+Unter **Einstellungen → Allgemeine Eigenschaften** kannst du den Modus wählen:
+
+| Modus | Symbol | Verhalten |
+|-------|--------|-----------|
+| **Automatisch** | 🔄 | HA wechselt Seiten nach dem eingestellten Zeitintervall |
+| **Nur Touch** | 👆 | Nur durch Tippen auf das Display — kein Auto-Wechsel |
+| **Beides** *(empfohlen)* | 🔄👆 | Auto läuft normal, Touch übersteuert für ~30 Sekunden |
+
+### Anzeige im Display-Footer
+- **`[>` gelb** = Touch-Override aktiv (du hast gerade getippt)
+- **`[>` weiß** = HA steuert automatisch
+- **`< >`** blinkt kurz bei jedem Touch auf
+
+---
+
+## 📡 Funktionsweise
+
+```
+Home Assistant  ──(ESPHome Native API)──►  ESP32 CYD
+     │                                          │
+     │  push_state() alle 5s                    │  Display-Lambda
+     │  (Solar, Batterie, Netz, ...)            │  rendert Seiten
+     │                                          │
+     │◄─────── Touch Event (Binary Sensor) ─────│
+```
+
+- **Kein MQTT, kein HTTP-Polling** — rein lokale Native API
+- Der ESP32 empfängt Daten aktiv im konfigurierten Intervall
+- Touch-Events werden direkt auf dem ESP32 verarbeitet (kein HA-Roundtrip nötig)
+
+---
+
+## 📋 Changelog
+
+### v1.0.0 — 2026-02-28 🎉 Initial Release
+- ✅ Live Energiefluss-Dashboard (Solar, Batterie, Haus, Netz)
+- ✅ Ertrags-Statistiken (Tag, Monat, Jahr, Gesamt)
+- ✅ Eigene Sensoren (Seite 3 & 4, je 4 Slots)
+- ✅ Mining Sensoren (Seite 5, 4 Slots)
+- ✅ **Touch-Seitenwechsel** — überall auf dem Display tippen
+- ✅ **Auto-Seitenwechsel** — konfigurierbares Zeitintervall
+- ✅ **Hybridmodus** — Auto + Touch-Override (~30 Sek.)
+- ✅ Seitenwechsel-Modus wählbar im HA-Panel
+- ✅ Seiten einzeln aktivierbar/deaktivierbar
+- ✅ kW / Watt Umschaltung
+- ✅ Interaktives HA-Sidebar-Panel mit 1:1 Live-Preview
+- ✅ Durchsuchbarer Sensor-Picker (Autocomplete)
+- ✅ Korrekte Dual-SPI-Konfiguration für CYD 2432S028
+- ✅ HACS-kompatibel mit automatischen Updates
 
 ---
 
 ## 🗺️ Roadmap
 
-> **Hinweis:** Die Display-Firmware (ESPHome YAML / C++ Lambda-Code) ist als **abgeschlossen und eingefroren** zu betrachten. Hardware-seitige Änderungen sind nicht mehr geplant.  
-> Neue Features betreffen ausschließlich die **Home Assistant Integration** (Python-Backend & das Web-Panel).
+### 🔧 Kurzfristig
+- [ ] Schwellwert-Benachrichtigungen (z.B. Batterie unter 20%)
+- [ ] Mehrere Display-Instanzen gleichzeitig
+- [ ] Konfiguration Export/Import als JSON
 
-### ✅ Abgeschlossen
-- [x] Live Energiefluss-Dashboard (Seite 1)
-- [x] Ertrags-Statistiken (Seite 2)
-- [x] Eigene Sensoren Seite 3 & 4 (8 Slots)
-- [x] Mining Sensoren (Seite 5)
-- [x] Seiten einzeln aktivierbar/deaktivierbar
-- [x] kW / Watt Umschaltung
-- [x] Interaktives Sidebar-Panel (CYD Monitor) mit 1:1 Live Preview
-- [x] Durchsuchbarer Sensor-Picker im Panel (Autocomplete)
-- [x] Schöne Entity-Chips mit Friendly Name + Entity-ID Anzeige
-
-### 🔧 In Arbeit / Kurzfristig
-- [ ] **Stabilisierung:** Optimierung der Laufzeitstabilität und Speichernutzung im Backend-Coordinator
-- [ ] **Fehlerbehandlung:** Bessere Anzeige wenn ein Sensor nicht verfügbar ist (`unavailable` / `unknown`)
-- [ ] **HACS-Listing:** Offizielles Listing im HACS Default-Store anstreben
-
-### 💡 Geplant / Mittelfristig
-- [ ] **Konfigurations-Export/Import:** Sensor-Zuordnungen als JSON exportieren und auf anderen HA-Instanzen importieren
-- [ ] **Mehrere Displays:** Unterstützung für mehrere CYD-Instanzen gleichzeitig in einer HA-Instanz
-- [ ] **Benachrichtigungen:** Optionale Push-Benachrichtigungen bei Über-/Unterschreitung von Schwellwerten
-
-### 🌟 Ideen / Langfristig
-- [ ] **Themes:** Auswahl zwischen verschiedenen Farbthemen im Panel (Cyberpunk, Classic, Minimal)
-- [ ] **Wetter-Integration:** Optionale Anzeige von Wetterdaten und PV-Prognose auf einer Zusatzseite
+### 💡 Mittelfristig
+- [ ] Weitere Display-Themes (Classic, Minimal)
+- [ ] Wetter & PV-Prognose Seite
+- [ ] Offizielles HACS Default-Store Listing
 
 ---
 
 ## ☕ Support & Spenden
 
-Dir gefällt das Projekt? Ich freue mich über jeden Beitrag für die nächste Tasse Kaffee!
+Dir gefällt das Projekt? Ich freue mich riesig über jeden Beitrag!
 
-[![Spenden via PayPal](https://img.shields.io/badge/PayPal-Spenden-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=info@low-streaming.de&currency_code=EUR)
+[![PayPal Spenden](https://img.shields.io/badge/PayPal-Spenden-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=info@low-streaming.de&currency_code=EUR)
 
 📧 **Kontakt:** `info@low-streaming.de`
 
 ---
 
-**Powered by [OpenKairo](https://openkairo.de) · Developed with ♥ for the HA Community**
+**Powered by [OpenKairo](https://openkairo.de) · Developed with ♥ by [low-streaming](https://github.com/low-streaming) for the HA Community**
