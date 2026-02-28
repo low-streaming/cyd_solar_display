@@ -1,16 +1,16 @@
 {
   "domain": "cyd_solar_display",
   "name": "CYD Solar Display",
-  "documentation": "https://github.com/low-streaming/cyd_solar_display",
-  "issue_tracker": "https://github.com/low-streaming/cyd_solar_display/issues",
+  "documentation": "https://github.com/openkairo/Solar_Display_openkairo",
+  "issue_tracker": "https://github.com/openkairo/Solar_Display_openkairo/issues",
   "dependencies": [],
   "codeowners": [
-    "@low-streaming"
+    "@openkairo"
   ],
   "requirements": [
     "aiohttp"
   ],
-  "version": "1.0.0",
+  "version": "1.1.0",
   "iot_class": "local_push",
   "config_flow": true
 }

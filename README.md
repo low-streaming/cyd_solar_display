@@ -1,9 +1,9 @@
 # CYD Solar Display — OpenKairo Edition
 
-![Version](https://img.shields.io/github/v/release/low-streaming/cyd_solar_display?style=for-the-badge&color=fdd835&label=Version)
+![Version](https://img.shields.io/github/v/release/openkairo/Solar_Display_openkairo?style=for-the-badge&color=fdd835&label=Version)
 ![HACS](https://img.shields.io/badge/HACS-Custom_Integration-orange?style=for-the-badge&logo=home-assistant)
 ![ESPHome](https://img.shields.io/badge/ESPHome-Compatible-00b4d8?style=for-the-badge)
-![License](https://img.shields.io/github/license/low-streaming/cyd_solar_display?style=for-the-badge&color=green)
+![License](https://img.shields.io/github/license/openkairo/Solar_Display_openkairo?style=for-the-badge&color=green)
 
 > **Ein Live-Solar-Dashboard für das ESP32 Cheap Yellow Display (CYD 2432S028) im neon-durchfluteten OpenKairo Cyberpunk Design — vollständig in Home Assistant integriert.**
 
@@ -66,7 +66,7 @@ HACS ermöglicht einfache Installation **und automatische Updates** bei neuen Ve
 2. Klicke auf die **3 Punkte** (oben rechts) → **Benutzerdefinierte Repositories**
 3. Füge folgende URL ein:
    ```
-   https://github.com/low-streaming/cyd_solar_display
+   https://github.com/openkairo/Solar_Display_openkairo
    ```
 4. Kategorie: **Integration**
 5. Klicke **Hinzufügen**
@@ -140,6 +140,11 @@ Home Assistant  ──(ESPHome Native API)──►  ESP32 CYD
 
 ## 📋 Changelog
 
+### v1.1.0 — 2026-02-28 🔧 Repository Transfer
+- 🔁 Repository zu [openkairo/Solar_Display_openkairo](https://github.com/openkairo/Solar_Display_openkairo) umgezogen
+- ✅ Code Owner auf @openkairo aktualisiert
+- ✅ Alle internen Links und Badges auf das neue Repository angepasst
+
 ### v1.0.0 — 2026-02-28 🎉 Initial Release
 - ✅ Live Energiefluss-Dashboard (Solar, Batterie, Haus, Netz)
 - ✅ Ertrags-Statistiken (Tag, Monat, Jahr, Gesamt)
@@ -182,4 +187,4 @@ Dir gefällt das Projekt? Ich freue mich riesig über jeden Beitrag!
 
 ---
 
-**Powered by [OpenKairo](https://openkairo.de) · Developed with ♥ by [low-streaming](https://github.com/low-streaming) for the HA Community**
+**Powered by [OpenKairo](https://openkairo.de) · Developed with ♥ by [openkairo](https://github.com/openkairo) for the HA Community**
