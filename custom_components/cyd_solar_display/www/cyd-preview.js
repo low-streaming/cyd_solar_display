@@ -463,9 +463,11 @@ class CYDPreview extends LitElement {
                 </div>
             </div>
 
-  <div class="form-group" style="width: 50%;">
-    <label>Batterie Füllstand (%)</label>
-    ${this.renderEntitySelect('battery_soc_entity', ['sensor', 'input_number'])}
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Batterie Füllstand (%)</label>
+                ${this.renderEntitySelect('battery_soc_entity', ['sensor', 'input_number'])}
+              </div>
             </div>
         </div>
 
@@ -1134,10 +1136,11 @@ class CYDPreview extends LitElement {
 }
       .form-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 15px;
   margin-bottom: 15px;
 }
-      .flex-1 { flex: 1; }
+      .flex-1 { flex: 1; min-width: 220px; }
       
       .form-group {
   display: flex;

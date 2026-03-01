@@ -69,6 +69,7 @@ api:
         c12_v: string
         dim_start: int
         dim_end: int
+        dim_brt: float
         p1_en: bool
         p2_en: bool
         p3_en: bool
@@ -544,7 +545,7 @@ display:
       int page = id(local_page);
       int total = id(local_page_total);
       if (total < 1) total = 5;
-      if (page < 1 || page > total) {
+      if (page < 1 || page > 5) {
         id(local_page) = 1;
         page = 1;
       }
