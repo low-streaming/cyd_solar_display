@@ -1273,6 +1273,12 @@ class CYDPreview extends LitElement {
         border-top: 1px solid rgba(255, 255, 255, 0.05);
         background: rgba(0, 0, 0, 0.2);
       }
+      @media screen and (max-width: 600px) {
+        .form-row {
+          flex-direction: column;
+          gap: 10px;
+        }
+      }
 `;
   }
 }
