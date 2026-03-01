@@ -253,6 +253,11 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "dim_start": int(self.entry.options.get("dim_start_time", 22)),
             "dim_end": int(self.entry.options.get("dim_end_time", 6)),
             "dim_brt": float(self.entry.options.get("dim_brightness", 20.0)),
+            "p1_en": bool(enable_p1),
+            "p2_en": bool(enable_p2),
+            "p3_en": bool(enable_p3),
+            "p4_en": bool(enable_p4),
+            "p5_en": bool(enable_p5),
         }
         
         # Call the ESPHome Service

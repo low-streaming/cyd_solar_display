@@ -69,7 +69,11 @@ api:
         c12_v: string
         dim_start: int
         dim_end: int
-        dim_brt: float
+        p1_en: bool
+        p2_en: bool
+        p3_en: bool
+        p4_en: bool
+        p5_en: bool
       then:
         - lambda: |-
             id(solar_w).publish_state(solar);
@@ -111,6 +115,12 @@ api:
             id(custom11_v).publish_state(c11_v);
             id(custom12_n).publish_state(c12_n);
             id(custom12_v).publish_state(c12_v);
+            
+            id(page1_enabled) = p1_en;
+            id(page2_enabled) = p2_en;
+            id(page3_enabled) = p3_en;
+            id(page4_enabled) = p4_en;
+            id(page5_enabled) = p5_en;
             
             id(dim_start_time) = dim_start;
             id(dim_end_time) = dim_end;
@@ -159,6 +169,21 @@ globals:
     type: float
     restore_value: no
     initial_value: '20.0'
+  - id: page1_enabled
+    type: bool
+    initial_value: 'true'
+  - id: page2_enabled
+    type: bool
+    initial_value: 'true'
+  - id: page3_enabled
+    type: bool
+    initial_value: 'true'
+  - id: page4_enabled
+    type: bool
+    initial_value: 'true'
+  - id: page5_enabled
+    type: bool
+    initial_value: 'true'
 
 # =======================================================
 # AUTO-SEITEN-WECHSEL (lokal auf ESP32, alle 15 Sekunden)
@@ -207,9 +232,24 @@ interval:
             lambda: 'return id(auto_switch_enabled) && (id(touch_override_ticks) <= 0);'
           then:
             - lambda: |-
-                int total = id(local_page_total);
-                if (total < 1) total = 5;
-                id(local_page) = (id(local_page) % total) + 1;
+                int next_page = id(local_page);
+                bool found = false;
+                for (int i = 0; i < 5; i++) {
+                  next_page++;
+                  if (next_page > 5) next_page = 1;
+                  bool is_en = false;
+                  if (next_page == 1) is_en = id(page1_enabled);
+                  if (next_page == 2) is_en = id(page2_enabled);
+                  if (next_page == 3) is_en = id(page3_enabled);
+                  if (next_page == 4) is_en = id(page4_enabled);
+                  if (next_page == 5) is_en = id(page5_enabled);
+                  if (is_en) {
+                    id(local_page) = next_page;
+                    found = true;
+                    break;
+                  }
+                }
+                if (!found) id(local_page) = 1;
                 id(touch_flash) = 0;
 
 time:
@@ -718,8 +758,19 @@ display:
         it.printf(5, 231, id(font_label), id(color_panel), TextAlign::CENTER_LEFT, "< >"); // unsichtbar
       }
       
-      // Seitenanzeige (lokal)
-      it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, "SEITE %d / %d", page, total);
+      // Seitenanzeige (lokal) mit korrekter Index-Berechnung
+      int idx = 0;
+      int tot = 0;
+      bool p[5] = {id(page1_enabled), id(page2_enabled), id(page3_enabled), id(page4_enabled), id(page5_enabled)};
+      for(int i=0; i<5; i++){
+        if(p[i]) {
+          tot++;
+          if((i+1) == page) idx = tot;
+        }
+      }
+      if(idx == 0) idx = 1;
+      if(tot == 0) tot = total;
+      it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, "SEITE %d / %d", idx, tot);
       
       // Touch-Override-Anzeige rechts im Footer
       if (id(touch_override_ticks) > 0) {
@@ -763,9 +814,25 @@ binary_sensor:
     y_max: 240
     on_press:
       - lambda: |-
-          int total = id(local_page_total);
-          if (total < 1) total = 5;
-          id(local_page) = (id(local_page) % total) + 1;
+          int next_page = id(local_page);
+          bool found = false;
+          for (int i = 0; i < 5; i++) {
+            next_page++;
+            if (next_page > 5) next_page = 1;
+            bool is_en = false;
+            if (next_page == 1) is_en = id(page1_enabled);
+            if (next_page == 2) is_en = id(page2_enabled);
+            if (next_page == 3) is_en = id(page3_enabled);
+            if (next_page == 4) is_en = id(page4_enabled);
+            if (next_page == 5) is_en = id(page5_enabled);
+            if (is_en) {
+              id(local_page) = next_page;
+              found = true;
+              break;
+            }
+          }
+          if (!found) id(local_page) = 1;
+          
           id(touch_flash) = 3;
           id(touch_override_ticks) = 30;
-          ESP_LOGI("touch", "Touch! Seite %d / %d", id(local_page), total);
+          ESP_LOGI("touch", "Touch! Seite %d", id(local_page));
