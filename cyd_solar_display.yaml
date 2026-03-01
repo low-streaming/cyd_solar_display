@@ -636,13 +636,13 @@ display:
         it.filled_rectangle(10, 132, 145, 80, id(color_panel));
         it.filled_rectangle(10, 132, 4, 80, id(color_solar));
         it.print(22, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG JAHR");
-        it.printf(82, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.1f kWh", id(yield_year).state);
+        it.printf(82, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.0f kWh", id(yield_year).state);
 
         // 4. GESAMTERTRAG
         it.filled_rectangle(165, 132, 145, 80, id(color_panel));
         it.filled_rectangle(165, 132, 4, 80, id(color_solar));
         it.print(177, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "GESAMTERTRAG");
-        it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.1f kWh", id(yield_total).state); 
+        it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.0f kWh", id(yield_total).state); 
       } else if (page == 3) {
         // PAGE 3 (CUSTOM OPENKAIRO SENSORS)
         

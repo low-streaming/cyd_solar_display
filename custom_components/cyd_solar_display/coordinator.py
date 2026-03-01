@@ -113,6 +113,14 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
                 return "--"
             val = state.state
+            try:
+                fval = float(val)
+                if fval.is_integer():
+                    val = f"{int(fval)}"
+                else:
+                    val = f"{round(fval, 2)}"
+            except ValueError:
+                pass
             unit = state.attributes.get("unit_of_measurement", "")
             return f"{val} {unit}".strip()
 

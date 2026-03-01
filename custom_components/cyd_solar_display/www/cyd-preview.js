@@ -168,7 +168,8 @@ class CYDPreview extends LitElement {
     const state = this.hass.states[entityId].state;
     if (state === 'unavailable' || state === 'unknown') return defaultVal;
     const parsed = parseFloat(state);
-    return isNaN(parsed) ? defaultVal : parsed;
+    if (isNaN(parsed)) return defaultVal;
+    return parseFloat(parsed.toFixed(2));
   }
 
   render() {
@@ -210,8 +211,8 @@ class CYDPreview extends LitElement {
 
     const yield_today = this.getLiveValue(this.editConfig.yield_today_entity, 12.4);
     const yield_month = this.getLiveValue(this.editConfig.yield_month_entity, 114.2);
-    const yield_year = this.getLiveValue(this.editConfig.yield_year_entity, 1054.8);
-    const yield_total = this.getLiveValue(this.editConfig.yield_total_entity, 3450.5);
+    const yield_year = Math.round(this.getLiveValue(this.editConfig.yield_year_entity, 1054.8));
+    const yield_total = Math.round(this.getLiveValue(this.editConfig.yield_total_entity, 3450.5));
 
     const c1_n = this.editConfig.custom1_name || "Custom 1";
     const c1_v = this.getLiveValue(this.editConfig.custom1_entity, 21.5) + " °C";
