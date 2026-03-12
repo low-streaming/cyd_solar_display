@@ -268,24 +268,24 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "p5_en": bool(enable_p5),
         }
         
-        # Call the ESPHome Service
-        # We assume the device name is 'cyd_solar_display' as per YAML,
-        # but HA might append strings like 'cyd_solar_display_2' or 'cyd_solar_display_495ec4'
+        # Call the ESPHome Service(s)
+        # We find all services ending in '_update_display' to seamlessly update multiple duplicate displays at once!
         esphome_services = self.hass.services.async_services().get("esphome", {})
-        service_name = "cyd_solar_display_update_display"
         
-        if service_name not in esphome_services:
-            possible_services = [s for s in esphome_services if s.endswith("_update_display")]
-            if possible_services:
-                service_name = possible_services[0]
+        target_services = [s for s in esphome_services if s.endswith("_update_display")]
+        
+        if not target_services:
+            # Fallback in case it's not loaded yet
+            target_services = ["cyd_solar_display_update_display"]
                 
-        try:
-            await self.hass.services.async_call(
-                "esphome", 
-                service_name, 
-                service_data
-            )
-        except Exception as err:
-            _LOGGER.error("Could not call ESPHome service '%s': %s", service_name, err)
+        for srv in target_services:
+            try:
+                await self.hass.services.async_call(
+                    "esphome", 
+                    srv, 
+                    service_data
+                )
+            except Exception as err:
+                _LOGGER.error("Could not call ESPHome service '%s': %s", srv, err)
 
         return payload

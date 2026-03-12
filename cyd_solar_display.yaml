@@ -145,7 +145,7 @@ globals:
   - id: auto_switch_enabled
     type: bool
     restore_value: no
-    initial_value: 'true'
+    initial_value: 'false'  # HA steuert das Auto-Switching
   - id: local_page_total
     type: int
     restore_value: no
@@ -544,14 +544,24 @@ display:
       }
       
       // Hybrid-Steuerung: Wenn Touch-Override aktiv -> lokale Seite nutzen
-      // Sonst: HA-Seite (current_page) uebernehmen
+      // Sonst: HA-Seite (current_page) nur bei AENDERUNG uebernehmen
+      static int last_ha_page = -1;
+      int curr_ha = -1;
+      if (!std::isnan(id(current_page).state)) {
+        curr_ha = (int)id(current_page).state;
+      }
+      
       if (id(touch_override_ticks) > 0) {
         // Touch-Override: Countdown verringern
         id(touch_override_ticks)--;
+        if (curr_ha != -1) {
+          last_ha_page = curr_ha;
+        }
       } else {
-        // HA steuert: current_page -> local_page synchronisieren
-        if (!std::isnan(id(current_page).state)) {
-          id(local_page) = (int)id(current_page).state;
+        // HA steuert: current_page -> local_page edge-triggered synchronisieren
+        if (curr_ha != -1 && curr_ha != last_ha_page) {
+          id(local_page) = curr_ha;
+          last_ha_page = curr_ha;
         }
       }
       
