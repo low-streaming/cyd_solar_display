@@ -276,8 +276,14 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         target_services = []
         
         if self.entry.options.get(CONF_BROADCAST_MODE, False):
-            # Broadcast Mode: Send to all displays ending in _update_display
-            target_services = [s for s in esphome_services if s.endswith("_update_display")]
+            # Broadcast Mode: Send to all displays that start with our unique prefix
+            # This ensures we only target CYD Solar Displays and not other ESPHome devices
+            target_services = [s for s in esphome_services if s.startswith("cyd_solar_display_") and s.endswith("_update_display")]
+            
+            # Special case for the legacy name without suffix (if it exists)
+            if "cyd_solar_display_update_display" in esphome_services:
+                if "cyd_solar_display_update_display" not in target_services:
+                    target_services.append("cyd_solar_display_update_display")
         else:
             # Specific Mode: Target only the display matching the configured IP (host)
             target_host = self.entry.data.get(CONF_HOST)
