@@ -53,6 +53,7 @@ from .const import (
     CONF_AUTO_PAGE_SWITCH,
     CONF_PAGE_INTERVAL,
     CONF_PAGE_SWITCH_MODE,
+    CONF_BROADCAST_MODE,
     PAGE_SWITCH_AUTO,
     PAGE_SWITCH_TOUCH,
     PAGE_SWITCH_BOTH,
@@ -84,6 +85,7 @@ class CYDSolarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({
                 vol.Required(CONF_HOST): str,
                 vol.Optional(CONF_PORT, default=DEFAULT_PORT): int,
+                vol.Optional(CONF_BROADCAST_MODE, default=False): bool,
             }),
             errors=errors,
         )
@@ -181,6 +183,7 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
 
                 # Settings
                 vol.Optional(CONF_SHOW_KW, default=opt.get(CONF_SHOW_KW, False)): bool,
+                vol.Optional(CONF_BROADCAST_MODE, default=opt.get(CONF_BROADCAST_MODE, False)): bool,
                 vol.Optional("update_interval", default=opt.get("update_interval", 5)): int,
                 vol.Optional(CONF_PAGE_INTERVAL, default=opt.get(CONF_PAGE_INTERVAL, 10)): int,
                 vol.Optional(CONF_PAGE_SWITCH_MODE, default=opt.get(CONF_PAGE_SWITCH_MODE, PAGE_SWITCH_AUTO)):

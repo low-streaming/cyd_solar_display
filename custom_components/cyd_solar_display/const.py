@@ -64,6 +64,7 @@ CONF_AUTO_PAGE_SWITCH = "auto_page_switch"
 CONF_PAGE_INTERVAL = "page_interval"
 CONF_PAGE_SWITCH_MODE = "page_switch_mode"   # "auto" | "touch" | "both"
 CONF_THEME_COLOR = "theme_color"
+CONF_BROADCAST_MODE = "broadcast_mode"
 
 PAGE_SWITCH_AUTO  = "auto"
 PAGE_SWITCH_TOUCH = "touch"

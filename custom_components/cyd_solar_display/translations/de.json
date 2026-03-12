@@ -6,7 +6,8 @@
                 "description": "Gib die IP-Adresse deines CYD Displays ein.",
                 "data": {
                     "host": "IP-Adresse oder Hostname",
-                    "port": "Port (Standard 80)"
+                    "port": "Port (Standard 80)",
+                    "broadcast_mode": "Duplikat-Modus (An ALLE Displays senden)"
                 }
             }
         },
@@ -29,6 +30,7 @@
                     "grid_import_entity": "Netz Bezug Heute (kWh)",
                     "grid_export_entity": "Netz Einspeisung Heute (kWh)",
                     "update_interval": "Sende-Intervall (Sekunden)",
+                    "broadcast_mode": "Duplikat-Modus (An ALLE Displays senden)",
                     "auto_page_switch": "Automatischer Seitenwechsel",
                     "page_interval": "Wechsel-Intervall (Sekunden)"
                 }

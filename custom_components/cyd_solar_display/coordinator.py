@@ -56,6 +56,7 @@ from .const import (
     CONF_AUTO_PAGE_SWITCH,
     CONF_PAGE_INTERVAL,
     CONF_PAGE_SWITCH_MODE,
+    CONF_BROADCAST_MODE,
     PAGE_SWITCH_AUTO,
     PAGE_SWITCH_TOUCH,
     PAGE_SWITCH_BOTH,
@@ -269,27 +270,43 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         }
         
         # Call the ESPHome Service(s)
-        # We find all services ending in '_update_display' to seamlessly update multiple duplicate displays at once!
         all_services = self.hass.services.async_services()
         esphome_services = all_services.get("esphome", {})
         
-        target_services = [s for s in esphome_services if s.endswith("_update_display")]
+        target_services = []
+        
+        if self.entry.options.get(CONF_BROADCAST_MODE, False):
+            # Broadcast Mode: Send to all displays ending in _update_display
+            target_services = [s for s in esphome_services if s.endswith("_update_display")]
+        else:
+            # Specific Mode: Target only the display matching the configured IP (host)
+            target_host = self.entry.data.get(CONF_HOST)
+            device_name = None
+            
+            # Find the ESPHome entry that matches our configured IP
+            for entry in self.hass.config_entries.async_entries("esphome"):
+                if entry.data.get("host") == target_host:
+                    device_name = entry.data.get("name") # Internal name from ESPHome YAML
+                    break
+            
+            if device_name:
+                # Service names use underscores instead of hyphens
+                safe_name = str(device_name).replace('-', '_')
+                srv = f"{safe_name}_update_display"
+                if srv in esphome_services:
+                    target_services = [srv]
         
         if not target_services:
             _LOGGER.warning(
-                "No CYD Solar Displays found in Home Assistant services. "
-                "Since you enabled 'name_add_mac_suffix', you MUST add the 'new' discovered displays to Home Assistant (ESPHome Integration) "
-                "and delete any old, disconnected display entries."
+                "Could not find a matching ESPHome service for host '%s'. "
+                "Ensure the display is added to the ESPHome integration and its IP matches.",
+                self.entry.data.get(CONF_HOST)
             )
             return payload
                 
         for srv in target_services:
             try:
-                await self.hass.services.async_call(
-                    "esphome", 
-                    srv, 
-                    service_data
-                )
+                await self.hass.services.async_call("esphome", srv, service_data)
             except Exception as err:
                 _LOGGER.error("Could not call ESPHome service '%s': %s", srv, err)
 
