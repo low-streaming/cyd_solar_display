@@ -270,13 +270,18 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         
         # Call the ESPHome Service(s)
         # We find all services ending in '_update_display' to seamlessly update multiple duplicate displays at once!
-        esphome_services = self.hass.services.async_services().get("esphome", {})
+        all_services = self.hass.services.async_services()
+        esphome_services = all_services.get("esphome", {})
         
         target_services = [s for s in esphome_services if s.endswith("_update_display")]
         
         if not target_services:
-            # Fallback in case it's not loaded yet
-            target_services = ["cyd_solar_display_update_display"]
+            _LOGGER.warning(
+                "No CYD Solar Displays found in Home Assistant services. "
+                "Since you enabled 'name_add_mac_suffix', you MUST add the 'new' discovered displays to Home Assistant (ESPHome Integration) "
+                "and delete any old, disconnected display entries."
+            )
+            return payload
                 
         for srv in target_services:
             try:
