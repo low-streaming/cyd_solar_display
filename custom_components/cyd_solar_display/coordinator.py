@@ -274,39 +274,38 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         esphome_services = all_services.get("esphome", {})
         
         target_services = []
+        broadcast = self.entry.options.get(CONF_BROADCAST_MODE, True)
         
-        if self.entry.options.get(CONF_BROADCAST_MODE, False):
-            # Broadcast Mode: Send to all displays that start with our unique prefix
-            # This ensures we only target CYD Solar Displays and not other ESPHome devices
-            target_services = [s for s in esphome_services if s.startswith("cyd_solar_display_") and s.endswith("_update_display")]
-            
-            # Special case for the legacy name without suffix (if it exists)
-            if "cyd_solar_display_update_display" in esphome_services:
-                if "cyd_solar_display_update_display" not in target_services:
-                    target_services.append("cyd_solar_display_update_display")
+        # 1. Collect all potential services
+        all_solar_services = [s for s in esphome_services if s.startswith("cyd_solar_display_") and s.endswith("_update_display")]
+        if "cyd_solar_display_update_display" in esphome_services:
+            all_solar_services.append("cyd_solar_display_update_display")
+
+        if broadcast:
+            target_services = all_solar_services
         else:
             # Specific Mode: Target only the display matching the configured IP (host)
             target_host = self.entry.data.get(CONF_HOST)
             device_name = None
-            
-            # Find the ESPHome entry that matches our configured IP
             for entry in self.hass.config_entries.async_entries("esphome"):
                 if entry.data.get("host") == target_host:
-                    device_name = entry.data.get("name") # Internal name from ESPHome YAML
+                    device_name = entry.data.get("name")
                     break
             
             if device_name:
-                # Service names use underscores instead of hyphens
-                safe_name = str(device_name).replace('-', '_')
-                srv = f"{safe_name}_update_display"
+                srv = f"{str(device_name).replace('-', '_')}_update_display"
                 if srv in esphome_services:
                     target_services = [srv]
         
+        # Fallback: If specific targeting fails but only one generic service exists, use it!
+        if not target_services and len(all_solar_services) > 0:
+            target_services = all_solar_services
+            _LOGGER.debug("Falling back to broadcast as no specific target match was found")
+
         if not target_services:
             _LOGGER.warning(
-                "Could not find a matching ESPHome service for host '%s'. "
-                "Ensure the display is added to the ESPHome integration and its IP matches.",
-                self.entry.data.get(CONF_HOST)
+                "Kein CYD Solar Display in ESPHome gefunden (oder noch 'entdeckt' aber nicht hinzugefügt). "
+                "Bitte klicke in der ESPHome Integration bei den Displays auf 'Hinzufügen'."
             )
             return payload
                 
