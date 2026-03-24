@@ -10,13 +10,6 @@ esphome:
   name: ${name}
   name_add_mac_suffix: true
   friendly_name: ${friendly_name}
-
-esp32:
-   board: esp32dev
-   framework:
-    type: arduino
-
-esphome:
   on_boot:
     priority: -10
     then:
@@ -38,6 +31,11 @@ esphome:
           }
           if (idx > 0) id(page_display_idx).publish_state(idx);
           if (tot > 0) id(page_display_total).publish_state(tot);
+
+esp32:
+   board: esp32dev
+   framework:
+    type: arduino
 
 # WiFi & API
 wifi:
@@ -759,7 +757,6 @@ display:
       
       // Hybrid-Steuerung: Wenn Touch-Override aktiv -> lokale Seite nutzen
       // Sonst: HA-Seite (current_page) nur bei AENDERUNG uebernehmen
-      static int last_ha_page = -1;
       int curr_ha = -1;
       if (!std::isnan(id(current_page).state)) {
         curr_ha = (int)id(current_page).state;
