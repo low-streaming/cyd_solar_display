@@ -282,9 +282,10 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             self.current_page = enabled_pages[0]
             
         if switch_mode == PAGE_SWITCH_TOUCH:
-            # Nur Touch-Modus: HA haelt Seite 1 fest
-            # Der ESP32 steuert Seitenwechsel vollstaendig per Touch-Override
-            self.current_page = enabled_pages[0]
+            # Nur Touch-Modus: HA rotiert nicht automatisch.
+            # Wenn die Seite noch nicht gesetzt wurde, nimm die erste.
+            if self.current_page is None:
+                self.current_page = enabled_pages[0]
             self.last_page_switch = datetime.now()  # Intervall-Timer zuruecksetzen
         elif rotation_source == "ha":
             # Auto oder Both, und HA ist Master: HA rotiert Seiten nach Intervall
@@ -320,7 +321,7 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "grid_in": float(payload["grid_import_kwh"] or 0.0),
             "grid_out": float(payload["grid_export_kwh"] or 0.0),
             "page_num": int(self.current_page),
-            "auto_rotate": bool(rotation_source == "display"),
+            "auto_rotate": bool(rotation_source == "display" and switch_mode != PAGE_SWITCH_TOUCH),
             "page_idx": int(page_idx),
             "page_total": int(page_total),
             "show_kw": bool(self.entry.options.get(CONF_SHOW_KW, False)),
