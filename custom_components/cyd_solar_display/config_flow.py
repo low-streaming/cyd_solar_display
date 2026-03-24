@@ -263,6 +263,7 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_CUSTOM24_ENTITY, description={"suggested_value": get_val(CONF_CUSTOM24_ENTITY)}): _entity_selector(),
 
                 # Settings
+                vol.Optional("antigravity_test", default=False): bool,
                 vol.Optional(CONF_SHOW_KW, default=opt.get(CONF_SHOW_KW, False)): bool,
                 vol.Optional(CONF_BROADCAST_MODE, default=opt.get(CONF_BROADCAST_MODE, False)): bool,
                 vol.Optional("update_interval", default=opt.get("update_interval", 5)): int,
