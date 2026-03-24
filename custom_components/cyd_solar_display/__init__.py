@@ -73,7 +73,30 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Handle options update."""
-    await hass.config_entries.async_reload(entry.entry_id)
+    # If the update only contains the last_page sync info, don't reload
+    # We use a simple comparison of other options if needed, but for now 
+    # we just accept that page-syncs might trigger a reload OR we could 
+    # use a flag.
+    
+    # Check if anything OTHER than last_page or _last_sync changed
+    old_options = hass.data.get(f"{DOMAIN}_old_options_{entry.entry_id}", {})
+    new_options = dict(entry.options)
+    
+    significant_change = False
+    for k, v in new_options.items():
+        if k in ["last_page", "_last_sync"]:
+            continue
+        if old_options.get(k) != v:
+            significant_change = True
+            break
+            
+    hass.data[f"{DOMAIN}_old_options_{entry.entry_id}"] = new_options
+    
+    if significant_change:
+        _LOGGER.debug("Significant config change detected, reloading...")
+        await hass.config_entries.async_reload(entry.entry_id)
+    else:
+        _LOGGER.debug("Internal page sync update, skipping reload.")
 
 class CYDConfigView(HomeAssistantView):
     """API Endpoint context for panel configuration."""

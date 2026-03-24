@@ -12,9 +12,32 @@ esphome:
   friendly_name: ${friendly_name}
 
 esp32:
-  board: esp32dev
-  framework:
+   board: esp32dev
+   framework:
     type: arduino
+
+esphome:
+  on_boot:
+    priority: -10
+    then:
+      - lambda: |-
+          id(current_page).publish_state(id(local_page));
+          // Recalculate and publish indices if possible, or wait for next HA update
+          int idx = 0;
+          int tot = 0;
+          bool p[9] = {
+            id(page1_enabled), id(page2_enabled), id(page3_enabled), 
+            id(page4_enabled), id(page5_enabled), id(page6_enabled),
+            id(page7_enabled), id(page8_enabled), id(page9_enabled)
+          };
+          for(int i=0; i<9; i++){
+            if(p[i]) {
+              tot++;
+              if((i+1) == id(local_page)) idx = tot;
+            }
+          }
+          if (idx > 0) id(page_display_idx).publish_state(idx);
+          if (tot > 0) id(page_display_total).publish_state(tot);
 
 # WiFi & API
 wifi:
@@ -68,6 +91,38 @@ api:
         c11_v: string
         c12_n: string
         c12_v: string
+        c13_n: string
+        c13_v: string
+        c14_n: string
+        c14_v: string
+        c15_n: string
+        c15_v: string
+        c16_n: string
+        c16_v: string
+        c17_n: string
+        c17_v: string
+        c18_n: string
+        c18_v: string
+        c19_n: string
+        c19_v: string
+        c20_n: string
+        c20_v: string
+        c21_n: string
+        c21_v: string
+        c22_n: string
+        c22_v: string
+        c23_n: string
+        c23_v: string
+        c24_n: string
+        c24_v: string
+        c25_n: string
+        c25_v: string
+        c26_n: string
+        c26_v: string
+        c27_n: string
+        c27_v: string
+        c28_n: string
+        c28_v: string
         dim_start: int
         dim_end: int
         dim_brt: float
@@ -76,6 +131,11 @@ api:
         p3_en: bool
         p4_en: bool
         p5_en: bool
+        p6_en: bool
+        p7_en: bool
+        p8_en: bool
+        p9_en: bool
+        auto_rotate: bool
       then:
         - lambda: |-
             id(solar_w).publish_state(solar);
@@ -117,12 +177,49 @@ api:
             id(custom11_v).publish_state(c11_v);
             id(custom12_n).publish_state(c12_n);
             id(custom12_v).publish_state(c12_v);
+            id(custom13_n).publish_state(c13_n);
+            id(custom13_v).publish_state(c13_v);
+            id(custom14_n).publish_state(c14_n);
+            id(custom14_v).publish_state(c14_v);
+            id(custom15_n).publish_state(c15_n);
+            id(custom15_v).publish_state(c15_v);
+            id(custom16_n).publish_state(c16_n);
+            id(custom16_v).publish_state(c16_v);
+            id(custom17_n).publish_state(c17_n);
+            id(custom17_v).publish_state(c17_v);
+            id(custom18_n).publish_state(c18_n);
+            id(custom18_v).publish_state(c18_v);
+            id(custom19_n).publish_state(c19_n);
+            id(custom19_v).publish_state(c19_v);
+            id(custom20_n).publish_state(c20_n);
+            id(custom20_v).publish_state(c20_v);
+            id(custom21_n).publish_state(c21_n);
+            id(custom21_v).publish_state(c21_v);
+            id(custom22_n).publish_state(c22_n);
+            id(custom22_v).publish_state(c22_v);
+            id(custom23_n).publish_state(c23_n);
+            id(custom23_v).publish_state(c23_v);
+            id(custom24_n).publish_state(c24_n);
+            id(custom24_v).publish_state(c24_v);
+            id(custom25_n).publish_state(c25_n);
+            id(custom25_v).publish_state(c25_v);
+            id(custom26_n).publish_state(c26_n);
+            id(custom26_v).publish_state(c26_v);
+            id(custom27_n).publish_state(c27_n);
+            id(custom27_v).publish_state(c27_v);
+            id(custom28_n).publish_state(c28_n);
+            id(custom28_v).publish_state(c28_v);
             
             id(page1_enabled) = p1_en;
             id(page2_enabled) = p2_en;
             id(page3_enabled) = p3_en;
             id(page4_enabled) = p4_en;
             id(page5_enabled) = p5_en;
+            id(page6_enabled) = p6_en;
+            id(page7_enabled) = p7_en;
+            id(page8_enabled) = p8_en;
+            id(page9_enabled) = p9_en;
+            id(auto_switch_enabled) = auto_rotate;
             
             id(dim_start_time) = dim_start;
             id(dim_end_time) = dim_end;
@@ -141,8 +238,12 @@ logger:
 globals:
   - id: local_page
     type: int
-    restore_value: no
+    restore_value: yes
     initial_value: '1'
+  - id: last_ha_page
+    type: int
+    restore_value: yes
+    initial_value: '-1'
   - id: auto_switch_enabled
     type: bool
     restore_value: no
@@ -184,6 +285,18 @@ globals:
     type: bool
     initial_value: 'true'
   - id: page5_enabled
+    type: bool
+    initial_value: 'true'
+  - id: page6_enabled
+    type: bool
+    initial_value: 'true'
+  - id: page7_enabled
+    type: bool
+    initial_value: 'true'
+  - id: page8_enabled
+    type: bool
+    initial_value: 'true'
+  - id: page9_enabled
     type: bool
     initial_value: 'true'
 
@@ -236,15 +349,19 @@ interval:
             - lambda: |-
                 int next_page = id(local_page);
                 bool found = false;
-                for (int i = 0; i < 5; i++) {
+                for (int i = 0; i < 9; i++) {
                   next_page++;
-                  if (next_page > 5) next_page = 1;
+                  if (next_page > 9) next_page = 1;
                   bool is_en = false;
                   if (next_page == 1) is_en = id(page1_enabled);
                   if (next_page == 2) is_en = id(page2_enabled);
                   if (next_page == 3) is_en = id(page3_enabled);
                   if (next_page == 4) is_en = id(page4_enabled);
                   if (next_page == 5) is_en = id(page5_enabled);
+                  if (next_page == 6) is_en = id(page6_enabled);
+                  if (next_page == 7) is_en = id(page7_enabled);
+                  if (next_page == 8) is_en = id(page8_enabled);
+                  if (next_page == 9) is_en = id(page9_enabled);
                   if (is_en) {
                     id(local_page) = next_page;
                     found = true;
@@ -474,6 +591,102 @@ text_sensor:
   - platform: template
     name: "Custom 12 Value"
     id: custom12_v
+  - platform: template
+    name: "Custom 13 Name"
+    id: custom13_n
+  - platform: template
+    name: "Custom 13 Value"
+    id: custom13_v
+  - platform: template
+    name: "Custom 14 Name"
+    id: custom14_n
+  - platform: template
+    name: "Custom 14 Value"
+    id: custom14_v
+  - platform: template
+    name: "Custom 15 Name"
+    id: custom15_n
+  - platform: template
+    name: "Custom 15 Value"
+    id: custom15_v
+  - platform: template
+    name: "Custom 16 Name"
+    id: custom16_n
+  - platform: template
+    name: "Custom 16 Value"
+    id: custom16_v
+  - platform: template
+    name: "Custom 17 Name"
+    id: custom17_n
+  - platform: template
+    name: "Custom 17 Value"
+    id: custom17_v
+  - platform: template
+    name: "Custom 18 Name"
+    id: custom18_n
+  - platform: template
+    name: "Custom 18 Value"
+    id: custom18_v
+  - platform: template
+    name: "Custom 19 Name"
+    id: custom19_n
+  - platform: template
+    name: "Custom 19 Value"
+    id: custom19_v
+  - platform: template
+    name: "Custom 20 Name"
+    id: custom20_n
+  - platform: template
+    name: "Custom 20 Value"
+    id: custom20_v
+  - platform: template
+    name: "Custom 21 Name"
+    id: custom21_n
+  - platform: template
+    name: "Custom 21 Value"
+    id: custom21_v
+  - platform: template
+    name: "Custom 22 Name"
+    id: custom22_n
+  - platform: template
+    name: "Custom 22 Value"
+    id: custom22_v
+  - platform: template
+    name: "Custom 23 Name"
+    id: custom23_n
+  - platform: template
+    name: "Custom 23 Value"
+    id: custom23_v
+  - platform: template
+    name: "Custom 24 Name"
+    id: custom24_n
+  - platform: template
+    name: "Custom 24 Value"
+    id: custom24_v
+  - platform: template
+    name: "Custom 25 Name"
+    id: custom25_n
+  - platform: template
+    name: "Custom 25 Value"
+    id: custom25_v
+  - platform: template
+    name: "Custom 26 Name"
+    id: custom26_n
+  - platform: template
+    name: "Custom 26 Value"
+    id: custom26_v
+  - platform: template
+    name: "Custom 27 Name"
+    id: custom27_n
+  - platform: template
+    name: "Custom 27 Value"
+    id: custom27_v
+  - platform: template
+    name: "Custom 28 Name"
+    id: custom28_n
+  - platform: template
+    name: "Custom 28 Value"
+    id: custom28_v
 switch:
   - platform: template
     name: "Live-Daten in kW anzeigen"
@@ -485,21 +698,21 @@ number:
     name: "Current Page"
     id: current_page
     min_value: 1
-    max_value: 5
+    max_value: 9
     step: 1
     optimistic: true
   - platform: template
     name: "Page Index"
     id: page_display_idx
     min_value: 1
-    max_value: 5
+    max_value: 9
     step: 1
     optimistic: true
   - platform: template
     name: "Page Total"
     id: page_display_total
     min_value: 1
-    max_value: 5
+    max_value: 9
     step: 1
     optimistic: true
 
@@ -556,20 +769,20 @@ display:
         // Touch-Override: Countdown verringern
         id(touch_override_ticks)--;
         if (curr_ha != -1) {
-          last_ha_page = curr_ha;
+          id(last_ha_page) = curr_ha;
         }
       } else {
         // HA steuert: current_page -> local_page edge-triggered synchronisieren
-        if (curr_ha != -1 && curr_ha != last_ha_page) {
+        if (curr_ha != -1 && curr_ha != id(last_ha_page)) {
           id(local_page) = curr_ha;
-          last_ha_page = curr_ha;
+          id(last_ha_page) = curr_ha;
         }
       }
       
       int page = id(local_page);
       int total = id(local_page_total);
-      if (total < 1) total = 5;
-      if (page < 1 || page > 5) {
+      if (total < 1) total = 9;
+      if (page < 1 || page > 9) {
         id(local_page) = 1;
         page = 1;
       }
@@ -769,6 +982,126 @@ display:
           it.print(177, 140, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom12_n).state.c_str());
           print_val(237, 172, "%s", id(custom12_v).state.c_str()); 
         }
+      } else if (page == 6) {
+        // PAGE 6 (CUSTOM OPENKAIRO SENSORS VOL 3)
+        // C13
+        if (id(custom13_v).state.length() > 0 && id(custom13_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
+          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom13_n).state.c_str());
+          print_val(82, 82, "%s", id(custom13_v).state.c_str());
+        }
+        // C14
+        if (id(custom14_v).state.length() > 0 && id(custom14_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
+          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom14_n).state.c_str());
+          print_val(237, 82, "%s", id(custom14_v).state.c_str());
+        }
+        // C15
+        if (id(custom15_v).state.length() > 0 && id(custom15_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
+          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom15_n).state.c_str());
+          print_val(82, 172, "%s", id(custom15_v).state.c_str());
+        }
+        // C16
+        if (id(custom16_v).state.length() > 0 && id(custom16_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
+          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom16_n).state.c_str());
+          print_val(237, 172, "%s", id(custom16_v).state.c_str()); 
+        }
+      } else if (page == 7) {
+        // PAGE 7 (CUSTOM OPENKAIRO SENSORS VOL 4)
+        // C17
+        if (id(custom17_v).state.length() > 0 && id(custom17_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
+          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom17_n).state.c_str());
+          print_val(82, 82, "%s", id(custom17_v).state.c_str());
+        }
+        // C18
+        if (id(custom18_v).state.length() > 0 && id(custom18_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
+          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom18_n).state.c_str());
+          print_val(237, 82, "%s", id(custom18_v).state.c_str());
+        }
+        // C19
+        if (id(custom19_v).state.length() > 0 && id(custom19_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
+          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom19_n).state.c_str());
+          print_val(82, 172, "%s", id(custom19_v).state.c_str());
+        }
+        // C20
+        if (id(custom20_v).state.length() > 0 && id(custom20_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
+          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom20_n).state.c_str());
+          print_val(237, 172, "%s", id(custom20_v).state.c_str()); 
+        }
+      } else if (page == 8) {
+        // PAGE 8 (CUSTOM OPENKAIRO SENSORS VOL 5)
+        // C21
+        if (id(custom21_v).state.length() > 0 && id(custom21_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
+          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom21_n).state.c_str());
+          print_val(82, 82, "%s", id(custom21_v).state.c_str());
+        }
+        // C22
+        if (id(custom22_v).state.length() > 0 && id(custom22_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
+          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom22_n).state.c_str());
+          print_val(237, 82, "%s", id(custom22_v).state.c_str());
+        }
+        // C23
+        if (id(custom23_v).state.length() > 0 && id(custom23_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
+          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom23_n).state.c_str());
+          print_val(82, 172, "%s", id(custom23_v).state.c_str());
+        }
+        // C24
+        if (id(custom24_v).state.length() > 0 && id(custom24_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
+          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom24_n).state.c_str());
+          print_val(237, 172, "%s", id(custom24_v).state.c_str()); 
+        }
+      } else if (page == 9) {
+        // PAGE 9 (CUSTOM OPENKAIRO SENSORS VOL 6)
+        // C25
+        if (id(custom25_v).state.length() > 0 && id(custom25_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
+          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom25_n).state.c_str());
+          print_val(82, 82, "%s", id(custom25_v).state.c_str());
+        }
+        // C26
+        if (id(custom26_v).state.length() > 0 && id(custom26_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
+          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom26_n).state.c_str());
+          print_val(237, 82, "%s", id(custom26_v).state.c_str());
+        }
+        // C27
+        if (id(custom27_v).state.length() > 0 && id(custom27_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
+          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom27_n).state.c_str());
+          print_val(82, 172, "%s", id(custom27_v).state.c_str());
+        }
+        // C28
+        if (id(custom28_v).state.length() > 0 && id(custom28_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
+          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom28_n).state.c_str());
+          print_val(237, 172, "%s", id(custom28_v).state.c_str()); 
+        }
       }
 
       // FOOTER
@@ -786,8 +1119,12 @@ display:
       // Seitenanzeige (lokal) mit korrekter Index-Berechnung
       int idx = 0;
       int tot = 0;
-      bool p[5] = {id(page1_enabled), id(page2_enabled), id(page3_enabled), id(page4_enabled), id(page5_enabled)};
-      for(int i=0; i<5; i++){
+      bool p[9] = {
+        id(page1_enabled), id(page2_enabled), id(page3_enabled), 
+        id(page4_enabled), id(page5_enabled), id(page6_enabled),
+        id(page7_enabled), id(page8_enabled), id(page9_enabled)
+      };
+      for(int i=0; i<9; i++){
         if(p[i]) {
           tot++;
           if((i+1) == page) idx = tot;
@@ -841,15 +1178,19 @@ binary_sensor:
       - lambda: |-
           int next_page = id(local_page);
           bool found = false;
-          for (int i = 0; i < 5; i++) {
+          for (int i = 0; i < 9; i++) {
             next_page++;
-            if (next_page > 5) next_page = 1;
+            if (next_page > 9) next_page = 1;
             bool is_en = false;
             if (next_page == 1) is_en = id(page1_enabled);
             if (next_page == 2) is_en = id(page2_enabled);
             if (next_page == 3) is_en = id(page3_enabled);
             if (next_page == 4) is_en = id(page4_enabled);
             if (next_page == 5) is_en = id(page5_enabled);
+            if (next_page == 6) is_en = id(page6_enabled);
+            if (next_page == 7) is_en = id(page7_enabled);
+            if (next_page == 8) is_en = id(page8_enabled);
+            if (next_page == 9) is_en = id(page9_enabled);
             if (is_en) {
               id(local_page) = next_page;
               found = true;
