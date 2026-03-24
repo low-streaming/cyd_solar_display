@@ -1,4 +1,4 @@
-﻿import {
+import {
   LitElement,
   html,
   css,
@@ -246,6 +246,10 @@ class CYDPreview extends LitElement {
     const hasPage3 = this.editConfig.enable_page3 !== false;
     const hasPage4 = this.editConfig.enable_page4 !== false;
     const hasPage5 = this.editConfig.enable_page5 !== false;
+    const hasPage6 = !!this.editConfig.enable_page6;
+    const hasPage7 = !!this.editConfig.enable_page7;
+    const hasPage8 = !!this.editConfig.enable_page8;
+    const hasPage9 = !!this.editConfig.enable_page9;
 
     const isNegative = grid_w < 0;
     const pVal = (w) => this.editConfig.show_kw ? (w / 1000).toFixed(2) : Math.round(w);
@@ -387,6 +391,28 @@ class CYDPreview extends LitElement {
                       </div>` : ''}
                     </div>
                   </div>
+                ` : this.page >= 6 && this.page <= 9 ? html`
+                  <div class="page page-custom">
+                    <div class="stats-grid">
+                      ${[1, 2, 3, 4].map(n => {
+                        const baseIdx = (this.page - 6) * 4 + 8 + n;
+                        const nameKey = `custom${baseIdx}_name`;
+                        const entKey = `custom${baseIdx}_entity`;
+                        const name = this.editConfig[nameKey] || `Custom ${baseIdx}`;
+                        const val = this.getLiveValue(this.editConfig[entKey], 0);
+                        const colorMap = ['#00f3ff', '#00ff73', '#b026ff', '#ff003c'];
+                        return this.editConfig[entKey] ? html`
+                          <div class="stat-item" style="border-left: 4px solid ${colorMap[n-1]};">
+                              <div class="label" style="color: ${colorMap[n-1]};">${name}</div>
+                              <div class="value">${val}</div>
+                          </div>` : '';
+                      })}
+                    </div>
+                  </div>
+                ` : html`
+                  <div class="page page-empty">
+                    <div style="text-align:center;color:#666;margin-top:40px;">Seite nicht aktiv</div>
+                  </div>
                 `}
 
                 <div class="footer">
@@ -396,6 +422,10 @@ class CYDPreview extends LitElement {
                     ${hasPage3 ? html`<div class="dot ${this.page === 3 ? 'active' : ''}"></div>` : ''}
                     ${hasPage4 ? html`<div class="dot ${this.page === 4 ? 'active' : ''}"></div>` : ''}
                     ${hasPage5 ? html`<div class="dot ${this.page === 5 ? 'active' : ''}"></div>` : ''}
+                    ${hasPage6 ? html`<div class="dot ${this.page === 6 ? 'active' : ''}"></div>` : ''}
+                    ${hasPage7 ? html`<div class="dot ${this.page === 7 ? 'active' : ''}"></div>` : ''}
+                    ${hasPage8 ? html`<div class="dot ${this.page === 8 ? 'active' : ''}"></div>` : ''}
+                    ${hasPage9 ? html`<div class="dot ${this.page === 9 ? 'active' : ''}"></div>` : ''}
                   </div>
                 </div>
               </div>
@@ -405,6 +435,10 @@ class CYDPreview extends LitElement {
                 ${hasPage3 ? html`<button @click="${() => this.page = 3}">P3</button>` : ''}
                 ${hasPage4 ? html`<button @click="${() => this.page = 4}">P4</button>` : ''}
                 ${hasPage5 ? html`<button @click="${() => this.page = 5}">P5</button>` : ''}
+                ${hasPage6 ? html`<button @click="${() => this.page = 6}">P6</button>` : ''}
+                ${hasPage7 ? html`<button @click="${() => this.page = 7}">P7</button>` : ''}
+                ${hasPage8 ? html`<button @click="${() => this.page = 8}">P8</button>` : ''}
+                ${hasPage9 ? html`<button @click="${() => this.page = 9}">P9</button>` : ''}
               </div>
             </div>
           </div>
@@ -616,62 +650,49 @@ class CYDPreview extends LitElement {
             ` : ''}
         </div>
         
-        <div class="tech-box" style="margin-top: 20px; border-color: #ff9800;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <h3 style="color: #ff9800; margin-top: 0;">⛏️ Mining Sensoren (Seite 5)</h3>
-              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #fff;">
-                  <input type="checkbox" name="enable_page5" .checked="${this.editConfig.enable_page5 !== false}" @change="${this.handleFormInput}" style="width: 18px; height: 18px; accent-color: #ff9800;">
-                  Aktivieren
-              </label>
-            </div>
-            
-            ${this.editConfig.enable_page5 !== false ? html`
-            <div class="form-row">
-              <div class="form-group flex-1">
-                <label>Name 1 (z.B. Hashrate)</label>
-                <input type="text" name="mining1_name" .value="${this.editConfig.mining1_name || ''}" @input="${this.handleFormInput}">
-              </div>
-              <div class="form-group flex-1">
-                <label>Sensor 1</label>
-                ${this.renderEntitySelect('mining1_entity', ['sensor', 'input_number'])}
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group flex-1">
-                <label>Name 2 (z.B. Temp)</label>
-                <input type="text" name="mining2_name" .value="${this.editConfig.mining2_name || ''}" @input="${this.handleFormInput}">
-              </div>
-              <div class="form-group flex-1">
-                <label>Sensor 2</label>
-                ${this.renderEntitySelect('mining2_entity', ['sensor', 'input_number'])}
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group flex-1">
-                <label>Name 3</label>
-                <input type="text" name="mining3_name" .value="${this.editConfig.mining3_name || ''}" @input="${this.handleFormInput}">
-              </div>
-              <div class="form-group flex-1">
-                <label>Sensor 3</label>
-                ${this.renderEntitySelect('mining3_entity', ['sensor', 'input_number'])}
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group flex-1">
-                <label>Name 4</label>
-                <input type="text" name="mining4_name" .value="${this.editConfig.mining4_name || ''}" @input="${this.handleFormInput}">
-              </div>
-              <div class="form-group flex-1">
-                <label>Sensor 4</label>
-                ${this.renderEntitySelect('mining4_entity', ['sensor', 'input_number'])}
-              </div>
-            </div>
             ` : ''}
         </div>
 
+        ${[6, 7, 8, 9].map(pageIdx => {
+          const baseIdx = (pageIdx - 6) * 4 + 9;
+          const colorMap = { 6: '#00f3ff', 7: '#00ff73', 8: '#b026ff', 9: '#ff003c' };
+          const color = colorMap[pageIdx];
+          const enableKey = `enable_page${pageIdx}`;
+          
+          return html`
+            <div class="tech-box" style="margin-top: 20px; border-color: ${color};">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: ${color}; margin-top: 0;">🔮 Eigene Sensoren (Seite ${pageIdx})</h3>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #fff;">
+                    <input type="checkbox" name="${enableKey}" .checked="${!!this.editConfig[enableKey]}" @change="${this.handleFormInput}" style="width: 18px; height: 18px; accent-color: ${color};">
+                    Aktivieren
+                </label>
+              </div>
+              
+              ${!!this.editConfig[enableKey] ? html`
+              <p style="color:#aaa; font-size: 12px; margin-top:-10px; margin-bottom: 15px;">Füge bis zu 4 eigene Sensoren hinzu, welche auf der Seite ${pageIdx} angezeigt werden.</p>
+              ${[0, 1, 2, 3].map(i => {
+                const sensorIdx = baseIdx + i;
+                const nameKey = `custom${sensorIdx}_name`;
+                const entKey = `custom${sensorIdx}_entity`;
+                return html`
+                  <div class="form-row">
+                    <div class="form-group flex-1">
+                      <label>Name ${sensorIdx}</label>
+                      <input type="text" name="${nameKey}" .value="${this.editConfig[nameKey] || ''}" @input="${this.handleFormInput}">
+                    </div>
+                    <div class="form-group flex-1">
+                      <label>Sensor ${sensorIdx}</label>
+                      ${this.renderEntitySelect(entKey, ['sensor', 'input_number'])}
+                    </div>
+                  </div>
+                `;
+              })}
+              ` : ''}
+            </div>
+          `;
+        })}
+        
         <div class="tech-box" style="margin-top: 20px; border-color: rgba(155, 89, 182, 0.4);">
             <h3 style="color: #9b59b6; margin-top: 0;">⚙️ Allgemeine Eigenschaften</h3>
             
@@ -745,6 +766,40 @@ class CYDPreview extends LitElement {
     })}
               </div>
             </div>
+
+            <!-- Seitenwechsel-Steuerung (Rotation Source) -->
+            <div style="margin-top: 25px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+              <label style="display:block; margin-bottom: 12px; font-weight: 600; color: #ccc;">Seitenwechsel-Steuerung durch</label>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                ${['ha', 'display'].map(source => {
+                  const labels = {
+                    ha: { icon: '🏠', title: 'Home Assistant', desc: 'Zentral gesteuert' },
+                    display: { icon: '📱', title: 'Display lokal', desc: 'Jedes Display rotiert selbst' },
+                  }[source];
+                  const isActive = (this.editConfig.page_rotation_source || 'ha') === source;
+                  return html`
+                    <div
+                      @click=${() => { this.editConfig = { ...this.editConfig, page_rotation_source: source }; this.requestUpdate(); }}
+                      style="
+                        flex: 1; min-width: 140px; cursor: pointer; padding: 12px 10px;
+                        border-radius: 8px; border: 2px solid ${isActive ? '#3498db' : 'rgba(52,152,219,0.1)'};
+                        background: ${isActive ? 'rgba(52,152,219,0.15)' : 'rgba(255,255,255,0.02)'};
+                        transition: all 0.2s ease;
+                        text-align: center;
+                      "
+                    >
+                      <div style="font-size: 1.4em; margin-bottom: 4px;">${labels.icon}</div>
+                      <div style="font-weight: 700; color: ${isActive ? '#3498db' : '#aaa'}; font-size: 0.9em;">${labels.title}</div>
+                      <div style="font-size: 0.65em; color: #777; margin-top: 2px;">${labels.desc}</div>
+                    </div>
+                  `;
+                })}
+              </div>
+              <p style="font-size: 0.7em; color: #666; margin-top: 10px; line-height: 1.3;">
+                💡 <b>Display lokal</b> empfohlen bei mehreren Displays mit unterschiedlichen Seiten-Speicherungen.
+              </p>
+            </div>
+        </div>
         </div>
 
         <div class="form-actions" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; text-align: right;">
