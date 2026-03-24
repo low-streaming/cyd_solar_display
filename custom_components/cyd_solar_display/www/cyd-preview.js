@@ -366,7 +366,7 @@ class CYDPreview extends LitElement {
                       </div>` : ''}
                     </div>
                   </div>
-                ` : html`
+                ` : this.page === 5 ? html`
                   <div class="page page5">
                     <div class="stats-grid">
                       ${this.editConfig.mining1_entity ? html`
@@ -647,9 +647,6 @@ class CYDPreview extends LitElement {
                 ${this.renderEntitySelect('custom8_entity', ['sensor', 'input_number'])}
               </div>
             </div>
-            ` : ''}
-        </div>
-        
             ` : ''}
         </div>
 
