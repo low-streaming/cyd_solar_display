@@ -697,6 +697,11 @@ switch:
     name: "Live-Daten in kW anzeigen"
     id: show_kw_switch
     optimistic: true
+  - platform: template
+    name: "HA-Seiten-Synchronisierung"
+    id: ha_page_sync_switch
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
 
 number:
   - platform: template
@@ -719,11 +724,6 @@ number:
     min_value: 1
     max_value: 9
     step: 1
-    optimistic: true
-  - platform: template
-    name: "HA-Seiten-Synchronisierung"
-    id: ha_page_sync_switch
-    restore_mode: RESTORE_DEFAULT_OFF
     optimistic: true
 
 # Display Logic (Grow Box Design)
