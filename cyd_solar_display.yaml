@@ -14,8 +14,11 @@ esphome:
     priority: -10
     then:
       - lambda: |-
+          // Restore indices
           id(current_page).publish_state(id(local_page));
-          // Recalculate and publish indices if possible, or wait for next HA update
+          id(last_ha_page) = id(local_page);
+          
+          // Recalculate and publish indices
           int idx = 0;
           int tot = 0;
           bool p[9] = {
@@ -147,8 +150,12 @@ api:
             id(yield_total).publish_state(val_yield_total);
             id(grid_import).publish_state(grid_in);
             id(grid_export).publish_state(grid_out);
-            id(current_page).publish_state(page_num);
-            id(page_display_idx).publish_state(page_idx);
+            
+            // Nur synchronisieren wenn Schalter aktiv - erlaubt individuelle Display-Seiten!
+            if (id(ha_page_sync_switch).state) {
+              id(current_page).publish_state(page_num);
+              id(page_display_idx).publish_state(page_idx);
+            }
             id(page_display_total).publish_state(page_total);
             id(custom1_n).publish_state(c1_n);
             id(custom1_v).publish_state(c1_v);
@@ -244,7 +251,7 @@ globals:
     initial_value: '-1'
   - id: auto_switch_enabled
     type: bool
-    restore_value: no
+    restore_value: yes
     initial_value: 'false'  # HA steuert das Auto-Switching
   - id: local_page_total
     type: int
@@ -713,6 +720,11 @@ number:
     max_value: 9
     step: 1
     optimistic: true
+  - platform: template
+    name: "HA-Seiten-Synchronisierung"
+    id: ha_page_sync_switch
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
 
 # Display Logic (Grow Box Design)
 display:
@@ -768,12 +780,16 @@ display:
         if (curr_ha != -1) {
           id(last_ha_page) = curr_ha;
         }
-      } else {
+      } else if (id(ha_page_sync_switch).state) {
         // HA steuert: current_page -> local_page edge-triggered synchronisieren
+        // Nur wenn Synchronisierung aktiv ist!
         if (curr_ha != -1 && curr_ha != id(last_ha_page)) {
           id(local_page) = curr_ha;
           id(last_ha_page) = curr_ha;
         }
+      } else {
+        // Fallback: Wenn nicht sync, curr_ha wegspeichern damit spaeterer Sync sauber ist
+        if (curr_ha != -1) id(last_ha_page) = curr_ha;
       }
       
       int page = id(local_page);
@@ -1130,6 +1146,14 @@ display:
       if(idx == 0) idx = 1;
       if(tot == 0) tot = total;
       it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, "SEITE %d / %d", idx, tot);
+      
+      // Periodisch den tatsaechlichen Index an HA zurueckmelden (alle ~2s bei ~30Hz Refresh)
+      static int report_throttle = 0;
+      if (report_throttle++ > 60) {
+          report_throttle = 0;
+          id(page_display_idx).publish_state(idx);
+          id(page_display_total).publish_state(tot);
+      }
       
       // Touch-Override-Anzeige rechts im Footer
       if (id(touch_override_ticks) > 0) {
