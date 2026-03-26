@@ -5,13 +5,18 @@
 substitutions:
   name: "cyd-solar-display"
   friendly_name: "CYD Solar Display"
+  version: "1.2.0"
+  # Zentrale Update-Server-URLs
+  firmware_url: "https://forgematrix.de/Openkairo/CYDSOLAR/cyd_solar_display.bin"
+  version_url: "https://forgematrix.de/Openkairo/CYDSOLAR/version.txt"
+  md5_url: "https://forgematrix.de/Openkairo/CYDSOLAR/cyd_solar_display.md5"
+
+
 
 esphome:
   name: ${name}
   name_add_mac_suffix: true
   friendly_name: ${friendly_name}
-  preferences:
-    flash_write_interval: 10s
   on_boot:
     priority: -10
     then:
@@ -235,10 +240,12 @@ api:
 
 ota:
   - platform: esphome
+  - platform: http_request
 
-update:
-  - platform: esphome
-    name: "CYD Firmware Update"
+http_request:
+  useragent: esphome/cyd
+  timeout: 30s
+  verify_ssl: false
 
 button:
   - platform: restart
@@ -256,6 +263,15 @@ globals:
     type: int
     restore_value: yes
     initial_value: '1'
+  - id: online_version
+    type: std::string
+    initial_value: '"Wird geprüft..."'
+  - id: update_available
+    type: bool
+    initial_value: 'false'
+  - id: update_in_progress
+    type: bool
+    initial_value: 'false'
   - id: last_ha_page
     type: int
     restore_value: yes
@@ -337,845 +353,29 @@ script:
       - globals.set:
           id: local_page
           value: !lambda 'return target_page;'
-      - lambda: |-
-          id(current_page).publish_state(target_page);
-          id(last_ha_page) = target_page;
-          // Force immediate preference save
-          global_preferences->sync();
-          ESP_LOGI("main", "Seite gespeichert: %d", target_page);
-
-  - id: evaluate_dimming
-    then:
-      - lambda: |-
-          if (!id(current_time).now().is_valid()) return;
-          int h = id(current_time).now().hour;
-          int p_start = id(dim_start_time);
-          int p_end = id(dim_end_time);
-          float b = id(dim_brightness);
-          
-          bool should_dim = false;
-          if (p_start < p_end) {
-            should_dim = (h >= p_start && h < p_end);
-          } else {
-            should_dim = (h >= p_start || h < p_end);
-          }
-          
-          static bool is_dimmed = false;
-          static bool first_run = true;
-          static float last_b = -1.0;
-          
-          // Apply changes if it's the first run, the dim state changes, or the user changes the target brightness.
-          if (first_run || is_dimmed != should_dim || last_b != b) {
-            auto call = id(backlight).turn_on();
-            call.set_brightness(should_dim ? (b / 100.0) : 1.0);
-            call.perform();
-            is_dimmed = should_dim;
-            last_b = b;
-            first_run = false;
-          }
-
-interval:
-  - interval: 1min
-    then:
-      - script.execute: evaluate_dimming
-
-  - interval: 15s
-    then:
-      - if:
-          condition:
-            lambda: 'return id(auto_switch_enabled) && (id(touch_override_ticks) <= 0);'
-          then:
-            - lambda: |-
-                int next_page = id(local_page);
-                bool found = false;
-                for (int i = 0; i < 9; i++) {
-                  next_page++;
-                  if (next_page > 9) next_page = 1;
-                  bool is_en = false;
-                  if (next_page == 1) is_en = id(page1_enabled);
-                  if (next_page == 2) is_en = id(page2_enabled);
-                  if (next_page == 3) is_en = id(page3_enabled);
-                  if (next_page == 4) is_en = id(page4_enabled);
-                  if (next_page == 5) is_en = id(page5_enabled);
-                  if (next_page == 6) is_en = id(page6_enabled);
-                  if (next_page == 7) is_en = id(page7_enabled);
-                  if (next_page == 8) is_en = id(page8_enabled);
-                  if (next_page == 9) is_en = id(page9_enabled);
-                  if (is_en) {
-                    auto call = id(set_local_page).make_call();
-                    call.set_target_page(next_page);
-                    call.perform();
-                    found = true;
-                    break;
-                  }
-                }
-                if (!found) {
-                  auto call = id(set_local_page).make_call();
-                  call.set_target_page(1);
-                  call.perform();
-                }
-                id(touch_flash) = 0;
-
-time:
-  - platform: homeassistant
-    id: current_time
-    timezone: Europe/Berlin
-
-# Hardware Setup (CYD 2432S028)
-# WICHTIG: Das CYD hat ZWEI separate SPI-Busse!
-spi:
-  - id: spi_display
-    clk_pin: 14
-    mosi_pin: 13
-    miso_pin: 12
-  - id: spi_touch
-    clk_pin: 25
-    mosi_pin: 32
-    miso_pin: 39
-
-output:
-  - platform: ledc
-    pin: 21
-    id: backlight_pwm
-light:
-  - platform: monochromatic
-    output: backlight_pwm
-    name: "Display Backlight"
-    id: backlight
-    restore_mode: ALWAYS_ON
-
-# Colors (OpenKairo Cyberpunk Aesthetic)
-color:
-  - id: color_bg
-    red: 0%
-    green: 0%
-    blue: 0%
-  - id: color_text
-    red: 100%
-    green: 100%
-    blue: 100%
-  - id: color_panel
-    red: 12%
-    green: 12%
-    blue: 15% 
-  - id: color_solar
-    red: 100%
-    green: 85%
-    blue: 0%
-  - id: color_house
-    red: 0%
-    green: 80%
-    blue: 100%
-  - id: color_grid_in
-    red: 100%
-    green: 20%
-    blue: 20%
-  - id: color_grid_out
-    red: 20%
-    green: 100%
-    blue: 20%
-  - id: color_bat
-    red: 70%
-    green: 20%
-    blue: 100%
-  - id: color_bat_mid
-    red: 100%
-    green: 65%
-    blue: 0%
-  - id: color_bat_low
-    red: 100%
-    green: 20%
-    blue: 20%
-  - id: color_bat_full
-    red: 0%
-    green: 100%
-    blue: 50%
-
-# Fonts
-font:
-  - file: "gfonts://Roboto"
-    id: font_title
-    size: 14
-  - file: "gfonts://Roboto"
-    id: font_value
-    size: 24
-  - file: "gfonts://Roboto"
-    id: font_value_small
-    size: 18
-  - file: "gfonts://Roboto"
-    id: font_label
-    size: 12
-
-# Sensors
-sensor:
-  - platform: template
-    name: "Solar Power"
-    id: solar_w
-    unit_of_measurement: "W"
-  - platform: template
-    name: "Grid Power"
-    id: grid_w
-    unit_of_measurement: "W"
-  - platform: template
-    name: "House Power"
-    id: house_w
-    unit_of_measurement: "W"
-  - platform: template
-    name: "Battery SoC"
-    id: battery_soc
-    unit_of_measurement: "%"
-  - platform: template
-    name: "Battery Power"
-    id: battery_w
-    unit_of_measurement: "W"
-  - platform: template
-    name: "Yield Today"
-    id: yield_today
-    unit_of_measurement: "kWh"
-    accuracy_decimals: 1
-  - platform: template
-    name: "Yield Month"
-    id: yield_month
-    unit_of_measurement: "kWh"
-    accuracy_decimals: 1
-  - platform: template
-    name: "Yield Year"
-    id: yield_year
-    unit_of_measurement: "kWh"
-    accuracy_decimals: 1
-  - platform: template
-    name: "Yield Total"
-    id: yield_total
-    unit_of_measurement: "kWh"
-    accuracy_decimals: 1
-  - platform: template
-    name: "Grid Import"
-    id: grid_import
-    unit_of_measurement: "kWh"
-    accuracy_decimals: 1
-  - platform: template
-    name: "Grid Export"
-    id: grid_export
-    unit_of_measurement: "kWh"
-    accuracy_decimals: 1
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "CYD IP Address"
-      id: wifi_ip
-  - platform: template
-    name: "Custom 1 Name"
-    id: custom1_n
-  - platform: template
-    name: "Custom 1 Value"
-    id: custom1_v
-  - platform: template
-    name: "Custom 2 Name"
-    id: custom2_n
-  - platform: template
-    name: "Custom 2 Value"
-    id: custom2_v
-  - platform: template
-    name: "Custom 3 Name"
-    id: custom3_n
-  - platform: template
-    name: "Custom 3 Value"
-    id: custom3_v
-  - platform: template
-    name: "Custom 4 Name"
-    id: custom4_n
-  - platform: template
-    name: "Custom 4 Value"
-    id: custom4_v
-  - platform: template
-    name: "Custom 5 Name"
-    id: custom5_n
-  - platform: template
-    name: "Custom 5 Value"
-    id: custom5_v
-  - platform: template
-    name: "Custom 6 Name"
-    id: custom6_n
-  - platform: template
-    name: "Custom 6 Value"
-    id: custom6_v
-  - platform: template
-    name: "Custom 7 Name"
-    id: custom7_n
-  - platform: template
-    name: "Custom 7 Value"
-    id: custom7_v
-  - platform: template
-    name: "Custom 8 Name"
-    id: custom8_n
-  - platform: template
-    name: "Custom 8 Value"
-    id: custom8_v
-  - platform: template
-    name: "Custom 9 Name"
-    id: custom9_n
-  - platform: template
-    name: "Custom 9 Value"
-    id: custom9_v
-  - platform: template
-    name: "Custom 10 Name"
-    id: custom10_n
-  - platform: template
-    name: "Custom 10 Value"
-    id: custom10_v
-  - platform: template
-    name: "Custom 11 Name"
-    id: custom11_n
-  - platform: template
-    name: "Custom 11 Value"
-    id: custom11_v
-  - platform: template
-    name: "Custom 12 Name"
-    id: custom12_n
-  - platform: template
-    name: "Custom 12 Value"
-    id: custom12_v
-  - platform: template
-    name: "Custom 13 Name"
-    id: custom13_n
-  - platform: template
-    name: "Custom 13 Value"
-    id: custom13_v
-  - platform: template
-    name: "Custom 14 Name"
-    id: custom14_n
-  - platform: template
-    name: "Custom 14 Value"
-    id: custom14_v
-  - platform: template
-    name: "Custom 15 Name"
-    id: custom15_n
-  - platform: template
-    name: "Custom 15 Value"
-    id: custom15_v
-  - platform: template
-    name: "Custom 16 Name"
-    id: custom16_n
-  - platform: template
-    name: "Custom 16 Value"
-    id: custom16_v
-  - platform: template
-    name: "Custom 17 Name"
-    id: custom17_n
-  - platform: template
-    name: "Custom 17 Value"
-    id: custom17_v
-  - platform: template
-    name: "Custom 18 Name"
-    id: custom18_n
-  - platform: template
-    name: "Custom 18 Value"
-    id: custom18_v
-  - platform: template
-    name: "Custom 19 Name"
-    id: custom19_n
-  - platform: template
-    name: "Custom 19 Value"
-    id: custom19_v
-  - platform: template
-    name: "Custom 20 Name"
-    id: custom20_n
-  - platform: template
-    name: "Custom 20 Value"
-    id: custom20_v
-  - platform: template
-    name: "Custom 21 Name"
-    id: custom21_n
-  - platform: template
-    name: "Custom 21 Value"
-    id: custom21_v
-  - platform: template
-    name: "Custom 22 Name"
-    id: custom22_n
-  - platform: template
-    name: "Custom 22 Value"
-    id: custom22_v
-  - platform: template
-    name: "Custom 23 Name"
-    id: custom23_n
-  - platform: template
-    name: "Custom 23 Value"
-    id: custom23_v
-  - platform: template
-    name: "Custom 24 Name"
-    id: custom24_n
-  - platform: template
-    name: "Custom 24 Value"
-    id: custom24_v
-  - platform: template
-    name: "Custom 25 Name"
-    id: custom25_n
-  - platform: template
-    name: "Custom 25 Value"
-    id: custom25_v
-  - platform: template
-    name: "Custom 26 Name"
-    id: custom26_n
-  - platform: template
-    name: "Custom 26 Value"
-    id: custom26_v
-  - platform: template
-    name: "Custom 27 Name"
-    id: custom27_n
-  - platform: template
-    name: "Custom 27 Value"
-    id: custom27_v
-  - platform: template
-    name: "Custom 28 Name"
-    id: custom28_n
-  - platform: template
-    name: "Custom 28 Value"
-    id: custom28_v
-switch:
-  - platform: template
-    name: "Live-Daten in kW anzeigen"
-    id: show_kw_switch
-    optimistic: true
-  - platform: template
-    name: "HA-Seiten-Synchronisierung"
-    id: ha_page_sync_switch
-    restore_mode: RESTORE_DEFAULT_OFF
-    optimistic: true
-
-number:
-  - platform: template
-    name: "Current Page"
-    id: current_page
-    min_value: 1
-    max_value: 10
-    step: 1
-    optimistic: true
-    restore_value: true
-  - platform: template
-    name: "Page Index"
-    id: page_display_idx
-    min_value: 1
-    max_value: 9
-    step: 1
-    optimistic: true
-  - platform: template
-    name: "Page Total"
-    id: page_display_total
-    min_value: 1
-    max_value: 9
-    step: 1
-    optimistic: true
-
-# Display Logic (Grow Box Design)
-display:
-  - platform: ili9xxx
-    model: ILI9341
-    id: cyd_display
-    spi_id: spi_display
-    cs_pin: 15
-    dc_pin: 2
-    invert_colors: false
-    color_order: BGR
-    # Palette optimization from the working Grow Box example
-    color_palette: 8BIT
-    rotation: 90
-    lambda: |-
-      static const char *TAG = "display";
-      
-      auto print_val = [&](int x, int y, const char *format, ...) {
-        char buf[64];
-        va_list args;
-        va_start(args, format);
-        vsnprintf(buf, sizeof(buf), format, args);
-        va_end(args);
-        auto font = strlen(buf) >= 8 ? id(font_value_small) : id(font_value);
-        it.print(x, y, font, id(color_text), TextAlign::CENTER, buf);
-      };
-      
-      // Background
-      it.fill(id(color_bg));
-
-      // Check if data available
-      if (std::isnan(id(solar_w).state)) {
-        it.print(160, 90, id(font_title), id(color_text), TextAlign::TOP_CENTER, "Warten auf Daten...");
-        it.printf(160, 140, id(font_label), id(color_text), TextAlign::TOP_CENTER, "IP: %s", id(wifi_ip).state.c_str());
-        return;
-      }
-
-      // Synchronisiere total-Seiten aus HA-Wert
-      if (!std::isnan(id(page_display_total).state)) {
-        id(local_page_total) = (int)id(page_display_total).state;
-      }
-      
-      // Hybrid-Steuerung: Wenn Touch-Override aktiv -> lokale Seite nutzen
-      // Sonst: HA-Seite (current_page) nur bei AENDERUNG uebernehmen
-      int curr_ha = -1;
-      if (!std::isnan(id(current_page).state)) {
-        curr_ha = (int)id(current_page).state;
-      }
-      
-      if (id(touch_override_ticks) > 0) {
-        // Touch-Override: Countdown verringern
-        id(touch_override_ticks)--;
-        if (curr_ha != -1) {
-          id(last_ha_page) = curr_ha;
-        }
-      } else if (id(ha_page_sync_switch).state) {
-        // HA steuert: current_page -> local_page edge-triggered synchronisieren
-        // Nur wenn Synchronisierung aktiv ist!
-        if (curr_ha != -1 && curr_ha != id(last_ha_page)) {
-          id(local_page) = curr_ha;
-          id(last_ha_page) = curr_ha;
-        }
-      } else {
-        // Fallback: Wenn nicht sync, curr_ha wegspeichern damit spaeterer Sync sauber ist
-        if (curr_ha != -1) id(last_ha_page) = curr_ha;
-      }
-      
-      int page = id(local_page);
-      int total = id(local_page_total);
-      if (total < 1) total = 9;
-      if (page < 1 || page > 10) {
-        auto call = id(set_local_page).make_call();
-        call.set_target_page(1);
-        call.perform();
-        page = 1;
-      }
-
-      // HEADER
-      it.filled_rectangle(0, 0, 320, 32, id(color_panel));
-      it.print(10, 16, id(font_title), id(color_solar), TextAlign::CENTER_LEFT, "OpenKairo Display");
-      it.print(310, 16, id(font_title), id(color_text), TextAlign::CENTER_RIGHT, id(current_time).now().strftime("%H:%M").c_str());
-      it.line(0, 32, 320, 32, id(color_text));
-
-      if (page == 1) {
-        // 1. SOLAR (Top Left)
-        it.filled_rectangle(10, 42, 145, 80, id(color_panel));
-        it.filled_rectangle(10, 42, 4, 80, id(color_solar));
-        it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SOLAR");
-        if (id(show_kw_switch).state) print_val(82, 82, "%.2f kW", id(solar_w).state / 1000.0);
-        else print_val(82, 82, "%.0f W", id(solar_w).state);
+        it.printf(22, 75, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Version: %s", "${version}");
+        it.printf(22, 90, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Online:  %s", id(online_version).c_str());
+        it.printf(22, 105, id(font_label), id(color_text), TextAlign::TOP_LEFT, "IP: %s", id(wifi_ip).state.c_str());
         
-        // 2. HAUSVERBRAUCH (Top Right)
-        it.filled_rectangle(165, 42, 145, 80, id(color_panel));
-        it.filled_rectangle(165, 42, 4, 80, id(color_house));
-        it.print(177, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, "HAUSVERBRAUCH");
-        if (id(show_kw_switch).state) print_val(237, 82, "%.2f kW", id(house_w).state / 1000.0);
-        else print_val(237, 82, "%.0f W", id(house_w).state);
+        // Buttons
+        // Button 1: Restart
+        it.filled_rectangle(22, 135, 130, 40, id(color_bg));
+        it.rectangle(22, 135, 130, 40, id(color_text));
+        it.print(87, 155, id(font_label), id(color_text), TextAlign::CENTER, "NEUSTART");
         
-        // Battery Gauge Logic & Colors
-        float soc = id(battery_soc).state;
-        if (std::isnan(soc)) soc = 0;
-        else if (soc > 100) soc = 100;
-        else if (soc < 0) soc = 0;
-        
-        auto curr_bat_color = id(color_bat);
-        if (soc <= 20) curr_bat_color = id(color_bat_low);
-        else if (soc <= 50) curr_bat_color = id(color_bat_mid);
-        else if (soc >= 95) curr_bat_color = id(color_bat_full);
-
-        // 3. BATTERIE (Bottom Left)
-        it.filled_rectangle(10, 132, 145, 80, id(color_panel));
-        it.filled_rectangle(10, 132, 4, 80, curr_bat_color);
-        it.print(22, 140, id(font_label), curr_bat_color, TextAlign::TOP_LEFT, "BATTERIE");
-        
-        // Large Percentage Display
-        print_val(82, 166, "%.0f %%", soc);
-        
-        // Battery Icon Outline
-        it.rectangle(20, 186, 75, 14, id(color_text));
-        // Battery Tip
-        it.filled_rectangle(95, 190, 3, 6, id(color_text));
-        
-        // Battery Fill
-        int fill_w = (int)((soc / 100.0) * 71.0);
-        if (fill_w > 0) {
-          it.filled_rectangle(22, 188, fill_w, 10, curr_bat_color);
-        }
-        
-        // Watt Text next to gauge
-        if (id(show_kw_switch).state) {
-          it.printf(104, 193, id(font_label), id(color_text), TextAlign::CENTER_LEFT, "%.2f kW", id(battery_w).state / 1000.0);
+        // Button 2: Cloud Update (nur wenn verfügbar)
+        if (id(update_in_progress)) {
+            it.filled_rectangle(162, 135, 138, 40, id(color_solar));
+            it.print(231, 155, id(font_label), id(color_bg), TextAlign::CENTER, "LADE...");
+        } else if (id(update_available)) {
+            it.filled_rectangle(162, 135, 138, 40, id(color_solar));
+            it.print(231, 155, id(font_label), id(color_bg), TextAlign::CENTER, "JETZT UPDATEN");
         } else {
-          it.printf(104, 193, id(font_label), id(color_text), TextAlign::CENTER_LEFT, "%.0f W", id(battery_w).state);
+            it.rectangle(162, 135, 138, 40, id(color_text));
+            it.print(231, 155, id(font_label), id(color_text), TextAlign::CENTER, "AKTUELL");
         }
         
-        // 4. NETZ (Bottom Right)
-        auto g_val = id(grid_w).state;
-        auto g_color = (g_val <= 0) ? id(color_grid_out) : id(color_grid_in);
-        const char* g_label = (g_val <= 0) ? "EINSPEISUNG" : "NETZBEZUG";
-        it.filled_rectangle(165, 132, 145, 80, id(color_panel));
-        it.filled_rectangle(165, 132, 4, 80, g_color);
-        it.print(177, 140, id(font_label), g_color, TextAlign::TOP_LEFT, g_label);
-        if (id(show_kw_switch).state) print_val(237, 172, "%.2f kW", abs(g_val) / 1000.0);
-        else print_val(237, 172, "%.0f W", abs(g_val));
-      } else if (page == 2) {
-        // PAGE 2 (STATISTICS) - OPENKAIRO STYLE
-        
-        // 1. ERTRAG TAG
-        it.filled_rectangle(10, 42, 145, 80, id(color_panel));
-        it.filled_rectangle(10, 42, 4, 80, id(color_solar));
-        it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG TAG");
-        print_val(82, 82, "%.1f kWh", id(yield_today).state);
-        
-        // 2. ERTRAG MONAT
-        it.filled_rectangle(165, 42, 145, 80, id(color_panel));
-        it.filled_rectangle(165, 42, 4, 80, id(color_solar));
-        it.print(177, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG MONAT");
-        print_val(237, 82, "%.1f kWh", id(yield_month).state);
-
-        // 3. ERTRAG JAHR
-        it.filled_rectangle(10, 132, 145, 80, id(color_panel));
-        it.filled_rectangle(10, 132, 4, 80, id(color_solar));
-        it.print(22, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG JAHR");
-        print_val(82, 172, "%.0f kWh", id(yield_year).state);
-
-        // 4. GESAMTERTRAG
-        it.filled_rectangle(165, 132, 145, 80, id(color_panel));
-        it.filled_rectangle(165, 132, 4, 80, id(color_solar));
-        it.print(177, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "GESAMTERTRAG");
-        print_val(237, 172, "%.0f kWh", id(yield_total).state); 
-      } else if (page == 3) {
-        // PAGE 3 (CUSTOM OPENKAIRO SENSORS)
-        
-        // C1
-        if (id(custom1_v).state.length() > 0 && id(custom1_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
-          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom1_n).state.c_str());
-          print_val(82, 82, "%s", id(custom1_v).state.c_str());
-        }
-        
-        // C2
-        if (id(custom2_v).state.length() > 0 && id(custom2_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
-          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom2_n).state.c_str());
-          print_val(237, 82, "%s", id(custom2_v).state.c_str());
-        }
-
-        // C3
-        if (id(custom3_v).state.length() > 0 && id(custom3_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
-          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom3_n).state.c_str());
-          print_val(82, 172, "%s", id(custom3_v).state.c_str());
-        }
-
-        // C4
-        if (id(custom4_v).state.length() > 0 && id(custom4_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
-          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom4_n).state.c_str());
-          print_val(237, 172, "%s", id(custom4_v).state.c_str()); 
-        }
-      } else if (page == 4) {
-        // PAGE 4 (CUSTOM OPENKAIRO SENSORS VOL 2)
-        
-        // C5
-        if (id(custom5_v).state.length() > 0 && id(custom5_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
-          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom5_n).state.c_str());
-          print_val(82, 82, "%s", id(custom5_v).state.c_str());
-        }
-        
-        // C6
-        if (id(custom6_v).state.length() > 0 && id(custom6_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
-          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom6_n).state.c_str());
-          print_val(237, 82, "%s", id(custom6_v).state.c_str());
-        }
-
-        // C7
-        if (id(custom7_v).state.length() > 0 && id(custom7_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
-          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom7_n).state.c_str());
-          print_val(82, 172, "%s", id(custom7_v).state.c_str());
-        }
-
-        // C8
-        if (id(custom8_v).state.length() > 0 && id(custom8_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
-          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom8_n).state.c_str());
-          print_val(237, 172, "%s", id(custom8_v).state.c_str()); 
-        }
-      } else if (page == 5) {
-        // PAGE 5 (MINING SENSORS)
-        
-        // M1
-        if (id(custom9_v).state.length() > 0 && id(custom9_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 42, 4, 80, id(color_bat_mid)); 
-          it.print(22, 50, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom9_n).state.c_str());
-          print_val(82, 82, "%s", id(custom9_v).state.c_str());
-        }
-        
-        // M2
-        if (id(custom10_v).state.length() > 0 && id(custom10_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 42, 4, 80, id(color_bat_mid));
-          it.print(177, 50, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom10_n).state.c_str());
-          print_val(237, 82, "%s", id(custom10_v).state.c_str());
-        }
-
-        // M3
-        if (id(custom11_v).state.length() > 0 && id(custom11_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 132, 4, 80, id(color_bat_mid));
-          it.print(22, 140, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom11_n).state.c_str());
-          print_val(82, 172, "%s", id(custom11_v).state.c_str());
-        }
-
-        // M4
-        if (id(custom12_v).state.length() > 0 && id(custom12_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 132, 4, 80, id(color_bat_mid));
-          it.print(177, 140, id(font_label), id(color_bat_mid), TextAlign::TOP_LEFT, id(custom12_n).state.c_str());
-          print_val(237, 172, "%s", id(custom12_v).state.c_str()); 
-        }
-      } else if (page == 6) {
-        // PAGE 6 (CUSTOM OPENKAIRO SENSORS VOL 3)
-        // C13
-        if (id(custom13_v).state.length() > 0 && id(custom13_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
-          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom13_n).state.c_str());
-          print_val(82, 82, "%s", id(custom13_v).state.c_str());
-        }
-        // C14
-        if (id(custom14_v).state.length() > 0 && id(custom14_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
-          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom14_n).state.c_str());
-          print_val(237, 82, "%s", id(custom14_v).state.c_str());
-        }
-        // C15
-        if (id(custom15_v).state.length() > 0 && id(custom15_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
-          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom15_n).state.c_str());
-          print_val(82, 172, "%s", id(custom15_v).state.c_str());
-        }
-        // C16
-        if (id(custom16_v).state.length() > 0 && id(custom16_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
-          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom16_n).state.c_str());
-          print_val(237, 172, "%s", id(custom16_v).state.c_str()); 
-        }
-      } else if (page == 7) {
-        // PAGE 7 (CUSTOM OPENKAIRO SENSORS VOL 4)
-        // C17
-        if (id(custom17_v).state.length() > 0 && id(custom17_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
-          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom17_n).state.c_str());
-          print_val(82, 82, "%s", id(custom17_v).state.c_str());
-        }
-        // C18
-        if (id(custom18_v).state.length() > 0 && id(custom18_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
-          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom18_n).state.c_str());
-          print_val(237, 82, "%s", id(custom18_v).state.c_str());
-        }
-        // C19
-        if (id(custom19_v).state.length() > 0 && id(custom19_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
-          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom19_n).state.c_str());
-          print_val(82, 172, "%s", id(custom19_v).state.c_str());
-        }
-        // C20
-        if (id(custom20_v).state.length() > 0 && id(custom20_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
-          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom20_n).state.c_str());
-          print_val(237, 172, "%s", id(custom20_v).state.c_str()); 
-        }
-      } else if (page == 8) {
-        // PAGE 8 (CUSTOM OPENKAIRO SENSORS VOL 5)
-        // C21
-        if (id(custom21_v).state.length() > 0 && id(custom21_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
-          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom21_n).state.c_str());
-          print_val(82, 82, "%s", id(custom21_v).state.c_str());
-        }
-        // C22
-        if (id(custom22_v).state.length() > 0 && id(custom22_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
-          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom22_n).state.c_str());
-          print_val(237, 82, "%s", id(custom22_v).state.c_str());
-        }
-        // C23
-        if (id(custom23_v).state.length() > 0 && id(custom23_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
-          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom23_n).state.c_str());
-          print_val(82, 172, "%s", id(custom23_v).state.c_str());
-        }
-        // C24
-        if (id(custom24_v).state.length() > 0 && id(custom24_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
-          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom24_n).state.c_str());
-          print_val(237, 172, "%s", id(custom24_v).state.c_str()); 
-        }
-      } else if (page == 9) {
-        // PAGE 9 (CUSTOM OPENKAIRO SENSORS VOL 6)
-        // C25
-        if (id(custom25_v).state.length() > 0 && id(custom25_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
-          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom25_n).state.c_str());
-          print_val(82, 82, "%s", id(custom25_v).state.c_str());
-        }
-        // C26
-        if (id(custom26_v).state.length() > 0 && id(custom26_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
-          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom26_n).state.c_str());
-          print_val(237, 82, "%s", id(custom26_v).state.c_str());
-        }
-        // C27
-        if (id(custom27_v).state.length() > 0 && id(custom27_v).state != "Unbekannt") {
-          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
-          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom27_n).state.c_str());
-          print_val(82, 172, "%s", id(custom27_v).state.c_str());
-        }
-        // C28
-        if (id(custom28_v).state.length() > 0 && id(custom28_v).state != "Unbekannt") {
-          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
-          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
-          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom28_n).state.c_str());
-          print_val(237, 172, "%s", id(custom28_v).state.c_str()); 
-        }
-      } else if (page == 10) {
-        // PAGE 10 (SYSTEM & UPDATE)
-        it.filled_rectangle(10, 42, 300, 172, id(color_panel));
-        it.filled_rectangle(10, 42, 4, 172, id(color_solar));
-        it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SYSTEM STATUS");
-        
-        it.printf(22, 80, id(font_label), id(color_text), TextAlign::TOP_LEFT, "IP: %s", id(wifi_ip).state.c_str());
-        it.printf(22, 105, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Hostname: %s", id(wifi::get_use_address()).c_str());
-        
-        // Restart Button Box
-        it.filled_rectangle(22, 140, 130, 45, id(color_bg));
-        it.rectangle(22, 140, 130, 45, id(color_text));
-        it.print(87, 162, id(font_label), id(color_text), TextAlign::CENTER, "NEUSTART");
-        
-        // Update Info
-        it.print(165, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "UPDATE:");
-        it.print(165, 155, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Warten auf HA...");
-        it.print(165, 170, id(font_label), id(color_text), TextAlign::TOP_LEFT, "V1.1.1");
+        it.print(160, 195, id(font_label), id(color_text), TextAlign::CENTER, "Forgematrix.de x Openkairo.de");
       }
 
       // FOOTER
@@ -1246,6 +446,68 @@ touchscreen:
       mirror_x: true
       mirror_y: false
       swap_xy: true
+    on_touch:
+      then:
+        - lambda: |-
+            int tx = touch.x;
+            int ty = touch.y;
+            
+            // Check for System Page Buttons
+            if (id(local_page) == 10) {
+              // Restart Button: rectangle(22, 135, 130, 40)
+              if (tx > 22 && tx < 152 && ty > 135 && ty < 175) {
+                id(cyd_restart).press();
+                return;
+              }
+              // Update Button: rectangle(162, 135, 138, 40)
+              if (tx > 162 && tx < 300 && ty > 135 && ty < 175) {
+                if (id(update_available) && !id(update_in_progress)) {
+                  id(perform_cloud_update).execute();
+                } else {
+                  id(check_for_update).execute();
+                }
+                return;
+              }
+            }
+
+            int next_page = id(local_page);
+            bool found = false;
+            // Loop including page 10 (System)
+            for (int i = 0; i < 10; i++) {
+              next_page++;
+              if (next_page > 10) next_page = 1;
+              
+              // System page is always "enabled" locally
+              if (next_page == 10) {
+                id(set_local_page).execute(10);
+                found = true;
+                break;
+              }
+              
+              bool is_en = false;
+              if (next_page == 1) is_en = id(page1_enabled);
+              if (next_page == 2) is_en = id(page2_enabled);
+              if (next_page == 3) is_en = id(page3_enabled);
+              if (next_page == 4) is_en = id(page4_enabled);
+              if (next_page == 5) is_en = id(page5_enabled);
+              if (next_page == 6) is_en = id(page6_enabled);
+              if (next_page == 7) is_en = id(page7_enabled);
+              if (next_page == 8) is_en = id(page8_enabled);
+              if (next_page == 9) is_en = id(page9_enabled);
+              
+              if (is_en) {
+                id(set_local_page).execute(next_page);
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              id(set_local_page).execute(1);
+            }
+            
+            id(touch_flash) = 3;
+            id(touch_override_ticks) = 30;
+            ESP_LOGI("touch", "Touch! Seite %d", id(local_page));
 
 # =======================================================
 # TOUCH BUTTON - GANZER BILDSCHIRM
@@ -1254,64 +516,8 @@ touchscreen:
 binary_sensor:
   - platform: touchscreen
     touchscreen_id: my_touch
-    name: "Display Touch Ueberall"
+    name: "Display Touch Aktiv"
     x_min: 0
     x_max: 320
     y_min: 0
     y_max: 240
-    on_press:
-      - lambda: |-
-          // Check for System Page Buttons
-          if (id(local_page) == 10) {
-            // Restart Button Coordinates (adjusted for rotation 90: 320x240)
-            // rectangle(22, 140, 130, 45)
-            if (x > 22 && x < 152 && y > 140 && y < 185) {
-              id(cyd_restart).press();
-              return;
-            }
-          }
-
-          int next_page = id(local_page);
-          bool found = false;
-          // Loop including page 10 (System)
-          for (int i = 0; i < 10; i++) {
-            next_page++;
-            if (next_page > 10) next_page = 1;
-            
-            // System page is always "enabled" locally
-            if (next_page == 10) {
-              auto call = id(set_local_page).make_call();
-              call.set_target_page(10);
-              call.perform();
-              found = true;
-              break;
-            }
-            
-            bool is_en = false;
-            if (next_page == 1) is_en = id(page1_enabled);
-            if (next_page == 2) is_en = id(page2_enabled);
-            if (next_page == 3) is_en = id(page3_enabled);
-            if (next_page == 4) is_en = id(page4_enabled);
-            if (next_page == 5) is_en = id(page5_enabled);
-            if (next_page == 6) is_en = id(page6_enabled);
-            if (next_page == 7) is_en = id(page7_enabled);
-            if (next_page == 8) is_en = id(page8_enabled);
-            if (next_page == 9) is_en = id(page9_enabled);
-            
-            if (is_en) {
-              auto call = id(set_local_page).make_call();
-              call.set_target_page(next_page);
-              call.perform();
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            auto call = id(set_local_page).make_call();
-            call.set_target_page(1);
-            call.perform();
-          }
-          
-          id(touch_flash) = 3;
-          id(touch_override_ticks) = 30;
-          ESP_LOGI("touch", "Touch! Seite %d", id(local_page));
