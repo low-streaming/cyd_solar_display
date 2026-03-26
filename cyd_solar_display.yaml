@@ -10,6 +10,8 @@ esphome:
   name: ${name}
   name_add_mac_suffix: true
   friendly_name: ${friendly_name}
+  preferences:
+    flash_write_interval: 10s
   on_boot:
     priority: -10
     then:
@@ -234,6 +236,15 @@ api:
 ota:
   - platform: esphome
 
+update:
+  - platform: esphome
+    name: "CYD Firmware Update"
+
+button:
+  - platform: restart
+    name: "CYD Neustart"
+    id: cyd_restart
+
 logger:
   level: DEBUG
 
@@ -279,30 +290,39 @@ globals:
     initial_value: '20.0'
   - id: page1_enabled
     type: bool
+    restore_value: yes
     initial_value: 'true'
   - id: page2_enabled
     type: bool
+    restore_value: yes
     initial_value: 'true'
   - id: page3_enabled
     type: bool
+    restore_value: yes
     initial_value: 'true'
   - id: page4_enabled
     type: bool
+    restore_value: yes
     initial_value: 'true'
   - id: page5_enabled
     type: bool
+    restore_value: yes
     initial_value: 'true'
   - id: page6_enabled
     type: bool
+    restore_value: yes
     initial_value: 'true'
   - id: page7_enabled
     type: bool
+    restore_value: yes
     initial_value: 'true'
   - id: page8_enabled
     type: bool
+    restore_value: yes
     initial_value: 'true'
   - id: page9_enabled
     type: bool
+    restore_value: yes
     initial_value: 'true'
 
 # =======================================================
@@ -310,6 +330,20 @@ globals:
 # Laeuft nur wenn kein Touch-Override aktiv!
 # =======================================================
 script:
+  - id: set_local_page
+    parameters:
+      target_page: int
+    then:
+      - globals.set:
+          id: local_page
+          value: !lambda 'return target_page;'
+      - lambda: |-
+          id(current_page).publish_state(target_page);
+          id(last_ha_page) = target_page;
+          // Force immediate preference save
+          global_preferences->sync();
+          ESP_LOGI("main", "Seite gespeichert: %d", target_page);
+
   - id: evaluate_dimming
     then:
       - lambda: |-
@@ -368,12 +402,18 @@ interval:
                   if (next_page == 8) is_en = id(page8_enabled);
                   if (next_page == 9) is_en = id(page9_enabled);
                   if (is_en) {
-                    id(local_page) = next_page;
+                    auto call = id(set_local_page).make_call();
+                    call.set_target_page(next_page);
+                    call.perform();
                     found = true;
                     break;
                   }
                 }
-                if (!found) id(local_page) = 1;
+                if (!found) {
+                  auto call = id(set_local_page).make_call();
+                  call.set_target_page(1);
+                  call.perform();
+                }
                 id(touch_flash) = 0;
 
 time:
@@ -708,9 +748,10 @@ number:
     name: "Current Page"
     id: current_page
     min_value: 1
-    max_value: 9
+    max_value: 10
     step: 1
     optimistic: true
+    restore_value: true
   - platform: template
     name: "Page Index"
     id: page_display_idx
@@ -795,8 +836,10 @@ display:
       int page = id(local_page);
       int total = id(local_page_total);
       if (total < 1) total = 9;
-      if (page < 1 || page > 9) {
-        id(local_page) = 1;
+      if (page < 1 || page > 10) {
+        auto call = id(set_local_page).make_call();
+        call.set_target_page(1);
+        call.perform();
         page = 1;
       }
 
@@ -1115,6 +1158,24 @@ display:
           it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom28_n).state.c_str());
           print_val(237, 172, "%s", id(custom28_v).state.c_str()); 
         }
+      } else if (page == 10) {
+        // PAGE 10 (SYSTEM & UPDATE)
+        it.filled_rectangle(10, 42, 300, 172, id(color_panel));
+        it.filled_rectangle(10, 42, 4, 172, id(color_solar));
+        it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SYSTEM STATUS");
+        
+        it.printf(22, 80, id(font_label), id(color_text), TextAlign::TOP_LEFT, "IP: %s", id(wifi_ip).state.c_str());
+        it.printf(22, 105, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Hostname: %s", id(wifi::get_use_address()).c_str());
+        
+        // Restart Button Box
+        it.filled_rectangle(22, 140, 130, 45, id(color_bg));
+        it.rectangle(22, 140, 130, 45, id(color_text));
+        it.print(87, 162, id(font_label), id(color_text), TextAlign::CENTER, "NEUSTART");
+        
+        // Update Info
+        it.print(165, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "UPDATE:");
+        it.print(165, 155, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Warten auf HA...");
+        it.print(165, 170, id(font_label), id(color_text), TextAlign::TOP_LEFT, "V1.1.1");
       }
 
       // FOOTER
@@ -1144,8 +1205,11 @@ display:
         }
       }
       if(idx == 0) idx = 1;
-      if(tot == 0) tot = total;
-      it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, "SEITE %d / %d", idx, tot);
+      if(tot == 0) tot = (page == 10) ? 10 : total;
+      
+      const char* footer_text = (page == 10) ? "SYSTEM-INFO" : "SEITE %d / %d";
+      if (page == 10) it.printf(160, 231, id(font_label), id(color_solar), TextAlign::CENTER, footer_text);
+      else it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, footer_text, idx, tot);
       
       // Periodisch den tatsaechlichen Index an HA zurueckmelden (alle ~2s bei ~30Hz Refresh)
       static int report_throttle = 0;
@@ -1197,11 +1261,32 @@ binary_sensor:
     y_max: 240
     on_press:
       - lambda: |-
+          // Check for System Page Buttons
+          if (id(local_page) == 10) {
+            // Restart Button Coordinates (adjusted for rotation 90: 320x240)
+            // rectangle(22, 140, 130, 45)
+            if (x > 22 && x < 152 && y > 140 && y < 185) {
+              id(cyd_restart).press();
+              return;
+            }
+          }
+
           int next_page = id(local_page);
           bool found = false;
-          for (int i = 0; i < 9; i++) {
+          // Loop including page 10 (System)
+          for (int i = 0; i < 10; i++) {
             next_page++;
-            if (next_page > 9) next_page = 1;
+            if (next_page > 10) next_page = 1;
+            
+            // System page is always "enabled" locally
+            if (next_page == 10) {
+              auto call = id(set_local_page).make_call();
+              call.set_target_page(10);
+              call.perform();
+              found = true;
+              break;
+            }
+            
             bool is_en = false;
             if (next_page == 1) is_en = id(page1_enabled);
             if (next_page == 2) is_en = id(page2_enabled);
@@ -1212,13 +1297,20 @@ binary_sensor:
             if (next_page == 7) is_en = id(page7_enabled);
             if (next_page == 8) is_en = id(page8_enabled);
             if (next_page == 9) is_en = id(page9_enabled);
+            
             if (is_en) {
-              id(local_page) = next_page;
+              auto call = id(set_local_page).make_call();
+              call.set_target_page(next_page);
+              call.perform();
               found = true;
               break;
             }
           }
-          if (!found) id(local_page) = 1;
+          if (!found) {
+            auto call = id(set_local_page).make_call();
+            call.set_target_page(1);
+            call.perform();
+          }
           
           id(touch_flash) = 3;
           id(touch_override_ticks) = 30;
