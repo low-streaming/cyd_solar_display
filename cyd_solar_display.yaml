@@ -6,10 +6,10 @@ substitutions:
   name: "cyd-solar-display"
   friendly_name: "CYD Solar Display"
   version: "1.2.1-Final"
-  # Zentrale Update-Server-URLs (Custom Hosting)
-  firmware_url: "https://forgematrix.de/Openkairo/CYDSOLAR/cyd_solar_display.bin"
-  version_url: "https://forgematrix.de/Openkairo/CYDSOLAR/version.txt"
-  md5_url: "https://forgematrix.de/Openkairo/CYDSOLAR/cyd_solar_display.md5"
+  # Zentrale Update-Server-URLs (GitHub Raw - High Performance)
+  firmware_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/cyd_solar_display.bin"
+  version_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/version.txt"
+  md5_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/cyd_solar_display.md5"
 
 
 
@@ -242,7 +242,7 @@ ota:
   - platform: http_request
 
 http_request:
-  useragent: "Mozilla/5.0"
+  useragent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   timeout: 120s
   verify_ssl: false
 
