@@ -242,8 +242,8 @@ ota:
   - platform: http_request
 
 http_request:
-  useragent: esphome/cyd
-  timeout: 30s
+  useragent: "Mozilla/5.0"
+  timeout: 120s
   verify_ssl: false
 
 button:
@@ -361,6 +361,8 @@ script:
   - id: perform_cloud_update
     then:
       - lambda: 'id(update_in_progress) = true;'
+      - component.update: cyd_display
+      - delay: 1s
       - ota.http_request.flash:
           url: ${firmware_url}
           md5_url: ${md5_url}
@@ -1283,13 +1285,14 @@ touchscreen:
     cs_pin: 33
     interrupt_pin: 36
     threshold: 400
+    update_interval: 0ms
     calibration:
       x_min: 380
       x_max: 3800
       y_min: 300
       y_max: 3800
     transform:
-      mirror_x: true
+      mirror_x: false
       mirror_y: false
       swap_xy: true
     on_touch:
@@ -1297,22 +1300,31 @@ touchscreen:
         - lambda: |-
             int tx = touch.x;
             int ty = touch.y;
+            ESP_LOGI("touch", "Touch-Event: X=%d, Y=%d", tx, ty);
             
-            // Check for System Page Buttons
+            // Check for System Page Buttons (Page 10)
             if (id(local_page) == 10) {
-              // Restart Button: rectangle(22, 135, 130, 40)
-              if (tx > 22 && tx < 152 && ty > 135 && ty < 175) {
-                id(cyd_restart).press();
-                return;
-              }
-              // Update Button: rectangle(162, 135, 138, 40)
-              if (tx > 162 && tx < 300 && ty > 135 && ty < 175) {
-                if (id(update_available) && !id(update_in_progress)) {
-                  id(perform_cloud_update).execute();
-                } else {
-                  id(update_ha_version).execute();
+              // Y-Check (Buttons are in the same vertical area 130-180)
+              if (ty > 130 && ty < 185) {                // X-Check Left Button (NEUSTART)
+                if (tx > 15 && tx < 158) {
+                  ESP_LOGI("touch", "Button: Neustart");
+                  id(touch_flash) = 3;
+                  id(touch_override_ticks) = 30;
+                  id(cyd_restart).press();
+                  return;
                 }
-                return;
+                // X-Check Right Button (UPDATE)
+                if (tx > 160 && tx < 315) {
+                   ESP_LOGI("touch", "Button: Update-Zentrale");
+                   if (id(update_available) && !id(update_in_progress)) {
+                      id(perform_cloud_update).execute();
+                   } else {
+                      id(update_ha_version).execute();
+                   }
+                   id(touch_flash) = 3;
+                   id(touch_override_ticks) = 30;
+                   return;
+                }
               }
             }
 
