@@ -5,11 +5,11 @@
 substitutions:
   name: "cyd-solar-display"
   friendly_name: "CYD Solar Display"
-  version: "1.2.1-Test"
-  # Zentrale Update-Server-URLs
-  firmware_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/cyd_solar_display.bin"
+  version: "1.2.1-Final"
+  # Zentrale Update-Server-URLs (GitHub Release Latest)
+  firmware_url: "https://github.com/low-streaming/cyd_solar_display/releases/latest/download/cyd_solar_display.bin"
   version_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/version.txt"
-  md5_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/cyd_solar_display.md5"
+  md5_url: "https://github.com/low-streaming/cyd_solar_display/releases/latest/download/cyd_solar_display.md5"
 
 
 
