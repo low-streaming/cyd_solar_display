@@ -2,7 +2,7 @@ import logging
 from homeassistant.components.update import (
     UpdateEntity,
     UpdateEntityFeature,
-    DEVICE_CLASS_FIRMWARE,
+    UpdateDeviceClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -22,7 +22,7 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
     """Update entity for CYD Solar Display."""
 
     _attr_has_entity_name = True
-    _attr_device_class = DEVICE_CLASS_FIRMWARE
+    _attr_device_class = UpdateDeviceClass.FIRMWARE
     _attr_supported_features = UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS
     _attr_title = "CYD Solar Firmware"
 
