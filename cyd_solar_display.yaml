@@ -1,10 +1,12 @@
 # =======================================================
-# CYD SOLAR MONITOR - GROW BOX DESIGN V2 (ULTRA STABLE)
+# CYD SOLAR MONITOR - GROW BOX DESIGN V2
+# Touch + Auto-Page-Switch Edition
 # =======================================================
 substitutions:
   name: "cyd-solar-display"
   friendly_name: "CYD Solar Display"
   version: "1.2.4"
+  # Zentrale Update-Server-URLs (GitHub RAW - Professional)
   firmware_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/cyd_solar_display.bin"
   version_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/version.txt"
   md5_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/cyd_solar_display.md5"
@@ -13,19 +15,37 @@ esphome:
   name: ${name}
   name_add_mac_suffix: true
   friendly_name: ${friendly_name}
-  platformio_options:
-    build_flags: ["-DCONFIG_ARDUINO_LOOP_STACK_SIZE=32768"] # Massive safety buffer
   on_boot:
     priority: -10
     then:
       - lambda: |-
+          // Restore indices
           id(current_page).publish_state(id(local_page));
           id(last_ha_page) = id(local_page);
-          id(calculate_indices).execute();
+          
+          // Recalculate and publish indices
+          int idx = 0;
+          int tot = 0;
+          bool p[9] = {
+            id(page1_enabled), id(page2_enabled), id(page3_enabled), 
+            id(page4_enabled), id(page5_enabled), id(page6_enabled),
+            id(page7_enabled), id(page8_enabled), id(page9_enabled)
+          };
+          for(int i=0; i<9; i++){
+            if(p[i]) {
+              tot++;
+              if((i+1) == id(local_page)) idx = tot;
+            }
+          }
+          if (idx > 0) id(page_display_idx).publish_state(idx);
+          if (tot > 0) id(page_display_total).publish_state(tot);
+
+  platformio_options:
+    build_flags: ["-DCONFIG_ARDUINO_LOOP_STACK_SIZE=32768"]
 
 esp32:
-   board: esp32dev
-   framework:
+  board: esp32dev
+  framework:
     type: arduino
 
 # WiFi & API
@@ -142,7 +162,9 @@ api:
             
             if (id(ha_page_sync_switch).state) {
               id(current_page).publish_state(page_num);
+              id(page_display_idx).publish_state(page_idx);
             }
+            id(page_display_total).publish_state(page_total);
             id(custom1_n).publish_state(c1_n);
             id(custom1_v).publish_state(c1_v);
             id(custom2_n).publish_state(c2_n);
@@ -190,8 +212,16 @@ api:
             id(custom22_v).publish_state(c22_v);
             id(custom23_n).publish_state(c23_n);
             id(custom23_v).publish_state(c23_v);
-            if (c24_n != "") id(custom24_n).publish_state(c24_n);
-            if (c24_v != "") id(custom24_v).publish_state(c24_v);
+            id(custom24_n).publish_state(c24_n);
+            id(custom24_v).publish_state(c24_v);
+            id(custom25_n).publish_state(c25_n);
+            id(custom25_v).publish_state(c25_v);
+            id(custom26_n).publish_state(c26_n);
+            id(custom26_v).publish_state(c26_v);
+            id(custom27_n).publish_state(c27_n);
+            id(custom27_v).publish_state(c27_v);
+            id(custom28_n).publish_state(c28_n);
+            id(custom28_v).publish_state(c28_v);
             
             id(page1_enabled) = p1_en;
             id(page2_enabled) = p2_en;
@@ -202,17 +232,19 @@ api:
             id(page7_enabled) = p7_en;
             id(page8_enabled) = p8_en;
             id(page9_enabled) = p9_en;
-            
-            id(dim_brightness) = dim_brt;
             id(auto_switch_enabled) = auto_rotate;
-            id(calculate_indices).execute();
+            
+            id(dim_start_time) = dim_start;
+            id(dim_end_time) = dim_end;
+            id(dim_brightness) = dim_brt;
+            id(evaluate_dimming).execute();
 
 ota:
   - platform: esphome
   - platform: http_request
 
 http_request:
-  useragent: "Mozilla/5.0 (CYD Solar Display)"
+  useragent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   timeout: 120s
   verify_ssl: false
 
@@ -224,6 +256,9 @@ button:
 logger:
   level: DEBUG
 
+# =======================================================
+# GLOBALE VARIABLEN fuer lokale Seiten-Steuerung
+# =======================================================
 globals:
   - id: local_page
     type: int
@@ -245,21 +280,30 @@ globals:
   - id: auto_switch_enabled
     type: bool
     restore_value: yes
-    initial_value: 'false'
-  - id: display_idx
+    initial_value: 'false'  # HA steuert das Auto-Switching
+  - id: local_page_total
     type: int
-    initial_value: '1'
-  - id: display_tot
-    type: int
+    restore_value: no
     initial_value: '5'
   - id: touch_flash
     type: int
+    restore_value: no
     initial_value: '0'
   - id: touch_override_ticks
     type: int
+    restore_value: no
     initial_value: '0'
+  - id: dim_start_time
+    type: int
+    restore_value: no
+    initial_value: '22'
+  - id: dim_end_time
+    type: int
+    restore_value: no
+    initial_value: '6'
   - id: dim_brightness
     type: float
+    restore_value: no
     initial_value: '20.0'
   - id: page1_enabled
     type: bool
@@ -298,6 +342,10 @@ globals:
     restore_value: yes
     initial_value: 'true'
 
+# =======================================================
+# AUTO-SEITEN-WECHSEL (lokal auf ESP32, alle 15 Sekunden)
+# Laeuft nur wenn kein Touch-Override aktiv!
+# =======================================================
 script:
   - id: set_local_page
     parameters:
@@ -309,46 +357,64 @@ script:
       - lambda: |-
           id(current_page).publish_state(target_page);
           id(last_ha_page) = target_page;
-          id(calculate_indices).execute();
           global_preferences->sync();
-
-  - id: calculate_indices
-    then:
-      - lambda: |-
-          int p = id(local_page);
-          int idx = 0;
-          int tot = 0;
-          bool en[9] = { id(page1_enabled), id(page2_enabled), id(page3_enabled), id(page4_enabled), id(page5_enabled), id(page6_enabled), id(page7_enabled), id(page8_enabled), id(page9_enabled) };
-          for (int i=0; i<9; i++) {
-            if (en[i]) {
-              tot++;
-              if ((i+1) == p) idx = tot;
-            }
-          }
-          if (p == 10) { idx = tot; tot = tot; } // System Page
-          id(display_idx) = (idx > 0) ? idx : 1;
-          id(display_tot) = (tot > 0) ? tot : 9;
-          id(page_display_idx).publish_state(id(display_idx));
-          id(page_display_total).publish_state(id(display_tot));
+          ESP_LOGI("main", "Seite gespeichert: %d", target_page);
 
   - id: perform_cloud_update
     then: 
       - lambda: |-
           id(update_in_progress) = true;
           ESP_LOGI("main", "Cloud Update gestartet...");
-      - delay: 1s
+      - delay: 500ms
       - ota.http_request.flash:
           url: ${firmware_url}
           md5_url: ${md5_url}
       - lambda: |-
+          // Falls wir hier ankommen, ist das Update fehlgeschlagen (sonst Reboot)
           id(update_in_progress) = false;
           ESP_LOGE("main", "Cloud Update fehlgeschlagen!");
 
-interval:
-  - interval: 1s
+  - id: update_ha_version
+    then:
+      - homeassistant.service:
+          service: homeassistant.update_entity
+          data:
+            entity_id: sensor.cyd_online_version
+
+  - id: evaluate_dimming
     then:
       - lambda: |-
-          if (id(touch_override_ticks) > 0) id(touch_override_ticks)--;
+          if (!id(current_time).now().is_valid()) return;
+          int h = id(current_time).now().hour;
+          int p_start = id(dim_start_time);
+          int p_end = id(dim_end_time);
+          float b = id(dim_brightness);
+          
+          bool should_dim = false;
+          if (p_start < p_end) {
+            should_dim = (h >= p_start && h < p_end);
+          } else {
+            should_dim = (h >= p_start || h < p_end);
+          }
+          
+          static bool is_dimmed = false;
+          static bool first_run = true;
+          static float last_b = -1.0;
+          
+          // Apply changes if it's the first run, the dim state changes, or the user changes the target brightness.
+          if (first_run || is_dimmed != should_dim || last_b != b) {
+            auto call = id(backlight).turn_on();
+            call.set_brightness(should_dim ? (b / 100.0) : 1.0);
+            call.perform();
+            is_dimmed = should_dim;
+            last_b = b;
+            first_run = false;
+          }
+
+interval:
+  - interval: 1min
+    then:
+      - script.execute: evaluate_dimming
 
   - interval: 15s
     then:
@@ -357,19 +423,39 @@ interval:
             lambda: 'return id(auto_switch_enabled) && (id(touch_override_ticks) <= 0);'
           then:
             - lambda: |-
-                int next = id(local_page);
-                for (int i=0; i<9; i++) {
-                  next++;
-                  if (next > 9) next = 1;
-                  bool en[9] = { id(page1_enabled), id(page2_enabled), id(page3_enabled), id(page4_enabled), id(page5_enabled), id(page6_enabled), id(page7_enabled), id(page8_enabled), id(page9_enabled) };
-                  if (en[next-1]) { id(set_local_page).execute(next); return; }
+                int next_page = id(local_page);
+                bool found = false;
+                for (int i = 0; i < 9; i++) {
+                  next_page++;
+                  if (next_page > 9) next_page = 1;
+                  bool is_en = false;
+                  if (next_page == 1) is_en = id(page1_enabled);
+                  if (next_page == 2) is_en = id(page2_enabled);
+                  if (next_page == 3) is_en = id(page3_enabled);
+                  if (next_page == 4) is_en = id(page4_enabled);
+                  if (next_page == 5) is_en = id(page5_enabled);
+                  if (next_page == 6) is_en = id(page6_enabled);
+                  if (next_page == 7) is_en = id(page7_enabled);
+                  if (next_page == 8) is_en = id(page8_enabled);
+                  if (next_page == 9) is_en = id(page9_enabled);
+                  if (is_en) {
+                    id(set_local_page).execute(next_page);
+                    found = true;
+                    break;
+                  }
                 }
+                if (!found) {
+                  id(set_local_page).execute(1);
+                }
+                id(touch_flash) = 0;
 
 time:
   - platform: homeassistant
     id: current_time
     timezone: Europe/Berlin
 
+# Hardware Setup (CYD 2432S028)
+# WICHTIG: Das CYD hat ZWEI separate SPI-Busse!
 spi:
   - id: spi_display
     clk_pin: 14
@@ -391,6 +477,7 @@ light:
     id: backlight
     restore_mode: ALWAYS_ON
 
+# Colors (OpenKairo Cyberpunk Aesthetic)
 color:
   - id: color_bg
     red: 0%
@@ -437,6 +524,7 @@ color:
     green: 100%
     blue: 50%
 
+# Fonts
 font:
   - file: "gfonts://Roboto"
     id: font_title
@@ -451,6 +539,7 @@ font:
     id: font_label
     size: 12
 
+# Sensors
 sensor:
   - platform: template
     name: "Solar Power"
@@ -682,11 +771,12 @@ text_sensor:
     on_value:
       then:
         - lambda: |-
-            std::string s = x;
-            s.erase(std::remove(s.begin(), s.end(), '\n'), s.end());
-            s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());
-            id(online_version) = s;
-            id(update_available) = (s != "${version}" && s != "unknown");
+            id(online_version) = x;
+            if (x != "${version}" && x != "unknown") {
+              id(update_available) = true;
+            } else {
+              id(update_available) = false;
+            }
 switch:
   - platform: template
     name: "Live-Daten in kW anzeigen"
@@ -722,6 +812,7 @@ number:
     step: 1
     optimistic: true
 
+# Display Logic (Grow Box Design)
 display:
   - platform: ili9xxx
     model: ILI9341
@@ -731,24 +822,68 @@ display:
     dc_pin: 2
     invert_colors: false
     color_order: BGR
-    rotation: 90
+    # Palette optimization from the working Grow Box example
     color_palette: 8BIT
+    rotation: 90
     lambda: |-
+      static const char *TAG = "display";
+      
+      auto print_val = [&](int x, int y, const char *format, ...) {
+        char buf[64];
+        va_list args;
+        va_start(args, format);
+        vsnprintf(buf, sizeof(buf), format, args);
+        va_end(args);
+        auto font = strlen(buf) >= 8 ? id(font_value_small) : id(font_value);
+        it.print(x, y, font, id(color_text), TextAlign::CENTER, buf);
+      };
+      
+      // Background
       it.fill(id(color_bg));
+
+      // Check if data available
       if (std::isnan(id(solar_w).state)) {
-        it.print(160, 120, id(font_title), id(color_text), TextAlign::CENTER, "Warten auf Daten...");
+        it.print(160, 90, id(font_title), id(color_text), TextAlign::TOP_CENTER, "Warten auf Daten...");
+        it.printf(160, 140, id(font_label), id(color_text), TextAlign::TOP_CENTER, "IP: %s", id(wifi_ip).state.c_str());
         return;
       }
 
-      int p = id(local_page);
+      // Synchronisiere total-Seiten aus HA-Wert
+      if (!std::isnan(id(page_display_total).state)) {
+        id(local_page_total) = (int)id(page_display_total).state;
+      }
       
-      // Auto-Sync Switch Handled in Interval and Globals
+      // Hybrid-Steuerung: Wenn Touch-Override aktiv -> lokale Seite nutzen
+      // Sonst: HA-Seite (current_page) nur bei AENDERUNG uebernehmen
       int curr_ha = -1;
-      if (!std::isnan(id(current_page).state)) curr_ha = (int)id(current_page).state;
-      if (id(touch_override_ticks) <= 0 && id(ha_page_sync_switch).state) {
-        if (curr_ha != -1 && curr_ha != id(last_ha_page)) {
-          id(local_page) = curr_ha; id(last_ha_page) = curr_ha;
+      if (!std::isnan(id(current_page).state)) {
+        curr_ha = (int)id(current_page).state;
+      }
+      
+      if (id(touch_override_ticks) > 0) {
+        // Touch-Override: Countdown verringern
+        id(touch_override_ticks)--;
+        if (curr_ha != -1) {
+          id(last_ha_page) = curr_ha;
         }
+      } else if (id(ha_page_sync_switch).state) {
+        // HA steuert: current_page -> local_page edge-triggered synchronisieren
+        // Nur wenn Synchronisierung aktiv ist!
+        if (curr_ha != -1 && curr_ha != id(last_ha_page)) {
+          id(local_page) = curr_ha;
+          id(last_ha_page) = curr_ha;
+        }
+      } else {
+        // Fallback: Wenn nicht sync, curr_ha wegspeichern damit spaeterer Sync sauber ist
+        if (curr_ha != -1) id(last_ha_page) = curr_ha;
+      }
+      
+      int page = id(local_page);
+      int total = id(local_page_total);
+      if (total < 1) total = 9;
+      if (page < 1 || page > 10) {
+        id(local_page) = 1;
+        page = 1;
       }
 
       // HEADER
@@ -757,63 +892,213 @@ display:
       it.print(310, 16, id(font_title), id(color_text), TextAlign::CENTER_RIGHT, id(current_time).now().strftime("%H:%M").c_str());
       it.line(0, 32, 320, 32, id(color_text));
 
-      if (p == 1) {
+      if (page == 1) {
+        // 1. SOLAR (Top Left)
         it.filled_rectangle(10, 42, 145, 80, id(color_panel));
         it.filled_rectangle(10, 42, 4, 80, id(color_solar));
         it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SOLAR");
-        if (id(show_kw_switch).state) it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", id(solar_w).state/1000.0);
-        else it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", id(solar_w).state);
+        if (id(show_kw_switch).state) print_val(82, 82, "%.2f kW", id(solar_w).state / 1000.0);
+        else print_val(82, 82, "%.0f W", id(solar_w).state);
         
+        // 2. HAUSVERBRAUCH (Top Right)
         it.filled_rectangle(165, 42, 145, 80, id(color_panel));
         it.filled_rectangle(165, 42, 4, 80, id(color_house));
-        it.print(177, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, "HAUS");
-        if (id(show_kw_switch).state) it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", id(house_w).state/1000.0);
-        else it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", id(house_w).state);
+        it.print(177, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, "HAUSVERBRAUCH");
+        if (id(show_kw_switch).state) print_val(237, 82, "%.2f kW", id(house_w).state / 1000.0);
+        else print_val(237, 82, "%.0f W", id(house_w).state);
         
-        it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+        // Battery Gauge Logic & Colors
         float soc = id(battery_soc).state;
-        auto b_col = (soc < 20) ? id(color_grid_in) : id(color_bat);
-        it.filled_rectangle(10, 132, 4, 80, b_col);
-        it.print(22, 140, id(font_label), b_col, TextAlign::TOP_LEFT, "BATTERIE");
-        it.printf(82, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.0f %%", soc);
+        if (std::isnan(soc)) soc = 0;
+        else if (soc > 100) soc = 100;
+        else if (soc < 0) soc = 0;
         
-        it.filled_rectangle(165, 132, 145, 80, id(color_panel));
-        auto g_val = id(grid_w).state;
-        auto g_col = (g_val <= 0) ? id(color_grid_out) : id(color_grid_in);
-        it.filled_rectangle(165, 132, 4, 80, g_col);
-        it.print(177, 140, id(font_label), g_col, TextAlign::TOP_LEFT, (g_val <= 0) ? "EXPORT" : "IMPORT");
-        it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", abs(g_val));
-      } else if (p == 2) {
-          it.print(160, 120, id(font_title), id(color_text), TextAlign::CENTER, "Seite 2: Statistik");
-      } else if (p >= 3 && p <= 9) {
-          it.printf(160, 120, id(font_title), id(color_text), TextAlign::CENTER, "Eigene Seite %d", p);
-      } else if (p == 10) {
-        it.filled_rectangle(10, 42, 300, 172, id(color_panel));
-        it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SYSTEM INFO");
-        it.printf(22, 80, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Firmware: %s", "${version}");
-        it.printf(22, 100, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Online: %s", id(online_version).c_str());
-        it.printf(22, 120, id(font_label), id(color_text), TextAlign::TOP_LEFT, "IP: %s", id(wifi_ip).state.c_str());
-        
-        it.filled_rectangle(22, 150, 130, 40, id(color_bg));
-        it.rectangle(22, 150, 130, 40, id(color_text));
-        it.print(87, 170, id(font_label), id(color_text), TextAlign::CENTER, "REBOOT");
+        auto curr_bat_color = id(color_bat);
+        if (soc <= 20) curr_bat_color = id(color_bat_low);
+        else if (soc <= 50) curr_bat_color = id(color_bat_mid);
+        else if (soc >= 95) curr_bat_color = id(color_bat_full);
 
-        if (id(update_available)) {
-          it.filled_rectangle(162, 150, 138, 40, id(color_solar));
-          it.print(231, 170, id(font_label), id(color_bg), TextAlign::CENTER, id(update_in_progress) ? "LADE..." : "UPDATE");
+        // 3. BATTERIE (Bottom Left)
+        it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+        it.filled_rectangle(10, 132, 4, 80, curr_bat_color);
+        it.print(22, 140, id(font_label), curr_bat_color, TextAlign::TOP_LEFT, "BATTERIE");
+        
+        // Large Percentage Display
+        print_val(82, 166, "%.0f %%", soc);
+        
+        // Battery Icon Outline
+        it.rectangle(20, 186, 75, 14, id(color_text));
+        // Battery Tip
+        it.filled_rectangle(95, 190, 3, 6, id(color_text));
+        
+        // Battery Fill
+        int fill_w = (int)((soc / 100.0) * 71.0);
+        if (fill_w > 0) {
+          it.filled_rectangle(22, 188, fill_w, 10, curr_bat_color);
         }
+        
+        // Watt Text next to gauge
+        if (id(show_kw_switch).state) {
+          it.printf(104, 193, id(font_label), id(color_text), TextAlign::CENTER_LEFT, "%.2f kW", id(battery_w).state / 1000.0);
+        } else {
+          it.printf(104, 193, id(font_label), id(color_text), TextAlign::CENTER_LEFT, "%.0f W", id(battery_w).state);
+        }
+        
+        // 4. NETZ (Bottom Right)
+        auto g_val = id(grid_w).state;
+        auto g_color = (g_val <= 0) ? id(color_grid_out) : id(color_grid_in);
+        const char* g_label = (g_val <= 0) ? "EINSPEISUNG" : "NETZBEZUG";
+        it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+        it.filled_rectangle(165, 132, 4, 80, g_color);
+        it.print(177, 140, id(font_label), g_color, TextAlign::TOP_LEFT, g_label);
+        if (id(show_kw_switch).state) print_val(237, 172, "%.2f kW", abs(g_val) / 1000.0);
+        else print_val(237, 172, "%.0f W", abs(g_val));
+      } else if (page == 2) {
+        // PAGE 2 (STATISTICS) - OPENKAIRO STYLE
+        
+        // 1. ERTRAG TAG
+        it.filled_rectangle(10, 42, 145, 80, id(color_panel));
+        it.filled_rectangle(10, 42, 4, 80, id(color_solar));
+        it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG TAG");
+        print_val(82, 82, "%.1f kWh", id(yield_today).state);
+        
+        // 2. ERTRAG MONAT
+        it.filled_rectangle(165, 42, 145, 80, id(color_panel));
+        it.filled_rectangle(165, 42, 4, 80, id(color_solar));
+        it.print(177, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG MONAT");
+        print_val(237, 82, "%.1f kWh", id(yield_month).state);
+
+        // 3. ERTRAG JAHR
+        it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+        it.filled_rectangle(10, 132, 4, 80, id(color_solar));
+        it.print(22, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG JAHR");
+        print_val(82, 172, "%.0f kWh", id(yield_year).state);
+
+        // 4. GESAMTERTRAG
+        it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+        it.filled_rectangle(165, 132, 4, 80, id(color_solar));
+        it.print(177, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "GESAMTERTRAG");
+        print_val(237, 172, "%.0f kWh", id(yield_total).state); 
+      } else if (page == 3) {
+        // PAGE 3 (CUSTOM OPENKAIRO SENSORS)
+        
+        // C1
+        if (id(custom1_v).state.length() > 0 && id(custom1_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 42, 4, 80, id(color_house)); 
+          it.print(22, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, id(custom1_n).state.c_str());
+          print_val(82, 82, "%s", id(custom1_v).state.c_str());
+        }
+        
+        // C2
+        if (id(custom2_v).state.length() > 0 && id(custom2_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 42, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 42, 4, 80, id(color_grid_out));
+          it.print(177, 50, id(font_label), id(color_grid_out), TextAlign::TOP_LEFT, id(custom2_n).state.c_str());
+          print_val(237, 82, "%s", id(custom2_v).state.c_str());
+        }
+
+        // C3
+        if (id(custom3_v).state.length() > 0 && id(custom3_v).state != "Unbekannt") {
+          it.filled_rectangle(10, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(10, 132, 4, 80, id(color_bat));
+          it.print(22, 140, id(font_label), id(color_bat), TextAlign::TOP_LEFT, id(custom3_n).state.c_str());
+          print_val(82, 172, "%s", id(custom3_v).state.c_str());
+        }
+
+        // C4
+        if (id(custom4_v).state.length() > 0 && id(custom4_v).state != "Unbekannt") {
+          it.filled_rectangle(165, 132, 145, 80, id(color_panel));
+          it.filled_rectangle(165, 132, 4, 80, id(color_grid_in));
+          it.print(177, 140, id(font_label), id(color_grid_in), TextAlign::TOP_LEFT, id(custom4_n).state.c_str());
+          print_val(237, 172, "%s", id(custom4_v).state.c_str()); 
+        }
+      } else if (page >= 4 && page <= 9) {
+          it.printf(160, 120, id(font_title), id(color_text), TextAlign::CENTER, "Custom Page %d", page);
+      } else if (page == 10) {
+        // PAGE 10 (SYSTEM, CLOUD UPDATE & SELL INFO)
+        it.filled_rectangle(10, 42, 300, 172, id(color_panel));
+        it.filled_rectangle(10, 42, 4, 172, id(id(update_available) ? color_solar : color_house));
+        it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SYSTEM & CLOUD UPDATE");
+        
+        it.printf(22, 75, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Version: %s", "${version}");
+        it.printf(22, 90, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Online:  %s", id(online_version).c_str());
+        it.printf(22, 105, id(font_label), id(color_text), TextAlign::TOP_LEFT, "IP: %s", id(wifi_ip).state.c_str());
+        
+        // Buttons
+        // Button 1: Restart
+        it.filled_rectangle(22, 135, 130, 40, id(color_bg));
+        it.rectangle(22, 135, 130, 40, id(color_text));
+        it.print(87, 155, id(font_label), id(color_text), TextAlign::CENTER, "NEUSTART");
+        
+        // Button 2: Cloud Update (nur wenn verfügbar)
+        if (id(update_in_progress)) {
+            it.filled_rectangle(162, 135, 138, 40, id(color_solar));
+            it.print(231, 155, id(font_label), id(color_bg), TextAlign::CENTER, "LADE...");
+        } else if (id(update_available)) {
+            it.filled_rectangle(162, 135, 138, 40, id(color_solar));
+            it.print(231, 155, id(font_label), id(color_bg), TextAlign::CENTER, "JETZT UPDATEN");
+        } else {
+            it.rectangle(162, 135, 138, 40, id(color_text));
+            it.print(231, 155, id(font_label), id(color_text), TextAlign::CENTER, "AKTUELL");
+        }
+        
+        it.print(160, 195, id(font_label), id(color_text), TextAlign::CENTER, "Forgematrix.de x Openkairo.de");
       }
 
       // FOOTER
       it.filled_rectangle(0, 222, 320, 18, id(color_panel));
       it.line(0, 222, 320, 222, id(color_text));
-      it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, (p==10) ? "SYSTEM" : "SEITE %d / %d", id(display_idx), id(display_tot));
-      if (id(touch_override_ticks) > 0) it.print(315, 231, id(font_label), id(color_solar), TextAlign::CENTER_RIGHT, "[T]");
+      
+      // Touch-Flash: zeige Tippen-Symbol kurz an
+      if (id(touch_flash) > 0) {
+        id(touch_flash)--;
+        it.printf(5, 231, id(font_label), id(color_solar), TextAlign::CENTER_LEFT, "< >");
+      }
+      
+      // Seitenanzeige (lokal) mit korrekter Index-Berechnung
+      int idx = 0;
+      int tot = 0;
+      bool p[9] = {
+        id(page1_enabled), id(page2_enabled), id(page3_enabled), 
+        id(page4_enabled), id(page5_enabled), id(page6_enabled),
+        id(page7_enabled), id(page8_enabled), id(page9_enabled)
+      };
+      for(int i=0; i<9; i++){
+        if(p[i]) {
+          tot++;
+          if((i+1) == page) idx = tot;
+        }
+      }
+      if(idx == 0) idx = 1;
+      if(tot == 0) tot = (page == 10) ? 10 : total;
+      
+      const char* footer_text = (page == 10) ? "SYSTEM-INFO" : "SEITE %d / %d";
+      if (page == 10) it.printf(160, 231, id(font_label), id(color_solar), TextAlign::CENTER, footer_text);
+      else it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, footer_text, idx, tot);
+      
+      // Periodisch den tatsaechlichen Index an HA zurueckmelden (alle ~2s bei ~30Hz Refresh)
+      static int report_throttle = 0;
+      if (report_throttle++ > 60) {
+          report_throttle = 0;
+          id(page_display_idx).publish_state(idx);
+          id(page_display_total).publish_state(tot);
+      }
+      
+      // Touch-Override-Anzeige rechts im Footer
+      if (id(touch_override_ticks) > 0) {
+        it.print(315, 231, id(font_label), id(color_solar), TextAlign::CENTER_RIGHT, "[>"); // aktiv
+      } else {
+        it.print(315, 231, id(font_label), id(color_text), TextAlign::CENTER_RIGHT, "[>"); // normal
+      }
 
+# =======================================================
+# TOUCHSCREEN Setup
+# =======================================================
 touchscreen:
   - platform: xpt2046
-    spi_id: spi_touch
     id: my_touch
+    spi_id: spi_touch
     display: cyd_display
     cs_pin: 33
     interrupt_pin: 36
@@ -831,20 +1116,68 @@ touchscreen:
     on_touch:
       then:
         - lambda: |-
-            int tx = touch.x; int ty = touch.y;
-            if (id(local_page) == 10 && ty > 140 && ty < 200) {
-              if (tx < 160) { id(cyd_restart).press(); return; }
-              if (tx > 160 && id(update_available)) { id(perform_cloud_update).execute(); return; }
+            int tx = touch.x;
+            int ty = touch.y;
+            ESP_LOGI("touch", "Touch-Event: X=%d, Y=%d", tx, ty);
+            
+            // Check for System Page Buttons (Page 10)
+            if (id(local_page) == 10) {
+              if (ty > 130 && ty < 185) {
+                if (tx > 15 && tx < 158) {
+                  id(touch_flash) = 3;
+                  id(touch_override_ticks) = 30;
+                  id(cyd_restart).press();
+                  return;
+                }
+                if (tx > 160 && tx < 315) {
+                   if (id(update_available) && !id(update_in_progress)) {
+                      id(perform_cloud_update).execute();
+                   } else {
+                      id(update_ha_version).execute();
+                   }
+                   id(touch_flash) = 3;
+                   id(touch_override_ticks) = 30;
+                   return;
+                }
+              }
             }
-            int n = id(local_page);
-            for (int i=0; i<10; i++) {
-              n++; if (n > 10) n = 1;
-              if (n == 10) { id(set_local_page).execute(10); return; }
-              bool en[9] = { id(page1_enabled), id(page2_enabled), id(page3_enabled), id(page4_enabled), id(page5_enabled), id(page6_enabled), id(page7_enabled), id(page8_enabled), id(page9_enabled) };
-              if (en[n-1]) { id(set_local_page).execute(n); return; }
+
+            int next_page = id(local_page);
+            bool found = false;
+            for (int i = 0; i < 10; i++) {
+              next_page++;
+              if (next_page > 10) next_page = 1;
+              if (next_page == 10) {
+                id(set_local_page).execute(10);
+                found = true;
+                break;
+              }
+              bool is_en = false;
+              if (next_page == 1) is_en = id(page1_enabled);
+              if (next_page == 2) is_en = id(page2_enabled);
+              if (next_page == 3) is_en = id(page3_enabled);
+              if (next_page == 4) is_en = id(page4_enabled);
+              if (next_page == 5) is_en = id(page5_enabled);
+              if (next_page == 6) is_en = id(page6_enabled);
+              if (next_page == 7) is_en = id(page7_enabled);
+              if (next_page == 8) is_en = id(page8_enabled);
+              if (next_page == 9) is_en = id(page9_enabled);
+              if (is_en) {
+                id(set_local_page).execute(next_page);
+                found = true;
+                break;
+              }
             }
+            if (!found) {
+              id(set_local_page).execute(1);
+            }
+            id(touch_flash) = 3;
             id(touch_override_ticks) = 30;
 
+# =======================================================
+# TOUCH BUTTON - GANZER BILDSCHIRM
+# Ueberall tippen = naechste Seite
+# =======================================================
 binary_sensor:
   - platform: touchscreen
     touchscreen_id: my_touch
