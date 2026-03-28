@@ -58,25 +58,28 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
 
     async def async_install(self, version: str, backup: bool, **kwargs):
         """Install an update."""
-        _LOGGER.info("USER-ACTION: Firmware-Update gestartet für Version %s", version)
+        _LOGGER.info("USER-ACTION: Unabhängiges Firmware-Update gestartet für Version %s", version)
         
-        # 1. Find the ESPHome update entity
-        esphome_update_entity = self.coordinator.data.get("esphome_update_entity")
-        _LOGGER.info("Discovery: Ziel-ESPHome-Entität ist %s", esphome_update_entity)
+        # 1. URL zur Datei auf GitHub
+        # Wir nutzen die Haupt-Datei, da ESPHome den Versions-Check intern über die Header macht
+        update_url = "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/cyd_solar_display.bin"
         
-        if not esphome_update_entity:
-            _LOGGER.error("FEHLER: Keine passende ESPHome-Update-Entität gefunden! Discovery fehlgeschlagen.")
+        # 2. Finde den spezialisierten OTA-Dienst
+        ota_service = self.coordinator.data.get("ota_service")
+        
+        if not ota_service:
+            _LOGGER.error("FEHLER: Kein OTA-Dienst für dieses Gerät gefunden! Discovery fehlgeschlagen.")
             return
 
-        # 2. Trigger the install service on the ESPhome entity
+        # 3. Rufe den ESPHome-Dienst auf dem Display auf
         try:
-            _LOGGER.info("Rufe HA-Dienst auf: update.install für %s", esphome_update_entity)
+            _LOGGER.info("Sende Update-Befehl an Display via Dienst: esphome.%s", ota_service)
             await self.hass.services.async_call(
-                "update",
-                "install",
-                {"entity_id": esphome_update_entity},
+                "esphome",
+                ota_service,
+                {"url": update_url},
                 blocking=True
             )
-            _LOGGER.info("Dienst erfolgreich aufgerufen!")
+            _LOGGER.info("Update-Befehl erfolgreich gesendet! Das Display lädt die Datei nun selbstständig.")
         except Exception as err:
-            _LOGGER.error("Dienst-Aufruf fehlgeschlagen: %s", err)
+            _LOGGER.error("Senden des Update-Befehls fehlgeschlagen: %s", err)

@@ -149,6 +149,7 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
 
         # --- Discover ESPHome Entity ---
         esphome_update_id = None
+        ota_service_name = None
         installed_ver = "1.2.6"
         
         target_host = self.entry.data.get(CONF_HOST)
@@ -158,7 +159,9 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         esphome_entry = next((e for e in self.hass.config_entries.async_entries("esphome") if e.data.get("host") == target_host), None)
         
         if esphome_entry:
-            _LOGGER.debug("ESPHome Eintrag gefunden: %s", esphome_entry.title)
+            device_name = esphome_entry.title.lower().replace(" ", "_").replace("-", "_")
+            ota_service_name = f"{device_name}_trigger_ota_update"
+            _LOGGER.debug("ESPHome Eintrag gefunden: %s, Dienst: %s", esphome_entry.title, ota_service_name)
             
             # 2. Durchsuche alle Entitäten nach einer Update-Entität für diesen Eintrag
             from homeassistant.helpers import entity_registry as er
@@ -184,7 +187,8 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             "latest_version": self.latest_version,
             "installed_version": installed_ver,
             "firmware_update_entity_id": f"update.{self.entry.entry_id}_update",
-            "esphome_update_entity": esphome_update_id
+            "esphome_update_entity": esphome_update_id,
+            "ota_service": ota_service_name
         }
         def get_custom_val(entity_id):
             if not entity_id:
