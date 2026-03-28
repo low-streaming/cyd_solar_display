@@ -86,7 +86,7 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
             _LOGGER.info("Pushing Firmware zu Display unter: %s", upload_url)
             
             data = aiohttp.FormData()
-            data.add_field('file', 
+            data.add_field('update', 
                            binary_data,
                            filename='firmware.bin',
                            content_type='application/octet-stream')
