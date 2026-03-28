@@ -1,0 +1,14 @@
+{
+  "name": "CYD Solar Display - OpenKairo Edition",
+  "version": "1.2.6",
+  "home_assistant_domain": "esphome",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "cyd_solar_display_factory.bin", "offset": 0 }
+      ]
+    }
+  ]
+}

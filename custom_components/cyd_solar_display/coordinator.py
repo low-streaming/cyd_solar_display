@@ -149,7 +149,7 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
 
         # --- Version Check Logic ---
         now = datetime.now()
-        if self.latest_version is None or (self.last_version_check and (now - self.last_version_check).total_seconds() > 3600):
+        if self.latest_version is None or (self.last_version_check and (now - self.last_version_check).total_seconds() > 60):
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(self.version_url, timeout=5) as response:
