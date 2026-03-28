@@ -152,18 +152,29 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         installed_ver = "1.2.6"
         
         target_host = self.entry.data.get(CONF_HOST)
-        # Search for the ESPHome device matching this host
-        for entry in self.hass.config_entries.async_entries("esphome"):
-            if entry.data.get("host") == target_host:
-                device_name = entry.data.get("name")
-                if device_name:
-                    # Conventional Name: update.<device_name>_firmware
-                    potential_id = f"update.{str(device_name).replace('-', '_')}_firmware"
-                    state = self.hass.states.get(potential_id)
+        _LOGGER.debug("Suche nach ESPHome-Gerät für Host %s", target_host)
+
+        # 1. Finde den Config Entry von ESPHome für diese IP
+        esphome_entry = next((e for e in self.hass.config_entries.async_entries("esphome") if e.data.get("host") == target_host), None)
+        
+        if esphome_entry:
+            _LOGGER.debug("ESPHome Eintrag gefunden: %s", esphome_entry.title)
+            
+            # 2. Durchsuche alle Entitäten nach einer Update-Entität für diesen Eintrag
+            from homeassistant.helpers import entity_registry as er
+            ent_reg = er.async_get(self.hass)
+            
+            for entity in er.async_entries_for_config_entry(ent_reg, esphome_entry.entry_id):
+                if entity.domain == "update":
+                    esphome_update_id = entity.entity_id
+                    _LOGGER.info("Gefundene Ziel-Entität für Updates: %s", esphome_update_id)
+                    
+                    state = self.hass.states.get(esphome_update_id)
                     if state:
-                        esphome_update_id = potential_id
                         installed_ver = state.attributes.get("installed_version", "1.2.6")
-                break
+                    break
+        else:
+            _LOGGER.warning("Kein ESPHome-Gerät für Host %s gefunden. Update-Funktion eingeschränkt.", target_host)
 
         # --- Version Check Logic ---
         await self.async_check_version()

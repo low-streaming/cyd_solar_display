@@ -58,23 +58,25 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
 
     async def async_install(self, version: str, backup: bool, **kwargs):
         """Install an update."""
-        _LOGGER.info("Starting firmware update for CYD Solar Display to version %s", version)
+        _LOGGER.info("USER-ACTION: Firmware-Update gestartet für Version %s", version)
         
         # 1. Find the ESPHome update entity
         esphome_update_entity = self.coordinator.data.get("esphome_update_entity")
+        _LOGGER.info("Discovery: Ziel-ESPHome-Entität ist %s", esphome_update_entity)
         
         if not esphome_update_entity:
-            _LOGGER.error("Could not find the target ESPHome update entity for installation")
+            _LOGGER.error("FEHLER: Keine passende ESPHome-Update-Entität gefunden! Discovery fehlgeschlagen.")
             return
 
         # 2. Trigger the install service on the ESPhome entity
         try:
+            _LOGGER.info("Rufe HA-Dienst auf: update.install für %s", esphome_update_entity)
             await self.hass.services.async_call(
                 "update",
                 "install",
                 {"entity_id": esphome_update_entity},
                 blocking=True
             )
-            _LOGGER.info("Successfully triggered ESPHome update for %s", esphome_update_entity)
+            _LOGGER.info("Dienst erfolgreich aufgerufen!")
         except Exception as err:
-            _LOGGER.error("Failed to trigger update: %s", err)
+            _LOGGER.error("Dienst-Aufruf fehlgeschlagen: %s", err)
