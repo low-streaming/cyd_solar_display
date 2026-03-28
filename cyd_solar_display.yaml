@@ -861,7 +861,7 @@ touchscreen:
     on_touch:
       then:
         - lambda: |-
-            if (id(touch_override_ticks) > 0) return;
+            if (id(touch_flash) > 0) return;
             int tx = touch.x; int ty = touch.y;
             if (id(local_page) == 10 && ty > 130 && ty < 185 && tx > 15 && tx < 158) { id(cyd_restart).press(); return; }
             int next_page = id(local_page); bool found = false;
@@ -878,7 +878,7 @@ touchscreen:
               }
             }
             if (!found && id(local_page) != 1) id(set_local_page).execute(1);
-            id(touch_flash) = 3; id(touch_override_ticks) = 45;
+            id(touch_flash) = 2; id(touch_override_ticks) = 15;
 
 binary_sensor:
   - platform: touchscreen

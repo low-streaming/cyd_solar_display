@@ -67,14 +67,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    # Remove the registered panel from the frontend on unload
-    frontend.async_remove_panel(hass, DOMAIN)
-
-    unload_ok = True
-    coordinator = hass.data[DOMAIN].pop(entry.entry_id)
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, ["update"])
     
-    if hasattr(coordinator, "_unsub_dummy") and coordinator._unsub_dummy:
-        coordinator._unsub_dummy()
+    if unload_ok:
+        # Remove the registered panel from the frontend on unload
+        frontend.async_remove_panel(hass, DOMAIN)
+        
+        if entry.entry_id in hass.data.get(DOMAIN, {}):
+            coordinator = hass.data[DOMAIN].pop(entry.entry_id)
+            if hasattr(coordinator, "_unsub_dummy") and coordinator._unsub_dummy:
+                coordinator._unsub_dummy()
 
     return unload_ok
 

@@ -682,6 +682,62 @@ class CYDPreview extends LitElement {
             ` : ''}
         </div>
 
+        <div class="tech-box" style="margin-top: 20px; border-color: #ff9800;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h3 style="color: #ff9800; margin-top: 0;">⛏️ Mining Sensoren (Seite 5)</h3>
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #fff;">
+                  <input type="checkbox" name="enable_page5" .checked="${this.editConfig.enable_page5 !== false}" @change="${this.handleFormInput}" style="width: 18px; height: 18px; accent-color: #ff9800;">
+                  Aktivieren
+              </label>
+            </div>
+            
+            ${this.editConfig.enable_page5 !== false ? html`
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 1</label>
+                <input type="text" name="mining1_name" .value="${this.editConfig.mining1_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 1</label>
+                ${this.renderEntitySelect('mining1_entity', ['sensor', 'input_number'])}
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 2</label>
+                <input type="text" name="mining2_name" .value="${this.editConfig.mining2_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 2</label>
+                ${this.renderEntitySelect('mining2_entity', ['sensor', 'input_number'])}
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 3</label>
+                <input type="text" name="mining3_name" .value="${this.editConfig.mining3_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 3</label>
+                ${this.renderEntitySelect('mining3_entity', ['sensor', 'input_number'])}
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Name 4</label>
+                <input type="text" name="mining4_name" .value="${this.editConfig.mining4_name || ''}" @input="${this.handleFormInput}">
+              </div>
+              <div class="form-group flex-1">
+                <label>Sensor 4</label>
+                ${this.renderEntitySelect('mining4_entity', ['sensor', 'input_number'])}
+              </div>
+            </div>
+            ` : ''}
+        </div>
+
         ${[6, 7, 8, 9].map(pageIdx => {
           const baseIdx = (pageIdx - 6) * 4 + 9;
           const colorMap = { 6: '#00f3ff', 7: '#00ff73', 8: '#b026ff', 9: '#ff003c' };
