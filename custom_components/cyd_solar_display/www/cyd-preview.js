@@ -810,10 +810,51 @@ class CYDPreview extends LitElement {
   }
 
   renderInfo() {
+    const currentVersion = "1.2.6";
+    const latest = this.latestVersion || "0.0.0";
+    const updateAvailable = latest !== "0.0.0" && latest !== currentVersion;
+
     return html`
-  <div class="card" >
-        <h2>ℹ️ Informationen & Ersteinrichtung</h2>
-        <p>Willkommen beim <strong>CYD Solar Display</strong> Panel.</p>
+    <div class="card" style="margin-bottom: 20px; border-color: ${updateAvailable ? '#00f3ff' : 'rgba(255,255,255,0.1)'}; background: ${updateAvailable ? 'rgba(0, 243, 255, 0.05)' : 'rgba(0,0,0,0.2)'};">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+        <div style="flex: 1; min-width: 250px;">
+          <h3 style="margin: 0; color: #fff; display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 1.4em; filter: drop-shadow(0 0 5px ${updateAvailable ? '#00f3ff' : '#4caf50'});">${updateAvailable ? '🚀' : '✅'}</span> 
+            System & Firmware Status
+          </h3>
+          <div style="margin-top: 8px; font-size: 14px; color: #aaa;">
+            Installiert: <span style="color: #fff; font-weight: bold;">v${currentVersion}</span>
+            ${updateAvailable ? html` | <span style="color: #00f3ff; font-weight: 500;">Neue Version v${latest} verfügbar!</span>` : html` | <span style="color: #4caf50; font-weight: 500;">System ist auf dem neuesten Stand.</span>`}
+          </div>
+        </div>
+        <div>
+          ${updateAvailable ? html`
+            <button 
+              @click="${() => {
+                if(confirm(`Möchtest du das Firmware-Update auf v${latest} jetzt starten? Das Display startet nach dem Vorgang neu.`)) {
+                  this.hass.callService('update', 'install', { entity_id: 'update.cyd_solar_display' });
+                  alert("Update-Vorgang eingeleitet... Das Display wird in Kürze aktualisiert.");
+                }
+              }}"
+              style="display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #00f3ff 0%, #0084ff 100%); color: #000; padding: 12px 25px; border-radius: 8px; border:none; font-size: 14px; font-weight: 900; box-shadow: 0 4px 15px rgba(0, 243, 255, 0.4); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-transform: uppercase; letter-spacing: 1px;"
+              onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(0, 243, 255, 0.6)';" 
+              onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(0, 243, 255, 0.4)';"
+            >
+              🚀 Jetzt Aktualisieren
+            </button>
+          ` : html`
+            <div style="background: rgba(76, 175, 80, 0.1); color: #4caf50; padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(76, 175, 80, 0.3); font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+               <div style="width: 8px; height: 8px; background: #4caf50; border-radius: 50%; box-shadow: 0 0 8px #4caf50;"></div>
+               Aktuell
+            </div>
+          `}
+        </div>
+      </div>
+    </div>
+
+    <div class="card" >
+      <h2>ℹ️ Informationen & Ersteinrichtung</h2>
+      <p>Willkommen beim <strong>CYD Solar Display</strong> Panel.</p>
         
         <div class="tech-box">
           <h3 style="margin-top:0; color:#F7931A;">☀️ Was ist das CYD Solar Display?</h3>
