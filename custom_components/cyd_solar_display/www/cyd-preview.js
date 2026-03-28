@@ -871,11 +871,8 @@ class CYDPreview extends LitElement {
           ${updateAvailable ? html`
             <button 
               @click="${() => {
-                const targetId = this.firmwareUpdateEntityId || 'update.cyd_solar_display';
-                if(confirm(`Möchtest du das Firmware-Update auf v${latest} jetzt starten? Das Display startet nach dem Vorgang neu.\n\nZiel-Entität: ${targetId}`)) {
-                  this.hass.callService('update', 'install', { entity_id: targetId });
-                  alert("Update-Vorgang eingeleitet... Das Display wird in Kürze aktualisiert.");
-                }
+                alert('Da die Anzeige mehrere Displays unterstützt, leiten wir dich direkt zur Übersicht weiter. Klicke dort beim gewünschten Display einfach auf das anstehende Update.');
+                window.location.href = '/config/integrations/integration/cyd_solar_display';
               }}"
               style="display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #00f3ff 0%, #0084ff 100%); color: #000; padding: 12px 25px; border-radius: 8px; border:none; font-size: 14px; font-weight: 900; box-shadow: 0 4px 15px rgba(0, 243, 255, 0.4); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-transform: uppercase; letter-spacing: 1px;"
               onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(0, 243, 255, 0.6)';" 
