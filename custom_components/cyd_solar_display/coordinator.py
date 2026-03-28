@@ -147,12 +147,33 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             except (ValueError, TypeError):
                 return None
 
+        # --- Discover ESPHome Entity ---
+        esphome_update_id = None
+        installed_ver = "1.2.6"
+        
+        target_host = self.entry.data.get(CONF_HOST)
+        # Search for the ESPHome device matching this host
+        for entry in self.hass.config_entries.async_entries("esphome"):
+            if entry.data.get("host") == target_host:
+                device_name = entry.data.get("name")
+                if device_name:
+                    # Conventional Name: update.<device_name>_firmware
+                    potential_id = f"update.{str(device_name).replace('-', '_')}_firmware"
+                    state = self.hass.states.get(potential_id)
+                    if state:
+                        esphome_update_id = potential_id
+                        installed_ver = state.attributes.get("installed_version", "1.2.6")
+                break
+
         # --- Version Check Logic ---
         await self.async_check_version()
         # ---------------------------
 
         data = {
-            "latest_version": self.latest_version
+            "latest_version": self.latest_version,
+            "installed_version": installed_ver,
+            "firmware_update_entity_id": f"update.{self.entry.entry_id}_update",
+            "esphome_update_entity": esphome_update_id
         }
         def get_custom_val(entity_id):
             if not entity_id:

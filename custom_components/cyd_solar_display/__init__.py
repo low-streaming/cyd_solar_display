@@ -40,6 +40,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Stable JS URL (no entry_id dependency)
     js_url = f"{static_url}/cyd-preview.js"
+    
+    # NEW: Forward setups to platforms (update)
+    await hass.config_entries.async_forward_entry_setups(entry, ["update"])
 
     # Register the Sidebar Panel (only once, guard by checking frontend_panels)
     frontend_panels = hass.data.get("frontend_panels", {})
@@ -115,11 +118,11 @@ class CYDConfigView(HomeAssistantView):
             return self.json_message("Entry not found", 404)
         
         coordinator = self.hass.data[DOMAIN].get(entry_id)
-        latest_version = coordinator.latest_version if coordinator else "0.0.0"
         
         return self.json({
-            "options": dict(entry.options),
-            "latest_version": latest_version
+            "config": dict(entry.options),
+            "latest_version": coordinator.latest_version if coordinator else "0.0.0",
+            "firmware_update_entity_id": coordinator.data.get("firmware_update_entity_id", "") if coordinator else ""
         })
 
     async def post(self, request: web.Request, entry_id: str) -> web.Response:

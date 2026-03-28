@@ -14,6 +14,7 @@ class CYDPreview extends LitElement {
       activeTab: { type: String },
       editConfig: { type: Object },
       latestVersion: { type: String },
+      firmwareUpdateEntityId: { type: String },
       _checkingUpdate: { type: Boolean },
       _pickerSearch: { type: Object }
     };
@@ -25,6 +26,7 @@ class CYDPreview extends LitElement {
     this.activeTab = 'overview';
     this.editConfig = {};
     this.latestVersion = "0.0.0";
+    this.firmwareUpdateEntityId = "";
     this._checkingUpdate = false;
     this._pickerSearch = {};
   }
@@ -38,8 +40,9 @@ class CYDPreview extends LitElement {
     const entryId = this.panel.config.entry_id;
     try {
       const data = await this.hass.callApi('GET', `cyd_solar_display/config/${entryId}`);
-      this.editConfig = data.options || {};
+      this.editConfig = JSON.parse(JSON.stringify(data.config));
       this.latestVersion = data.latest_version || "0.0.0";
+      this.firmwareUpdateEntityId = data.firmware_update_entity_id || "";
       this.requestUpdate();
     } catch (e) { console.error("Failed to load config", e); }
   }
@@ -868,8 +871,9 @@ class CYDPreview extends LitElement {
           ${updateAvailable ? html`
             <button 
               @click="${() => {
-                if(confirm(`Möchtest du das Firmware-Update auf v${latest} jetzt starten? Das Display startet nach dem Vorgang neu.`)) {
-                  this.hass.callService('update', 'install', { entity_id: 'update.cyd_solar_display' });
+                const targetId = this.firmwareUpdateEntityId || 'update.cyd_solar_display';
+                if(confirm(`Möchtest du das Firmware-Update auf v${latest} jetzt starten? Das Display startet nach dem Vorgang neu.\n\nZiel-Entität: ${targetId}`)) {
+                  this.hass.callService('update', 'install', { entity_id: targetId });
                   alert("Update-Vorgang eingeleitet... Das Display wird in Kürze aktualisiert.");
                 }
               }}"
