@@ -1,3 +1,4 @@
+import aiohttp
 import logging
 from homeassistant.components.update import (
     UpdateEntity,
@@ -5,6 +6,7 @@ from homeassistant.components.update import (
     UpdateDeviceClass,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -57,29 +59,44 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
         return self.coordinator.data.get("update_in_progress", False)
 
     async def async_install(self, version: str, backup: bool, **kwargs):
-        """Install an update."""
-        _LOGGER.info("USER-ACTION: Unabhängiges Firmware-Update gestartet für Version %s", version)
+        """Install an update using the ESPHome web server."""
+        _LOGGER.info("USER-ACTION: Direct-Push Update gestartet für Version %s", version)
         
-        # 1. URL zur Datei auf GitHub
-        # Wir nutzen die Haupt-Datei, da ESPHome den Versions-Check intern über die Header macht
-        update_url = "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/cyd_solar_display.bin"
-        
-        # 2. Finde den spezialisierten OTA-Dienst
-        ota_service = self.coordinator.data.get("ota_service")
-        
-        if not ota_service:
-            _LOGGER.error("FEHLER: Kein OTA-Dienst für dieses Gerät gefunden! Discovery fehlgeschlagen.")
+        target_host = self.coordinator.entry.data.get(CONF_HOST)
+        if not target_host:
+            _LOGGER.error("FEHLER: Keine Host-IP für das Display gefunden!")
             return
 
-        # 3. Rufe den ESPHome-Dienst auf dem Display auf
+        # 1. URL zur Datei auf GitHub
+        update_url = "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/cyd_solar_display.bin"
+        
         try:
-            _LOGGER.info("Sende Update-Befehl an Display via Dienst: esphome.%s", ota_service)
-            await self.hass.services.async_call(
-                "esphome",
-                ota_service,
-                {"url": update_url},
-                blocking=True
-            )
-            _LOGGER.info("Update-Befehl erfolgreich gesendet! Das Display lädt die Datei nun selbstständig.")
+            # 2. Download der Binary von GitHub
+            _LOGGER.info("Lade Firmware von GitHub herunter: %s", update_url)
+            async with aiohttp.ClientSession() as session:
+                async with session.get(update_url) as resp:
+                    if resp.status != 200:
+                        _LOGGER.error("Download fehlgeschlagen (Status %s)", resp.status)
+                        return
+                    binary_data = await resp.read()
+            
+            # 3. Upload zum Display (ESPHome WebServer /update endpoint)
+            # ESPHome erwartet die Datei als Multipart-Form-Data
+            upload_url = f"http://{target_host}/update"
+            _LOGGER.info("Pushing Firmware zu Display unter: %s", upload_url)
+            
+            data = aiohttp.FormData()
+            data.add_field('file', 
+                           binary_data,
+                           filename='firmware.bin',
+                           content_type='application/octet-stream')
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(upload_url, data=data) as resp:
+                    if resp.status == 200:
+                        _LOGGER.info("Update erfolgreich gesendet! Display startet neu.")
+                    else:
+                        _LOGGER.error("Push fehlgeschlagen! Status: %s. Ist der WebServer aktiv?", resp.status)
+
         except Exception as err:
-            _LOGGER.error("Senden des Update-Befehls fehlgeschlagen: %s", err)
+            _LOGGER.error("Kritischer Fehler beim Update-Push: %s", err)

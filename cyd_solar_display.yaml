@@ -44,21 +44,12 @@ wifi:
     ssid: "CYD-Solar-Setup"
     password: ""
 captive_portal:
-http_request:
-  user_agent: esphome/device
-  timeout: 30s
 web_server:
   id: web_server_id
   port: 80
 
 api:
   services:
-    - service: trigger_ota_update
-      variables:
-        url: string
-      then:
-        - ota.http_request.install:
-            url: !lambda 'return url;'
     - service: update_display
       variables:
         solar: float
@@ -240,7 +231,6 @@ api:
 
 ota:
   - platform: esphome
-  - platform: http_request
 
 button:
   - platform: restart
