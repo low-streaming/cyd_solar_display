@@ -1,15 +1,11 @@
 # =======================================================
 # CYD SOLAR MONITOR - GROW BOX DESIGN V2
-# Touch + Auto-Page-Switch Edition
+# Stabile Edition v1.2.6 (Corrected Formatting)
 # =======================================================
 substitutions:
   name: "cyd-solar-display"
   friendly_name: "CYD Solar Display"
-  version: "1.2.4"
-  # Zentrale Update-Server-URLs (GitHub RAW - Professional)
-  firmware_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/cyd_solar_display.bin"
-  version_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/version.txt"
-  md5_url: "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/cyd_solar_display.md5"
+  version: "1.2.6"
 
 esphome:
   name: ${name}
@@ -19,11 +15,9 @@ esphome:
     priority: -10
     then:
       - lambda: |-
-          // Restore indices
           id(current_page).publish_state(id(local_page));
           id(last_ha_page) = id(local_page);
           
-          // Recalculate and publish indices
           int idx = 0;
           int tot = 0;
           bool p[9] = {
@@ -45,7 +39,6 @@ esp32:
   framework:
     type: arduino
 
-# WiFi & API
 wifi:
   ap:
     ssid: "CYD-Solar-Setup"
@@ -162,6 +155,7 @@ api:
               id(page_display_idx).publish_state(page_idx);
             }
             id(page_display_total).publish_state(page_total);
+            
             id(custom1_n).publish_state(c1_n);
             id(custom1_v).publish_state(c1_v);
             id(custom2_n).publish_state(c2_n);
@@ -178,7 +172,6 @@ api:
             id(custom7_v).publish_state(c7_v);
             id(custom8_n).publish_state(c8_n);
             id(custom8_v).publish_state(c8_v);
-            id(show_kw_switch).publish_state(show_kw);
             id(custom9_n).publish_state(c9_n);
             id(custom9_v).publish_state(c9_v);
             id(custom10_n).publish_state(c10_n);
@@ -220,6 +213,7 @@ api:
             id(custom28_n).publish_state(c28_n);
             id(custom28_v).publish_state(c28_v);
             
+            id(show_kw_switch).publish_state(show_kw);
             id(page1_enabled) = p1_en;
             id(page2_enabled) = p2_en;
             id(page3_enabled) = p3_en;
@@ -230,7 +224,6 @@ api:
             id(page8_enabled) = p8_en;
             id(page9_enabled) = p9_en;
             id(auto_switch_enabled) = auto_rotate;
-            
             id(dim_start_time) = dim_start;
             id(dim_end_time) = dim_end;
             id(dim_brightness) = dim_brt;
@@ -238,12 +231,6 @@ api:
 
 ota:
   - platform: esphome
-  - platform: http_request
-
-http_request:
-  useragent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-  timeout: 120s
-  verify_ssl: false
 
 button:
   - platform: restart
@@ -258,15 +245,6 @@ globals:
     type: int
     restore_value: yes
     initial_value: '1'
-  - id: online_version
-    type: std::string
-    initial_value: '"Wird geprüft..."'
-  - id: update_available
-    type: bool
-    initial_value: 'false'
-  - id: update_in_progress
-    type: bool
-    initial_value: 'false'
   - id: last_ha_page
     type: int
     restore_value: yes
@@ -348,27 +326,6 @@ script:
           id(current_page).publish_state(target_page);
           id(last_ha_page) = target_page;
           global_preferences->sync();
-          ESP_LOGI("main", "Seite gespeichert: %d", target_page);
-
-  - id: perform_cloud_update
-    then: 
-      - lambda: |-
-          id(update_in_progress) = true;
-          ESP_LOGI("main", "Cloud Update gestartet...");
-      - delay: 500ms
-      - ota.http_request.flash:
-          url: ${firmware_url}
-          md5_url: ${md5_url}
-      - lambda: |-
-          id(update_in_progress) = false;
-          ESP_LOGE("main", "Cloud Update fehlgeschlagen!");
-
-  - id: update_ha_version
-    then:
-      - homeassistant.service:
-          service: homeassistant.update_entity
-          data:
-            entity_id: sensor.cyd_online_version
 
   - id: evaluate_dimming
     then:
@@ -378,32 +335,21 @@ script:
           int p_start = id(dim_start_time);
           int p_end = id(dim_end_time);
           float b = id(dim_brightness);
-          
-          bool should_dim = false;
-          if (p_start < p_end) {
-            should_dim = (h >= p_start && h < p_end);
-          } else {
-            should_dim = (h >= p_start || h < p_end);
-          }
-          
+          bool should_dim = (p_start < p_end) ? (h >= p_start && h < p_end) : (h >= p_start || h < p_end);
           static bool is_dimmed = false;
-          static bool first_run = true;
           static float last_b = -1.0;
-          
-          if (first_run || is_dimmed != should_dim || last_b != b) {
+          if (is_dimmed != should_dim || last_b != b) {
             auto call = id(backlight).turn_on();
             call.set_brightness(should_dim ? (b / 100.0) : 1.0);
             call.perform();
             is_dimmed = should_dim;
             last_b = b;
-            first_run = false;
           }
 
 interval:
   - interval: 1min
     then:
       - script.execute: evaluate_dimming
-
   - interval: 15s
     then:
       - if:
@@ -426,15 +372,9 @@ interval:
                   if (next_page == 7) is_en = id(page7_enabled);
                   if (next_page == 8) is_en = id(page8_enabled);
                   if (next_page == 9) is_en = id(page9_enabled);
-                  if (is_en) {
-                    id(set_local_page).execute(next_page);
-                    found = true;
-                    break;
-                  }
+                  if (is_en) { id(set_local_page).execute(next_page); found = true; break; }
                 }
-                if (!found) {
-                  id(set_local_page).execute(1);
-                }
+                if (!found) id(set_local_page).execute(1);
                 id(touch_flash) = 0;
 
 time:
@@ -625,15 +565,6 @@ text_sensor:
   - platform: template
     name: "Custom 8 Name"
     id: custom8_n
-    on_value:
-      then:
-        - lambda: |-
-            id(online_version) = x;
-            if (x != "${version}" && x != "unknown") {
-              id(update_available) = true;
-            } else {
-              id(update_available) = false;
-            }
   - platform: template
     name: "Custom 8 Value"
     id: custom8_v
@@ -757,18 +688,7 @@ text_sensor:
   - platform: template
     name: "Custom 28 Value"
     id: custom28_v
-  - platform: homeassistant
-    entity_id: sensor.cyd_online_version
-    id: online_version_raw
-    on_value:
-      then:
-        - lambda: |-
-            id(online_version) = x;
-            if (x != "${version}" && x != "unknown") {
-              id(update_available) = true;
-            } else {
-              id(update_available) = false;
-            }
+
 switch:
   - platform: template
     name: "Live-Daten in kW anzeigen"
@@ -817,17 +737,6 @@ display:
     rotation: 90
     lambda: |-
       static const char *TAG = "display";
-      
-      auto print_val = [&](int x, int y, const char *format, ...) {
-        char buf[64];
-        va_list args;
-        va_start(args, format);
-        vsnprintf(buf, sizeof(buf), format, args);
-        va_end(args);
-        auto font = strlen(buf) >= 8 ? id(font_value_small) : id(font_value);
-        it.print(x, y, font, id(color_text), TextAlign::CENTER, buf);
-      };
-      
       it.fill(id(color_bg));
 
       if (std::isnan(id(solar_w).state)) {
@@ -836,20 +745,12 @@ display:
         return;
       }
 
-      if (!std::isnan(id(page_display_total).state)) {
-        id(local_page_total) = (int)id(page_display_total).state;
-      }
-      
-      int curr_ha = -1;
-      if (!std::isnan(id(current_page).state)) {
-        curr_ha = (int)id(current_page).state;
-      }
+      if (!std::isnan(id(page_display_total).state)) id(local_page_total) = (int)id(page_display_total).state;
+      int curr_ha = !std::isnan(id(current_page).state) ? (int)id(current_page).state : -1;
       
       if (id(touch_override_ticks) > 0) {
         id(touch_override_ticks)--;
-        if (curr_ha != -1) {
-          id(last_ha_page) = curr_ha;
-        }
+        if (curr_ha != -1) id(last_ha_page) = curr_ha;
       } else if (id(ha_page_sync_switch).state) {
         if (curr_ha != -1 && curr_ha != id(last_ha_page)) {
           id(local_page) = curr_ha;
@@ -860,11 +761,7 @@ display:
       }
       
       int page = id(local_page);
-      int total = id(local_page_total);
-      if (total < 1) total = 9;
-      if (page < 1 || page > 10) {
-        page = 1;
-      }
+      if (page < 1 || page > 10) page = 1;
 
       it.filled_rectangle(0, 0, 320, 32, id(color_panel));
       it.print(10, 16, id(font_title), id(color_solar), TextAlign::CENTER_LEFT, "OpenKairo Display");
@@ -875,128 +772,71 @@ display:
         it.filled_rectangle(10, 42, 145, 80, id(color_panel));
         it.filled_rectangle(10, 42, 4, 80, id(color_solar));
         it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SOLAR");
-        if (id(show_kw_switch).state) print_val(82, 82, "%.2f kW", id(solar_w).state / 1000.0);
-        else print_val(82, 82, "%.0f W", id(solar_w).state);
+        if (id(show_kw_switch).state) it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", id(solar_w).state / 1000.0);
+        else it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", id(solar_w).state);
         
         it.filled_rectangle(165, 42, 145, 80, id(color_panel));
         it.filled_rectangle(165, 42, 4, 80, id(color_house));
         it.print(177, 50, id(font_label), id(color_house), TextAlign::TOP_LEFT, "HAUSVERBRAUCH");
-        if (id(show_kw_switch).state) print_val(237, 82, "%.2f kW", id(house_w).state / 1000.0);
-        else print_val(237, 82, "%.0f W", id(house_w).state);
+        if (id(show_kw_switch).state) it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", id(house_w).state / 1000.0);
+        else it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", id(house_w).state);
         
         float soc = id(battery_soc).state;
-        if (std::isnan(soc)) soc = 0;
-        else if (soc > 100) soc = 100;
-        else if (soc < 0) soc = 0;
-        
-        auto curr_bat_color = id(color_bat);
-        if (soc <= 20) curr_bat_color = id(color_bat_low);
-        else if (soc <= 50) curr_bat_color = id(color_bat_mid);
-        else if (soc >= 95) curr_bat_color = id(color_bat_full);
-
+        auto c_bat = (soc <= 20) ? id(color_bat_low) : (soc <= 50 ? id(color_bat_mid) : (soc >= 95 ? id(color_bat_full) : id(color_bat)));
         it.filled_rectangle(10, 132, 145, 80, id(color_panel));
-        it.filled_rectangle(10, 132, 4, 80, curr_bat_color);
-        it.print(22, 140, id(font_label), curr_bat_color, TextAlign::TOP_LEFT, "BATTERIE");
-        print_val(82, 166, "%.0f %%", soc);
+        it.filled_rectangle(10, 132, 4, 80, c_bat);
+        it.print(22, 140, id(font_label), c_bat, TextAlign::TOP_LEFT, "BATTERIE");
+        it.printf(82, 166, id(font_value), id(color_text), TextAlign::CENTER, "%.0f %%", soc);
         it.rectangle(20, 186, 75, 14, id(color_text));
-        it.filled_rectangle(95, 190, 3, 6, id(color_text));
-        int fill_w = (int)((soc / 100.0) * 71.0);
-        if (fill_w > 0) {
-          it.filled_rectangle(22, 188, fill_w, 10, curr_bat_color);
-        }
-        if (id(show_kw_switch).state) it.printf(104, 193, id(font_label), id(color_text), TextAlign::CENTER_LEFT, "%.2f kW", id(battery_w).state / 1000.0);
-        else it.printf(104, 193, id(font_label), id(color_text), TextAlign::CENTER_LEFT, "%.0f W", id(battery_w).state);
+        it.filled_rectangle(22, 188, (int)((soc / 100.0) * 71.0), 10, c_bat);
         
         auto g_val = id(grid_w).state;
         auto g_color = (g_val <= 0) ? id(color_grid_out) : id(color_grid_in);
-        const char* g_label = (g_val <= 0) ? "EINSPEISUNG" : "NETZBEZUG";
         it.filled_rectangle(165, 132, 145, 80, id(color_panel));
         it.filled_rectangle(165, 132, 4, 80, g_color);
-        it.print(177, 140, id(font_label), g_color, TextAlign::TOP_LEFT, g_label);
-        if (id(show_kw_switch).state) print_val(237, 172, "%.2f kW", abs(g_val) / 1000.0);
-        else print_val(237, 172, "%.0f W", abs(g_val));
+        it.print(177, 140, id(font_label), g_color, TextAlign::TOP_LEFT, (g_val <= 0 ? "EINSPEISUNG" : "NETZBEZUG"));
+        if (id(show_kw_switch).state) it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.2f kW", abs(g_val) / 1000.0);
+        else it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.0f W", abs(g_val));
       } else if (page == 2) {
-        it.filled_rectangle(10, 42, 145, 80, id(color_panel));
-        it.filled_rectangle(10, 42, 4, 80, id(color_solar));
-        it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG TAG");
-        print_val(82, 82, "%.1f kWh", id(yield_today).state);
-        it.filled_rectangle(165, 42, 145, 80, id(color_panel));
-        it.filled_rectangle(165, 42, 4, 80, id(color_solar));
-        it.print(177, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG MONAT");
-        print_val(237, 82, "%.1f kWh", id(yield_month).state);
-        it.filled_rectangle(10, 132, 145, 80, id(color_panel));
-        it.filled_rectangle(10, 132, 4, 80, id(color_solar));
-        it.print(22, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "ERTRAG JAHR");
-        print_val(82, 172, "%.0f kWh", id(yield_year).state);
-        it.filled_rectangle(165, 132, 145, 80, id(color_panel));
-        it.filled_rectangle(165, 132, 4, 80, id(color_solar));
-        it.print(177, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "GESAMTERTRAG");
-        print_val(237, 172, "%.0f kWh", id(yield_total).state); 
+        it.filled_rectangle(10, 42, 145, 80, id(color_panel)); it.filled_rectangle(10, 42, 4, 80, id(color_solar)); it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "TAG"); it.printf(82, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.1f kWh", id(yield_today).state);
+        it.filled_rectangle(165, 42, 145, 80, id(color_panel)); it.filled_rectangle(165, 42, 4, 80, id(color_solar)); it.print(177, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "MONAT"); it.printf(237, 82, id(font_value), id(color_text), TextAlign::CENTER, "%.1f kWh", id(yield_month).state);
+        it.filled_rectangle(10, 132, 145, 80, id(color_panel)); it.filled_rectangle(10, 132, 4, 80, id(color_solar)); it.print(22, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "JAHR"); it.printf(82, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.0f kWh", id(yield_year).state);
+        it.filled_rectangle(165, 132, 145, 80, id(color_panel)); it.filled_rectangle(165, 132, 4, 80, id(color_solar)); it.print(177, 140, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "TOTAL"); it.printf(237, 172, id(font_value), id(color_text), TextAlign::CENTER, "%.0f kWh", id(yield_total).state);
       } else if (page >= 3 && page <= 9) {
-          it.printf(160, 120, id(font_title), id(color_text), TextAlign::CENTER, "Custom Page %d", page);
-      } else if (page == 10) {
-        it.filled_rectangle(10, 42, 300, 172, id(color_panel));
-        it.filled_rectangle(10, 42, 4, 172, id(id(update_available) ? color_solar : color_house));
-        it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SYSTEM & CLOUD UPDATE");
-        it.printf(22, 75, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Version: %s", "${version}");
-        it.printf(22, 90, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Online:  %s", id(online_version).c_str());
-        it.printf(22, 105, id(font_label), id(color_text), TextAlign::TOP_LEFT, "IP: %s", id(wifi_ip).state.c_str());
-        it.filled_rectangle(22, 135, 130, 40, id(color_bg));
-        it.rectangle(22, 135, 130, 40, id(color_text));
-        it.print(87, 155, id(font_label), id(color_text), TextAlign::CENTER, "NEUSTART");
-        if (id(update_in_progress)) {
-            it.filled_rectangle(162, 135, 138, 40, id(color_solar));
-            it.print(231, 155, id(font_label), id(color_bg), TextAlign::CENTER, "LADE...");
-        } else if (id(update_available)) {
-            it.filled_rectangle(162, 135, 138, 40, id(color_solar));
-            it.print(231, 155, id(font_label), id(color_bg), TextAlign::CENTER, "JETZT UPDATEN");
-        } else {
-            it.rectangle(162, 135, 138, 40, id(color_text));
-            it.print(231, 155, id(font_label), id(color_text), TextAlign::CENTER, "AKTUELL");
+        text_sensor::TextSensor* ns[4];
+        text_sensor::TextSensor* vs[4];
+        if(page==3){ ns[0]=id(custom1_n); ns[1]=id(custom2_n); ns[2]=id(custom3_n); ns[3]=id(custom4_n); vs[0]=id(custom1_v); vs[1]=id(custom2_v); vs[2]=id(custom3_v); vs[3]=id(custom4_v); }
+        else if(page==4){ ns[0]=id(custom5_n); ns[1]=id(custom6_n); ns[2]=id(custom7_n); ns[3]=id(custom8_n); vs[0]=id(custom5_v); vs[1]=id(custom6_v); vs[2]=id(custom7_v); vs[3]=id(custom8_v); }
+        else if(page==5){ ns[0]=id(custom9_n); ns[1]=id(custom10_n); ns[2]=id(custom11_n); ns[3]=id(custom12_n); vs[0]=id(custom9_v); vs[1]=id(custom10_v); vs[2]=id(custom11_v); vs[3]=id(custom12_v); }
+        else if(page==6){ ns[0]=id(custom13_n); ns[1]=id(custom14_n); ns[2]=id(custom15_n); ns[3]=id(custom16_n); vs[0]=id(custom13_v); vs[1]=id(custom14_v); vs[2]=id(custom15_v); vs[3]=id(custom16_v); }
+        else if(page==7){ ns[0]=id(custom17_n); ns[1]=id(custom18_n); ns[2]=id(custom19_n); ns[3]=id(custom20_n); vs[0]=id(custom17_v); vs[1]=id(custom18_v); vs[2]=id(custom19_v); vs[3]=id(custom20_v); }
+        else if(page==8){ ns[0]=id(custom21_n); ns[1]=id(custom22_n); ns[2]=id(custom23_n); ns[3]=id(custom24_n); vs[0]=id(custom21_v); vs[1]=id(custom22_v); vs[2]=id(custom23_v); vs[3]=id(custom24_v); }
+        else { ns[0]=id(custom25_n); ns[1]=id(custom26_n); ns[2]=id(custom27_n); ns[3]=id(custom28_n); vs[0]=id(custom25_v); vs[1]=id(custom26_v); vs[2]=id(custom27_v); vs[3]=id(custom28_v); }
+        
+        for(int i=0; i<4; i++){
+          int row = i / 2; int col = i % 2;
+          int x = 10 + col*155; int y = 42 + row*90;
+          it.filled_rectangle(x, y, 145, 80, id(color_panel));
+          it.filled_rectangle(x, y, 4, 80, id(color_solar));
+          if(ns[i]->state.length() > 0) {
+            it.print(x+12, y+8, id(font_label), id(color_solar), TextAlign::TOP_LEFT, ns[i]->state.c_str());
+            auto val = vs[i]->state;
+            auto f = val.length() > 8 ? id(font_value_small) : id(font_value);
+            it.print(x+72, y+40, f, id(color_text), TextAlign::CENTER, val.c_str());
+          }
         }
-        it.print(160, 195, id(font_label), id(color_text), TextAlign::CENTER, "Forgematrix.de x Openkairo.de");
+      } else if (page == 10) {
+        it.filled_rectangle(10, 42, 300, 172, id(color_panel)); it.filled_rectangle(10, 42, 4, 172, id(color_house)); it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SYSTEM INFO"); it.printf(22, 75, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Version: %s", "1.2.6"); it.printf(22, 105, id(font_label), id(color_text), TextAlign::TOP_LEFT, "IP: %s", id(wifi_ip).state.c_str());
+        it.filled_rectangle(22, 135, 130, 40, id(color_bg)); it.rectangle(22, 135, 130, 40, id(color_text)); it.print(87, 155, id(font_label), id(color_text), TextAlign::CENTER, "NEUSTART"); it.print(160, 195, id(font_label), id(color_text), TextAlign::CENTER, "Forgematrix.de x Openkairo.de");
       }
 
-      it.filled_rectangle(0, 222, 320, 18, id(color_panel));
-      it.line(0, 222, 320, 222, id(color_text));
-      
-      if (id(touch_flash) > 0) {
-        id(touch_flash)--;
-        it.printf(5, 231, id(font_label), id(color_solar), TextAlign::CENTER_LEFT, "< >");
-      }
-      
-      int idx = 0;
-      int tot = 0;
-      bool p[9] = {
-        id(page1_enabled), id(page2_enabled), id(page3_enabled), 
-        id(page4_enabled), id(page5_enabled), id(page6_enabled),
-        id(page7_enabled), id(page8_enabled), id(page9_enabled)
-      };
-      for(int i=0; i<9; i++){
-        if(p[i]) {
-          tot++;
-          if((i+1) == page) idx = tot;
-        }
-      }
-      if(idx == 0) idx = 1;
-      if(tot == 0) tot = (page == 10) ? 10 : total;
-      
-      const char* footer_text = (page == 10) ? "SYSTEM-INFO" : "SEITE %d / %d";
-      if (page == 10) it.printf(160, 231, id(font_label), id(color_solar), TextAlign::CENTER, footer_text);
-      else it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, footer_text, idx, tot);
-      
-      static int report_throttle = 0;
-      if (report_throttle++ > 60) {
-          report_throttle = 0;
-          id(page_display_idx).publish_state(idx);
-          id(page_display_total).publish_state(tot);
-      }
-      
-      if (id(touch_override_ticks) > 0) {
-        it.print(315, 231, id(font_label), id(color_solar), TextAlign::CENTER_RIGHT, "[>");
-      } else {
-        it.print(315, 231, id(font_label), id(color_text), TextAlign::CENTER_RIGHT, "[>");
-      }
+      it.filled_rectangle(0, 222, 320, 18, id(color_panel)); it.line(0, 222, 320, 222, id(color_text));
+      if (id(touch_flash) > 0) { id(touch_flash)--; it.print(5, 231, id(font_label), id(color_solar), TextAlign::CENTER_LEFT, "< >"); }
+      int idx = 0; int tot = 0; bool p[9] = {id(page1_enabled), id(page2_enabled), id(page3_enabled), id(page4_enabled), id(page5_enabled), id(page6_enabled), id(page7_enabled), id(page8_enabled), id(page9_enabled)};
+      for(int i=0; i<9; i++){ if(p[i]) { tot++; if((i+1) == page) idx = tot; } }
+      if (page == 10) it.print(160, 231, id(font_label), id(color_solar), TextAlign::CENTER, "SYSTEM-INFO");
+      else it.printf(160, 231, id(font_label), id(color_house), TextAlign::CENTER, "SEITE %d / %d", idx > 0 ? idx : 1, tot > 0 ? tot : 1);
+      it.print(315, 231, id(font_label), id(id(touch_override_ticks) > 0 ? color_solar : color_text), TextAlign::CENTER_RIGHT, "[>");
 
 touchscreen:
   - platform: xpt2046
@@ -1007,72 +847,22 @@ touchscreen:
     interrupt_pin: 36
     threshold: 400
     update_interval: 0ms
-    calibration:
-      x_min: 380
-      x_max: 3800
-      y_min: 300
-      y_max: 3800
-    transform:
-      mirror_x: false
-      mirror_y: false
-      swap_xy: true
+    calibration: {x_min: 380, x_max: 3800, y_min: 300, y_max: 3800}
+    transform: {mirror_x: false, mirror_y: false, swap_xy: true}
     on_touch:
       then:
         - lambda: |-
-            int tx = touch.x;
-            int ty = touch.y;
-            if (id(local_page) == 10) {
-              if (ty > 130 && ty < 185) {
-                if (tx > 15 && tx < 158) {
-                  id(touch_flash) = 3;
-                  id(touch_override_ticks) = 30;
-                  id(cyd_restart).press();
-                  return;
-                }
-                if (tx > 160 && tx < 315) {
-                   if (id(update_available) && !id(update_in_progress)) {
-                      id(perform_cloud_update).execute();
-                   } else {
-                      id(update_ha_version).execute();
-                   }
-                   id(touch_flash) = 3;
-                   id(touch_override_ticks) = 30;
-                   return;
-                }
-              }
-            }
-
-            int next_page = id(local_page);
-            bool found = false;
+            int tx = touch.x; int ty = touch.y;
+            if (id(local_page) == 10 && ty > 130 && ty < 185 && tx > 15 && tx < 158) { id(cyd_restart).press(); return; }
+            int next_page = id(local_page); bool found = false;
             for (int i = 0; i < 10; i++) {
-              next_page++;
-              if (next_page > 10) next_page = 1;
-              if (next_page == 10) {
-                id(set_local_page).execute(10);
-                found = true;
-                break;
-              }
-              bool is_en = false;
-              if (next_page == 1) is_en = id(page1_enabled);
-              if (next_page == 2) is_en = id(page2_enabled);
-              if (next_page == 3) is_en = id(page3_enabled);
-              if (next_page == 4) is_en = id(page4_enabled);
-              if (next_page == 5) is_en = id(page5_enabled);
-              if (next_page == 6) is_en = id(page6_enabled);
-              if (next_page == 7) is_en = id(page7_enabled);
-              if (next_page == 8) is_en = id(page8_enabled);
-              if (next_page == 9) is_en = id(page9_enabled);
-              if (is_en) {
-                id(set_local_page).execute(next_page);
-                found = true;
-                break;
-              }
+              next_page++; if (next_page > 10) next_page = 1;
+              if (next_page == 10) { id(set_local_page).execute(10); found = true; break; }
+              bool is_e = (next_page == 1) ? id(page1_enabled) : (next_page == 2 ? id(page2_enabled) : (next_page == 3 ? id(page3_enabled) : (next_page == 4 ? id(page4_enabled) : (next_page == 5 ? id(page5_enabled) : (next_page == 6 ? id(page6_enabled) : (next_page == 7 ? id(page7_enabled) : (next_page == 8 ? id(page8_enabled) : id(page9_enabled))))))));
+              if (is_e) { id(set_local_page).execute(next_page); found = true; break; }
             }
-            if (!found) {
-              id(set_local_page).execute(1);
-            }
-            id(touch_flash) = 3;
-            id(touch_override_ticks) = 30;
+            if (!found) id(set_local_page).execute(1);
+            id(touch_flash) = 3; id(touch_override_ticks) = 30;
 
 binary_sensor:
   - platform: touchscreen

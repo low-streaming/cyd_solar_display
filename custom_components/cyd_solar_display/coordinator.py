@@ -107,9 +107,10 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, entry):
         """Initialize."""
         self.entry = entry
-        self.host = entry.data[CONF_HOST]
-        self.port = entry.data.get(CONF_PORT, 80)
         self.last_page_switch = datetime.now()
+        self.latest_version = "0.0.0"
+        self.last_version_check = None
+        self.version_url = "https://raw.githubusercontent.com/low-streaming/cyd_solar_display/main/version.txt"
         
         # Restore last page from options
         self.current_page = entry.options.get("last_page", 1)
@@ -146,6 +147,23 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
             except (ValueError, TypeError):
                 return None
 
+        # --- Version Check Logic ---
+        now = datetime.now()
+        if self.latest_version is None or (self.last_version_check and (now - self.last_version_check).total_seconds() > 3600):
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(self.version_url, timeout=5) as response:
+                        if response.status == 200:
+                            self.latest_version = (await response.text()).strip()
+                            self.last_version_check = now
+                            _LOGGER.debug("Latest GitHub version: %s", self.latest_version)
+            except Exception as e:
+                _LOGGER.warning("Failed to fetch version from GitHub: %s", e)
+        # ---------------------------
+
+        data = {
+            "latest_version": self.latest_version
+        }
         def get_custom_val(entity_id):
             if not entity_id:
                 return ""

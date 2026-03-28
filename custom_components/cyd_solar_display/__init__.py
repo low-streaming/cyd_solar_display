@@ -112,7 +112,14 @@ class CYDConfigView(HomeAssistantView):
         entry = self.hass.config_entries.async_get_entry(entry_id)
         if not entry:
             return self.json_message("Entry not found", 404)
-        return self.json({"options": dict(entry.options)})
+        
+        coordinator = self.hass.data[DOMAIN].get(entry_id)
+        latest_version = coordinator.latest_version if coordinator else "0.0.0"
+        
+        return self.json({
+            "options": dict(entry.options),
+            "latest_version": latest_version
+        })
 
     async def post(self, request: web.Request, entry_id: str) -> web.Response:
         """Update options."""

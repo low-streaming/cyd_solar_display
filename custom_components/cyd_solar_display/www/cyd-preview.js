@@ -13,6 +13,7 @@ class CYDPreview extends LitElement {
       page: { type: Number },
       activeTab: { type: String },
       editConfig: { type: Object },
+      latestVersion: { type: String },
       _pickerSearch: { type: Object }
     };
   }
@@ -22,6 +23,7 @@ class CYDPreview extends LitElement {
     this.page = 1;
     this.activeTab = 'overview';
     this.editConfig = {};
+    this.latestVersion = "0.0.0";
     this._pickerSearch = {};
   }
 
@@ -35,6 +37,7 @@ class CYDPreview extends LitElement {
     try {
       const data = await this.hass.callApi('GET', `cyd_solar_display/config/${entryId}`);
       this.editConfig = data.options || {};
+      this.latestVersion = data.latest_version || "0.0.0";
       this.requestUpdate();
     } catch (e) { console.error("Failed to load config", e); }
   }
