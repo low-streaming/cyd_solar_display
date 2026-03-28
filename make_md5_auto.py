@@ -11,11 +11,11 @@ def create_md5_file(bin_file_path):
         while chunk := f.read(4096):
             file_hash.update(chunk)
             
-    md5_hex = file_hash.hexdigest().upper()
+    md5_hex = file_hash.hexdigest().lower()
     
     md5_file_path = "cyd_solar_display.md5"
     with open(md5_file_path, "w") as f:
-        f.write(md5_hex)
+        f.write(md5_hex.strip())
         
     print(f"Erfolg! MD5-Datei wurde erstellt:")
     print(f"-> Code: {md5_hex}")
