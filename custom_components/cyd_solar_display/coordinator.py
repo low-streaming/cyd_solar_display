@@ -148,17 +148,7 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
                 return None
 
         # --- Version Check Logic ---
-        now = datetime.now()
-        if self.latest_version is None or (self.last_version_check and (now - self.last_version_check).total_seconds() > 60):
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(self.version_url, timeout=5) as response:
-                        if response.status == 200:
-                            self.latest_version = (await response.text()).strip()
-                            self.last_version_check = now
-                            _LOGGER.debug("Latest GitHub version: %s", self.latest_version)
-            except Exception as e:
-                _LOGGER.warning("Failed to fetch version from GitHub: %s", e)
+        await self.async_check_version()
         # ---------------------------
 
         data = {

@@ -22,6 +22,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register API View for Panel Config (only once)
     if "api_registered" not in hass.data[DOMAIN]:
         hass.http.register_view(CYDConfigView(hass))
+        hass.http.register_view(CYDCheckUpdateView(hass))
         hass.data[DOMAIN]["api_registered"] = True
 
     # Register static files with a FIXED path (no entry_id!)
@@ -133,3 +134,26 @@ class CYDConfigView(HomeAssistantView):
         
         self.hass.config_entries.async_update_entry(entry, options=new_options)
         return self.json({"status": "ok"})
+
+
+class CYDCheckUpdateView(HomeAssistantView):
+    """View to force a version check."""
+
+    url = "/api/cyd_solar_display/check_update/{entry_id}"
+    name = "api:cyd_solar_display:check_update"
+
+    def __init__(self, hass):
+        """Initialize."""
+        self.hass = hass
+
+    async def post(self, request: web.Request, entry_id: str) -> web.Response:
+        """Force a version check."""
+        coordinator = self.hass.data[DOMAIN].get(entry_id)
+        if not coordinator:
+            return self.json_message("Coordinator not found", 404)
+        
+        updated = await coordinator.async_check_version(force=True)
+        return self.json({
+            "latest_version": coordinator.latest_version,
+            "updated": updated
+        })

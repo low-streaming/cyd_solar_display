@@ -14,6 +14,7 @@ class CYDPreview extends LitElement {
       activeTab: { type: String },
       editConfig: { type: Object },
       latestVersion: { type: String },
+      _checkingUpdate: { type: Boolean },
       _pickerSearch: { type: Object }
     };
   }
@@ -24,6 +25,7 @@ class CYDPreview extends LitElement {
     this.activeTab = 'overview';
     this.editConfig = {};
     this.latestVersion = "0.0.0";
+    this._checkingUpdate = false;
     this._pickerSearch = {};
   }
 
@@ -66,6 +68,30 @@ class CYDPreview extends LitElement {
     } catch (e) {
       console.error(e);
       alert("❌ Fehler beim Speichern der Einstellungen.");
+    }
+  }
+
+  async checkUpdate() {
+    if (!this.panel || !this.panel.config || !this.panel.config.entry_id) return;
+    const entryId = this.panel.config.entry_id;
+    this._checkingUpdate = true;
+    this.requestUpdate();
+
+    try {
+      const data = await this.hass.callApi('POST', `cyd_solar_display/check_update/${entryId}`);
+      this.latestVersion = data.latest_version || "0.0.0";
+      
+      if (data.updated) {
+        // Version changed
+      } else {
+        alert("ℹ️ Du bist bereits auf dem neuesten Stand!");
+      }
+    } catch (e) {
+      console.error("Manual update check failed", e);
+      alert("❌ Fehler beim Abrufen der Version.");
+    } finally {
+      this._checkingUpdate = false;
+      this.requestUpdate();
     }
   }
 
@@ -822,9 +848,20 @@ class CYDPreview extends LitElement {
             <span style="font-size: 1.4em; filter: drop-shadow(0 0 5px ${updateAvailable ? '#00f3ff' : '#4caf50'});">${updateAvailable ? '🚀' : '✅'}</span> 
             System & Firmware Status
           </h3>
-          <div style="margin-top: 8px; font-size: 14px; color: #aaa;">
-            Installiert: <span style="color: #fff; font-weight: bold;">v${currentVersion}</span>
-            ${updateAvailable ? html` | <span style="color: #00f3ff; font-weight: 500;">Neue Version v${latest} verfügbar!</span>` : html` | <span style="color: #4caf50; font-weight: 500;">System ist auf dem neuesten Stand.</span>`}
+          <div style="margin-top: 8px; font-size: 14px; color: #aaa; display: flex; align-items: center; gap: 10px;">
+            <div>
+              Installiert: <span style="color: #fff; font-weight: bold;">v${currentVersion}</span>
+              ${updateAvailable ? html` | <span style="color: #00f3ff; font-weight: 500;">Neue Version v${latest} verfügbar!</span>` : html` | <span style="color: #4caf50; font-weight: 500;">System ist auf dem neuesten Stand.</span>`}
+            </div>
+            <button 
+              @click="${this.checkUpdate}" 
+              ?disabled="${this._checkingUpdate}"
+              style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; transition: all 0.2s;"
+              onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+              onmouseout="this.style.background='rgba(255,255,255,0.05)'"
+            >
+              ${this._checkingUpdate ? 'Suche...' : '🔍 Prüfen'}
+            </button>
           </div>
         </div>
         <div>
