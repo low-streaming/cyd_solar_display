@@ -80,7 +80,7 @@ Das System prüft automatisch auf neue Versionen.
 
 ## 📋 Changelog
 
-### v1.2.6 — 2026-03-28 🚀 Stabilitäts-Update
+### v1.2.7 — 2026-03-28 🚀 Stabilitäts-Update
 - ✅ **One-Click Firmware Update**: Neue Sektion im Hilfe-Tab
 - ✅ **Web-Flasher Support**: Installation direkt im Browser (index.html/manifest.json)
 - ✅ **28 Custom Sensoren**: Unterstützung für Seiten 1 bis 9 voll ausgebaut

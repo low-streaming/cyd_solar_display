@@ -46,7 +46,7 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
     def installed_version(self):
         """Version currently in use."""
         # We try to get this from the coordinator data
-        return self.coordinator.data.get("installed_version", "1.2.6")
+        return self.coordinator.data.get("installed_version", "1.2.7")
 
     @property
     def latest_version(self):

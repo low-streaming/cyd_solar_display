@@ -150,7 +150,7 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         # --- Discover ESPHome Entity ---
         esphome_update_id = None
         ota_service_name = None
-        installed_ver = "1.2.6"
+        installed_ver = "1.2.7"
         
         target_host = self.entry.data.get(CONF_HOST)
         _LOGGER.debug("Suche nach ESPHome-Gerät für Host %s", target_host)
@@ -174,7 +174,7 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
                     
                     state = self.hass.states.get(esphome_update_id)
                     if state:
-                        installed_ver = state.attributes.get("installed_version", "1.2.6")
+                        installed_ver = state.attributes.get("installed_version", "1.2.7")
                     break
         else:
             _LOGGER.warning("Kein ESPHome-Gerät für Host %s gefunden. Update-Funktion eingeschränkt.", target_host)

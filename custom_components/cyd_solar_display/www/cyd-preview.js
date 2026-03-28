@@ -839,7 +839,7 @@ class CYDPreview extends LitElement {
   }
 
   renderInfo() {
-    const currentVersion = "1.2.6";
+    const currentVersion = "1.2.7";
     const latest = this.latestVersion || "0.0.0";
     const updateAvailable = latest !== "0.0.0" && latest !== currentVersion;
 

@@ -1,11 +1,11 @@
 # =======================================================
 # CYD SOLAR MONITOR - GROW BOX DESIGN V2
-# Stabile Edition v1.2.6 (Corrected Formatting)
+# Stabile Edition v1.2.7 (Corrected Formatting)
 # =======================================================
 substitutions:
   name: "cyd-solar-display"
   friendly_name: "CYD Solar Display"
-  version: "1.2.6"
+  version: "1.2.7"
 
 esphome:
   name: ${name}
@@ -319,13 +319,17 @@ script:
     parameters:
       target_page: int
     then:
-      - globals.set:
-          id: local_page
-          value: !lambda 'return target_page;'
-      - lambda: |-
-          id(current_page).publish_state(target_page);
-          id(last_ha_page) = target_page;
-          global_preferences->sync();
+      - if:
+          condition:
+            lambda: 'return id(local_page) != target_page;'
+          then:
+            - globals.set:
+                id: local_page
+                value: !lambda 'return target_page;'
+            - lambda: |-
+                id(current_page).publish_state(target_page);
+                id(last_ha_page) = target_page;
+                global_preferences->sync();
 
   - id: evaluate_dimming
     then:
@@ -364,17 +368,23 @@ interval:
                   if (next_page > 9) next_page = 1;
                   bool is_en = false;
                   if (next_page == 1) is_en = id(page1_enabled);
-                  if (next_page == 2) is_en = id(page2_enabled);
-                  if (next_page == 3) is_en = id(page3_enabled);
-                  if (next_page == 4) is_en = id(page4_enabled);
-                  if (next_page == 5) is_en = id(page5_enabled);
-                  if (next_page == 6) is_en = id(page6_enabled);
-                  if (next_page == 7) is_en = id(page7_enabled);
-                  if (next_page == 8) is_en = id(page8_enabled);
-                  if (next_page == 9) is_en = id(page9_enabled);
-                  if (is_en) { id(set_local_page).execute(next_page); found = true; break; }
+                  else if (next_page == 2) is_en = id(page2_enabled);
+                  else if (next_page == 3) is_en = id(page3_enabled);
+                  else if (next_page == 4) is_en = id(page4_enabled);
+                  else if (next_page == 5) is_en = id(page5_enabled);
+                  else if (next_page == 6) is_en = id(page6_enabled);
+                  else if (next_page == 7) is_en = id(page7_enabled);
+                  else if (next_page == 8) is_en = id(page8_enabled);
+                  else if (next_page == 9) is_en = id(page9_enabled);
+                  if (is_en) { 
+                    if (next_page != id(local_page)) {
+                      id(set_local_page).execute(next_page);
+                    }
+                    found = true; 
+                    break; 
+                  }
                 }
-                if (!found) id(set_local_page).execute(1);
+                if (!found && id(local_page) != 1) id(set_local_page).execute(1);
                 id(touch_flash) = 0;
 
 time:
@@ -826,7 +836,7 @@ display:
           }
         }
       } else if (page == 10) {
-        it.filled_rectangle(10, 42, 300, 172, id(color_panel)); it.filled_rectangle(10, 42, 4, 172, id(color_house)); it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SYSTEM INFO"); it.printf(22, 75, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Version: %s", "1.2.6"); it.printf(22, 105, id(font_label), id(color_text), TextAlign::TOP_LEFT, "IP: %s", id(wifi_ip).state.c_str());
+        it.filled_rectangle(10, 42, 300, 172, id(color_panel)); it.filled_rectangle(10, 42, 4, 172, id(color_house)); it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SYSTEM INFO"); it.printf(22, 75, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Version: %s", "1.2.7"); it.printf(22, 105, id(font_label), id(color_text), TextAlign::TOP_LEFT, "IP: %s", id(wifi_ip).state.c_str());
         it.filled_rectangle(22, 135, 130, 40, id(color_bg)); it.rectangle(22, 135, 130, 40, id(color_text)); it.print(87, 155, id(font_label), id(color_text), TextAlign::CENTER, "NEUSTART"); it.print(160, 195, id(font_label), id(color_text), TextAlign::CENTER, "Forgematrix.de x Openkairo.de");
       }
 
@@ -852,6 +862,7 @@ touchscreen:
     on_touch:
       then:
         - lambda: |-
+            if (id(touch_override_ticks) > 0) return;
             int tx = touch.x; int ty = touch.y;
             if (id(local_page) == 10 && ty > 130 && ty < 185 && tx > 15 && tx < 158) { id(cyd_restart).press(); return; }
             int next_page = id(local_page); bool found = false;
@@ -859,10 +870,16 @@ touchscreen:
               next_page++; if (next_page > 10) next_page = 1;
               if (next_page == 10) { id(set_local_page).execute(10); found = true; break; }
               bool is_e = (next_page == 1) ? id(page1_enabled) : (next_page == 2 ? id(page2_enabled) : (next_page == 3 ? id(page3_enabled) : (next_page == 4 ? id(page4_enabled) : (next_page == 5 ? id(page5_enabled) : (next_page == 6 ? id(page6_enabled) : (next_page == 7 ? id(page7_enabled) : (next_page == 8 ? id(page8_enabled) : id(page9_enabled))))))));
-              if (is_e) { id(set_local_page).execute(next_page); found = true; break; }
+              if (is_e) { 
+                if (next_page != id(local_page)) {
+                  id(set_local_page).execute(next_page);
+                }
+                found = true; 
+                break; 
+              }
             }
-            if (!found) id(set_local_page).execute(1);
-            id(touch_flash) = 3; id(touch_override_ticks) = 30;
+            if (!found && id(local_page) != 1) id(set_local_page).execute(1);
+            id(touch_flash) = 3; id(touch_override_ticks) = 45;
 
 binary_sensor:
   - platform: touchscreen
