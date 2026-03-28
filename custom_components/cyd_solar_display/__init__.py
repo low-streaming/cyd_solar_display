@@ -71,7 +71,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     frontend.async_remove_panel(hass, DOMAIN)
 
     unload_ok = True
-    hass.data[DOMAIN].pop(entry.entry_id)
+    coordinator = hass.data[DOMAIN].pop(entry.entry_id)
+    
+    if hasattr(coordinator, "_unsub_dummy") and coordinator._unsub_dummy:
+        coordinator._unsub_dummy()
 
     return unload_ok
 

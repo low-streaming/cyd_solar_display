@@ -328,7 +328,6 @@ script:
                 value: !lambda 'return target_page;'
             - lambda: |-
                 id(current_page).publish_state(target_page);
-                id(last_ha_page) = target_page;
                 global_preferences->sync();
 
   - id: evaluate_dimming
@@ -707,7 +706,7 @@ switch:
   - platform: template
     name: "HA-Seiten-Synchronisierung"
     id: ha_page_sync_switch
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: RESTORE_DEFAULT_ON
     optimistic: true
 
 number:

@@ -143,6 +143,12 @@ class CYDSolarOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         if user_input is not None:
+            # Erhalte versteckte System-Tasten (wie die letzte Seite)
+            old_opt = dict(self.config_entry.options)
+            for k in ["last_page", "_last_sync"]:
+                if k in old_opt:
+                    user_input[k] = old_opt[k]
+                    
             return self.async_create_entry(title="", data=user_input)
 
         opt = getattr(self.config_entry, "options", {})
