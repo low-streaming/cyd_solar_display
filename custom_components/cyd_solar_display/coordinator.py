@@ -450,3 +450,19 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
                 _LOGGER.error("Could not call ESPHome service '%s': %s", srv, err)
 
         return payload
+
+    async def async_check_version(self, force=False):
+        """Fetch latest version from GitHub."""
+        now = datetime.now()
+        if force or self.latest_version == "0.0.0" or self.last_version_check is None or (now - self.last_version_check).total_seconds() > 60:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(self.version_url, timeout=5) as response:
+                        if response.status == 200:
+                            self.latest_version = (await response.text()).strip()
+                            self.last_version_check = now
+                            _LOGGER.debug("Latest GitHub version: %s", self.latest_version)
+                            return True
+            except Exception as e:
+                _LOGGER.warning("Failed to fetch version from GitHub: %s", e)
+        return False
