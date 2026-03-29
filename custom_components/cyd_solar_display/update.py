@@ -105,25 +105,39 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
                         if state and "installed_version" in state.attributes:
                             v = state.attributes["installed_version"]
                             if v and v != "unknown":
-                                return v.lstrip("vV")
+                                return str(v).strip().lstrip("vV")
                                 
                 # 3. Fallback: Suche nach einem Firmware-Version Sensor (falls kein Update-Entity vorhanden)
                 for entity in er.async_entries_for_config_entry(ent_reg, target_esphome.entry_id):
                     if entity.domain == "sensor" and "firmware" in entity.entity_id:
                         state = self.coordinator.hass.states.get(entity.entity_id)
                         if state and state.state not in ["unknown", "unavailable"]:
-                            return state.state.lstrip("vV")
+                            return str(state.state).strip().lstrip("vV")
                             
         except Exception as e:
             _LOGGER.debug("Fehler beim Ermitteln der Firmware für %s: %s", self._target_host, e)
 
         # 4. Letztes Fallback: Coordinator-Daten (nur als Fallback-Wert 1.2.7)
-        return self.coordinator.data.get("installed_version", "1.2.7")
+        return str(self.coordinator.data.get("installed_version", "1.2.7")).strip().lstrip("vV")
 
     @property
     def latest_version(self):
         """Latest version available for install."""
-        return self.coordinator.latest_version
+        v = self.coordinator.latest_version
+        if v:
+            return str(v).strip().lstrip("vV")
+        return v
+        
+    @property
+    def state(self):
+        """Force exactly the state, bypassing any AwesomeVersion cached state bugs."""
+        i_ver = self.installed_version
+        l_ver = self.latest_version
+        if i_ver and l_ver and i_ver == l_ver:
+            return "off"
+        if i_ver != l_ver:
+            return "on"
+        return "off"
 
     @property
     def in_progress(self):
