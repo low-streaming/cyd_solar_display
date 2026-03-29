@@ -215,12 +215,14 @@ class CYDPreview extends LitElement {
           <div class="tabs">
             <div class="tab ${this.activeTab === 'overview' ? 'active' : ''}" @click="${() => this.activeTab = 'overview'}">Dashboard</div>
             <div class="tab ${this.activeTab === 'settings' ? 'active' : ''}" @click="${() => this.activeTab = 'settings'}">Einstellungen</div>
+            <div class="tab ${this.activeTab === 'updates' ? 'active' : ''}" @click="${() => this.activeTab = 'updates'}">Display Update</div>
             <div class="tab ${this.activeTab === 'info' ? 'active' : ''}" @click="${() => this.activeTab = 'info'}">Hilfe & Info</div>
           </div>
 
           <div class="content">
             ${this.activeTab === 'overview' ? this.renderOverview() : ''}
             ${this.activeTab === 'settings' ? this.renderSettings() : ''}
+            ${this.activeTab === 'updates' ? this.renderUpdates() : ''}
             ${this.activeTab === 'info' ? this.renderInfo() : ''}
           </div>
           
@@ -802,6 +804,19 @@ class CYDPreview extends LitElement {
                 `}
             </div>
 
+            <div style="margin-top: 15px; margin-bottom: 20px; padding: 15px; background: rgba(0,243,255,0.05); border: 1px solid rgba(0,243,255,0.3); border-radius: 8px;">
+              <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: #fff; margin: 0;">
+                  <input type="checkbox" name="broadcast_mode" .checked="${this.editConfig.broadcast_mode === true}" @change="${this.handleFormInput}" style="width: 20px; height: 20px; accent-color: #00f3ff; margin-top: 3px; flex-shrink: 0;">
+                  <div>
+                    <div style="font-weight: bold; color: #00f3ff; font-size: 15px;">Synchron-Modus (Broadcast / Alle Displays) aktivieren</div>
+                    <div style="color: #aaa; font-size: 13px; margin-top: 5px; line-height: 1.5;">
+                      Wenn aktiv, steuert diese Integration automatisch <b>alle</b> deine CYD Displays gleichzeitig! Alle Bildschirme im Haus zeigen dann synchron denselben Inhalt an und blättern im selben Moment um.
+                      <br><strong style="color: #ff5252;">WICHTIG bei 2+ Displays:</strong> Aktiviere diesen Haken hier und lösche die zweite "Geräte/Dienste" Karte in Home Assistant (die du eben hinzugefügt hast)! Diese eine reicht nun aus.
+                    </div>
+                  </div>
+              </label>
+            </div>
+
             <div style="margin-top: 15px; margin-bottom: 20px;">
               <h4 style="color: #bbb; margin-bottom: 15px;">🌙 Nacht-Dimming Anzeige</h4>
               <div class="form-row" style="margin-bottom: 0;">
@@ -894,6 +909,94 @@ class CYDPreview extends LitElement {
   `;
   }
 
+  async triggerUpdate(entityId) {
+    if (!confirm("Firmware Update starten? Das Display wird danach neu gestartet.")) return;
+    try {
+      await this.hass.callService("update", "install", { entity_id: entityId });
+      alert("✅ Update-Befehl wurde gesendet!");
+    } catch (e) {
+      console.error(e);
+      alert("❌ Fehler beim Senden des Updates.");
+    }
+  }
+
+  renderUpdateCard(entity) {
+    const isUpdateAvailable = entity.state === 'on';
+    const inProgress = entity.attributes.in_progress === true || entity.attributes.update_action === 'installing';
+    let installed = entity.attributes.installed_version || 'Unbekannt';
+    let latest = entity.attributes.latest_version || 'Unbekannt';
+    const name = entity.attributes.friendly_name || entity.entity_id;
+    const ip = entity.attributes.display_ip || 'Unbekannt';
+
+    if (!installed.startsWith('v') && installed !== 'Unbekannt') installed = 'v' + installed;
+    if (!latest.startsWith('v') && latest !== 'Unbekannt') latest = 'v' + latest;
+
+    return html`
+      <div class="tech-box" style="margin-bottom: 15px; border-color: ${isUpdateAvailable ? '#00f3ff' : 'rgba(255,255,255,0.1)'}; background: ${isUpdateAvailable ? 'rgba(0, 243, 255, 0.05)' : 'rgba(0,0,0,0.2)'};">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+          <div style="flex: 1; min-width: 250px;">
+            <h3 style="margin: 0; color: #fff; display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 1.4em; filter: drop-shadow(0 0 5px ${isUpdateAvailable ? '#00f3ff' : '#4caf50'});">${isUpdateAvailable ? '🆕' : '📱'}</span> 
+              ${name}
+              <span style="font-size: 14px; font-weight: 500; color: #aaa; background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">🌐 ${ip}</span>
+            </h3>
+            <div style="margin-top: 8px; font-size: 14px; color: #aaa;">
+              Installiert: <span style="color: #fff; font-weight: bold;">${installed}</span> | 
+              Aktuell verfügbar: <span style="${isUpdateAvailable ? 'color: #00f3ff; font-weight: bold;' : 'color: #aaa;'}">${latest}</span>
+            </div>
+          </div>
+          <div>
+            ${inProgress ? html`
+              <div style="color: #fdd835; font-weight: bold; background: rgba(253,216,53,0.1); padding: 10px 15px; border-radius: 6px; border: 1px solid rgba(253,216,53,0.3); display: flex; align-items: center; gap: 8px;">
+                ⏳ Update läuft...
+              </div>
+            ` : isUpdateAvailable ? html`
+              <button 
+                @click="${() => this.triggerUpdate(entity.entity_id)}"
+                style="display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #00f3ff 0%, #0084ff 100%); color: #000; padding: 12px 25px; border-radius: 8px; border:none; font-size: 14px; font-weight: 900; box-shadow: 0 4px 15px rgba(0, 243, 255, 0.4); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-transform: uppercase; letter-spacing: 1px;"
+                onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(0, 243, 255, 0.6)';" 
+                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(0, 243, 255, 0.4)';"
+              >
+                🚀 Update Starten
+              </button>
+            ` : html`
+              <div style="background: rgba(76, 175, 80, 0.1); color: #4caf50; padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(76, 175, 80, 0.3); font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                 <div style="width: 8px; height: 8px; background: #4caf50; border-radius: 50%; box-shadow: 0 0 8px #4caf50;"></div>
+                 Auf dem neuesten Stand
+              </div>
+            `}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderUpdates() {
+    if (!this.hass) return html``;
+    
+    // Find all update entities that match CYD Solar Display
+    // ONLY display update entities that have a non-undefined display_ip attribute (thereby excluding ESPHome's internal updates)
+    const cydUpdates = Object.keys(this.hass.states)
+      .filter(eid => eid.startsWith('update.'))
+      .map(eid => this.hass.states[eid])
+      .filter(state => state.attributes.display_ip !== undefined);
+
+    return html`
+      <div class="card edit-card">
+        <h2>🚀 Display Firmware Updates</h2>
+        <p style="color:#aaa; font-size:14px; margin-bottom: 25px;">
+          Hier siehst du alle verbundenen CYD Solar Displays und kannst gezielt Updates anstoßen.
+        </p>
+
+        ${cydUpdates.length === 0 ? html`
+          <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; text-align: center; color: #888;">
+            Keine Displays aus dem Custom Component gefunden (oder ein Neustart ist nach dem Integration-Update nötig).
+          </div>
+        ` : cydUpdates.map(entity => this.renderUpdateCard(entity))}
+      </div>
+    `;
+  }
+
   renderInfo() {
     const currentVersion = "1.2.7";
     const latest = this.latestVersion || "0.0.0";
@@ -926,15 +1029,12 @@ class CYDPreview extends LitElement {
         <div>
           ${updateAvailable ? html`
             <button 
-              @click="${() => {
-                alert('Da die Anzeige mehrere Displays unterstützt, leiten wir dich direkt zur Übersicht weiter. Klicke dort beim gewünschten Display einfach auf das anstehende Update.');
-                window.location.href = '/config/integrations/integration/cyd_solar_display';
-              }}"
+              @click="${() => { this.activeTab = 'updates'; }}"
               style="display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #00f3ff 0%, #0084ff 100%); color: #000; padding: 12px 25px; border-radius: 8px; border:none; font-size: 14px; font-weight: 900; box-shadow: 0 4px 15px rgba(0, 243, 255, 0.4); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-transform: uppercase; letter-spacing: 1px;"
               onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(0, 243, 255, 0.6)';" 
               onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(0, 243, 255, 0.4)';"
             >
-              🚀 Jetzt Aktualisieren
+              🚀 Zu den Updates
             </button>
           ` : html`
             <div style="background: rgba(76, 175, 80, 0.1); color: #4caf50; padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(76, 175, 80, 0.3); font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px;">

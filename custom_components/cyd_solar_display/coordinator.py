@@ -448,7 +448,7 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         
         # 1. Collect all potential services
         all_solar_services = [s for s in esphome_services if s.startswith("cyd_solar_display_") and s.endswith("_update_display")]
-        if "cyd_solar_display_update_display" in esphome_services:
+        if "cyd_solar_display_update_display" in esphome_services and "cyd_solar_display_update_display" not in all_solar_services:
             all_solar_services.append("cyd_solar_display_update_display")
 
         if broadcast:
@@ -456,21 +456,28 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         else:
             # Specific Mode: Target only the display matching the configured IP (host)
             target_host = self.entry.data.get(CONF_HOST)
-            device_name = None
             for entry in self.hass.config_entries.async_entries("esphome"):
                 if entry.data.get("host") == target_host:
-                    device_name = entry.data.get("name")
+                    name_data = entry.data.get("name", "")
+                    title_data = entry.title
+                    
+                    possible_names = [name_data, title_data]
+                    for d_name in possible_names:
+                        if d_name:
+                            srv = f"{str(d_name).lower().replace('-', '_').replace(' ', '_')}_update_display"
+                            if srv in esphome_services:
+                                target_services = [srv]
+                                break
+                if target_services:
                     break
-            
-            if device_name:
-                srv = f"{str(device_name).replace('-', '_')}_update_display"
-                if srv in esphome_services:
-                    target_services = [srv]
         
         # Fallback: If specific targeting fails but only one generic service exists, use it!
-        if not target_services and len(all_solar_services) > 0:
+        if not target_services and len(all_solar_services) == 1:
             target_services = all_solar_services
-            _LOGGER.debug("Falling back to broadcast as no specific target match was found")
+            _LOGGER.debug(f"Calling only service {target_services[0]} as specific match failed but 1 display exists")
+        elif not target_services and len(all_solar_services) > 1:
+            _LOGGER.error("MEHRERE DISPLAYS gefunden, aber IP/Host '%s' passt zu keinem ESPHome-Gerät! Aus Sicherheitsgründen wird nichts gesendet.", target_host)
+            return payload
 
         if not target_services:
             _LOGGER.warning(

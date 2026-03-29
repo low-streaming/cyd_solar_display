@@ -18,34 +18,78 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
     """Set up the CYD Solar update entity."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([CYDSolarUpdateEntity(coordinator, entry)])
+    
+    entities = []
+    
+    main_host = entry.data.get(CONF_HOST)
+    # 1. Haupt-Device hinzufügen
+    entities.append(
+        CYDSolarUpdateEntity(
+            coordinator=coordinator, 
+            entry=entry, 
+            target_host=main_host, 
+            unique_id=f"{entry.entry_id}_update",
+            title="CYD Solar Firmware",
+            device_id=entry.entry_id
+        )
+    )
+    
+    # 2. Weitere ESPHome CYD Displays suchen (falls Broadcast oder generelle Mehrfachnutzung erlaubt sein soll)
+    for esphome_entry in hass.config_entries.async_entries("esphome"):
+        e_host = esphome_entry.data.get("host")
+        e_title = esphome_entry.title or ""
+        
+        # Ignoriere das Hauptgerät, das wir bereits hinzugefügt haben
+        if e_host and e_host != main_host:
+            # Heuristik: Handelt es sich um ein CYD Display?
+            if "cyd" in e_title.lower() or "solar" in e_title.lower():
+                uid = f"{entry.entry_id}_additional_{esphome_entry.entry_id}"
+                entities.append(
+                    CYDSolarUpdateEntity(
+                        coordinator=coordinator, 
+                        entry=entry, 
+                        target_host=e_host, 
+                        unique_id=uid,
+                        title=f"{e_title} Firmware",
+                        device_id=esphome_entry.entry_id
+                    )
+                )
+
+    async_add_entities(entities)
 
 class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
     """Update entity for CYD Solar Display."""
 
     _attr_has_entity_name = True
     _attr_device_class = UpdateDeviceClass.FIRMWARE
-    _attr_supported_features = UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS
-    _attr_title = "CYD Solar Firmware"
+    _attr_supported_features = UpdateEntityFeature.INSTALL
 
-    def __init__(self, coordinator, entry):
+    def __init__(self, coordinator, entry, target_host: str, unique_id: str, title: str, device_id: str):
         """Initialize."""
         super().__init__(coordinator)
         self.entry = entry
-        self._attr_unique_id = f"{entry.entry_id}_update"
+        self._target_host = target_host
+        self._attr_unique_id = unique_id
+        self._attr_title = title
         
-        # Link to the same device as the rest of the integration
+        # We try to keep it under separate devices (or all in one? Separate is cleaner)
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, entry.entry_id)},
-            name="CYD Solar Display",
+            identifiers={(DOMAIN, device_id)},
+            name=title.replace(" Firmware", ""),
             manufacturer="OpenKairo",
             model="ESP32-2432S028",
         )
 
     @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        return {
+            "display_ip": self._target_host,
+        }
+
+    @property
     def installed_version(self):
         """Version currently in use."""
-        # We try to get this from the coordinator data
         return self.coordinator.data.get("installed_version", "1.2.7")
 
     @property
@@ -59,11 +103,10 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
         return self.coordinator.data.get("update_in_progress", False)
 
     async def async_install(self, version: str, backup: bool, **kwargs):
-        """Install an update using the ESPHome web server."""
-        _LOGGER.info("USER-ACTION: Direct-Push Update gestartet für Version %s", version)
+        """Install an update using the ESPHome web server via Direct Push."""
+        _LOGGER.info("USER-ACTION: Direct-Push Update gestartet für Version %s (Host: %s)", version, self._target_host)
         
-        target_host = self.coordinator.entry.data.get(CONF_HOST)
-        if not target_host:
+        if not self._target_host:
             _LOGGER.error("FEHLER: Keine Host-IP für das Display gefunden!")
             return
 
@@ -81,8 +124,7 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
                     binary_data = await resp.read()
             
             # 3. Upload zum Display (ESPHome WebServer /update endpoint)
-            # ESPHome erwartet die Datei als Multipart-Form-Data
-            upload_url = f"http://{target_host}/update"
+            upload_url = f"http://{self._target_host}/update"
             _LOGGER.info("Pushing Firmware zu Display unter: %s", upload_url)
             
             data = aiohttp.FormData()
@@ -90,6 +132,7 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
                            binary_data,
                            filename='firmware.bin',
                            content_type='application/octet-stream')
+                           
             
             async with aiohttp.ClientSession() as session:
                 async with session.post(upload_url, data=data) as resp:
