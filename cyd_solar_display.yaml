@@ -1,6 +1,6 @@
 # =======================================================
 # CYD SOLAR MONITOR - GROW BOX DESIGN V2
-# Stabile Edition v1.2.7 (Corrected Formatting)
+# Stabile Edition v1.2.6 (Corrected Formatting)
 # =======================================================
 substitutions:
   name: "cyd-solar-display"
@@ -529,6 +529,15 @@ text_sensor:
     ip_address:
       name: "CYD IP Address"
       id: wifi_ip
+      
+  - platform: template
+    name: "CYD Firmware Version"
+    id: firmware_version_sensor
+    icon: mdi:cellphone-information
+    lambda: |-
+      return {"v${version}"};
+    update_interval: 60s
+
   - platform: template
     name: "Custom 1 Name"
     id: custom1_n
