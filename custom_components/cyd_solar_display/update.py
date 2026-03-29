@@ -105,14 +105,16 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
                         if state and "installed_version" in state.attributes:
                             v = state.attributes["installed_version"]
                             if v and v != "unknown":
-                                return str(v).strip().lstrip("vV")
+                                import re
+                                return re.sub(r'[^\d\.]', '', str(v))
                                 
                 # 3. Fallback: Suche nach einem Firmware-Version Sensor (falls kein Update-Entity vorhanden)
                 for entity in er.async_entries_for_config_entry(ent_reg, target_esphome.entry_id):
                     if entity.domain == "sensor" and "firmware" in entity.entity_id:
                         state = self.coordinator.hass.states.get(entity.entity_id)
                         if state and state.state not in ["unknown", "unavailable"]:
-                            return str(state.state).strip().lstrip("vV")
+                            import re
+                            return re.sub(r'[^\d\.]', '', str(state.state))
                             
         except Exception as e:
             _LOGGER.debug("Fehler beim Ermitteln der Firmware für %s: %s", self._target_host, e)
@@ -125,20 +127,20 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
         """Latest version available for install."""
         v = self.coordinator.latest_version
         if v:
-            # DEBUG: Füge '[ ]' hinzu, um zu testen, ob dieser Code wirklich auf dem HA läuft!
-            return f"[{str(v).strip().lstrip('vV')}]"
+            import re
+            return re.sub(r'[^\d\.]', '', str(v))
         return v
+
     @property
     def state(self):
         """Force exactly the state, bypassing any AwesomeVersion cached state bugs."""
         i_ver = self.installed_version
         l_ver = self.latest_version
-        if i_ver and l_ver and i_ver == l_ver:
+        if i_ver and l_ver and str(i_ver) == str(l_ver):
             return "off"
         if i_ver != l_ver:
             return "on"
         return "off"
-
     @property
     def in_progress(self):
         """Update installation in progress."""
