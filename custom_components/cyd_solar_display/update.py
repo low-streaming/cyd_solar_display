@@ -99,21 +99,20 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
             target_esphome = next((e for e in esphome_entries if e.data.get("host") == self._target_host), None)
             
             if target_esphome:
-                # 2. Suche nach der nativen ESPHome Update-Entität
                 for entity in er.async_entries_for_config_entry(ent_reg, target_esphome.entry_id):
                     if entity.domain == "update" and entity.platform == "esphome":
                         state = self.coordinator.hass.states.get(entity.entity_id)
                         if state and "installed_version" in state.attributes:
                             v = state.attributes["installed_version"]
                             if v and v != "unknown":
-                                return v
+                                return v.lstrip("vV")
                                 
                 # 3. Fallback: Suche nach einem Firmware-Version Sensor (falls kein Update-Entity vorhanden)
                 for entity in er.async_entries_for_config_entry(ent_reg, target_esphome.entry_id):
                     if entity.domain == "sensor" and "firmware" in entity.entity_id:
                         state = self.coordinator.hass.states.get(entity.entity_id)
                         if state and state.state not in ["unknown", "unavailable"]:
-                            return state.state
+                            return state.state.lstrip("vV")
                             
         except Exception as e:
             _LOGGER.debug("Fehler beim Ermitteln der Firmware für %s: %s", self._target_host, e)
