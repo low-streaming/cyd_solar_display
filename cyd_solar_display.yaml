@@ -5,7 +5,7 @@
 substitutions:
   name: "cyd-solar-display"
   friendly_name: "CYD Solar Display"
-  version: "1.2.7"
+  version: "1.2.8"
 
 esphome:
   name: ${name}
@@ -844,7 +844,7 @@ display:
           }
         }
       } else if (page == 10) {
-        it.filled_rectangle(10, 42, 300, 172, id(color_panel)); it.filled_rectangle(10, 42, 4, 172, id(color_house)); it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SYSTEM INFO"); it.printf(22, 75, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Version: %s", "1.2.7"); it.printf(22, 105, id(font_label), id(color_text), TextAlign::TOP_LEFT, "IP: %s", id(wifi_ip).state.c_str());
+        it.filled_rectangle(10, 42, 300, 172, id(color_panel)); it.filled_rectangle(10, 42, 4, 172, id(color_house)); it.print(22, 50, id(font_label), id(color_solar), TextAlign::TOP_LEFT, "SYSTEM INFO"); it.printf(22, 75, id(font_label), id(color_text), TextAlign::TOP_LEFT, "Version: %s", "1.2.8"); it.printf(22, 105, id(font_label), id(color_text), TextAlign::TOP_LEFT, "IP: %s", id(wifi_ip).state.c_str());
         it.filled_rectangle(22, 135, 130, 40, id(color_bg)); it.rectangle(22, 135, 130, 40, id(color_text)); it.print(87, 155, id(font_label), id(color_text), TextAlign::CENTER, "NEUSTART"); it.print(160, 195, id(font_label), id(color_text), TextAlign::CENTER, "Forgematrix.de x Openkairo.de");
       }
 
