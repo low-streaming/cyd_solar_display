@@ -66,7 +66,11 @@ class CYDPreview extends LitElement {
     if (!this.panel || !this.panel.config || !this.panel.config.entry_id) return;
     const entryId = this.panel.config.entry_id;
     try {
-      await this.hass.callApi('POST', `cyd_solar_display/config/${entryId}`, this.editConfig);
+      const payload = { ...this.editConfig };
+      delete payload.last_page;
+      delete payload._last_sync;
+      
+      await this.hass.callApi('POST', `cyd_solar_display/config/${entryId}`, payload);
       alert("✅ Einstellungen wurden erfolgreich gespeichert!");
     } catch (e) {
       console.error(e);
@@ -810,8 +814,9 @@ class CYDPreview extends LitElement {
                   <div>
                     <div style="font-weight: bold; color: #00f3ff; font-size: 15px;">Synchron-Modus (Broadcast / Alle Displays) aktivieren</div>
                     <div style="color: #aaa; font-size: 13px; margin-top: 5px; line-height: 1.5;">
-                      Wenn aktiv, steuert diese Integration automatisch <b>alle</b> deine CYD Displays gleichzeitig! Alle Bildschirme im Haus zeigen dann synchron denselben Inhalt an und blättern im selben Moment um.
-                      <br><strong style="color: #ff5252;">WICHTIG bei 2+ Displays:</strong> Aktiviere diesen Haken hier und lösche die zweite "Geräte/Dienste" Karte in Home Assistant (die du eben hinzugefügt hast)! Diese eine reicht nun aus.
+                      Wenn aktiv, versorgt diese Integration <b>alle</b> deine CYD Displays gleichzeitig mit den exakt gleichen Daten und Einstellungen. <br>
+                      <strong style="color: #4caf50;">Beide Displays bleiben dabei aber völlig unabhängig per Touch-Eingabe bedienbar!</strong>
+                      <br><strong style="color: #ff5252;">WICHTIG bei 2+ Displays:</strong> Aktiviere diesen Haken hier und lösche die zweite "Geräte/Dienste" Karte in Home Assistant! Diese eine reicht nun aus.
                     </div>
                   </div>
               </label>

@@ -18,6 +18,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
+    hass.data.setdefault(f"{DOMAIN}_old_options_{entry.entry_id}", dict(entry.options))
 
     # Register API View for Panel Config (only once)
     if "api_registered" not in hass.data[DOMAIN]:
@@ -70,8 +71,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, ["update"])
     
     if unload_ok:
-        # Remove the registered panel from the frontend on unload
-        frontend.async_remove_panel(hass, DOMAIN)
+        # Wir entfernen das Panel hier NICHT, da ein Reload (z.B. durch Speichern in der UI) 
+        # sonst dazu führt, dass HA den Nutzer sofort aus dem Fenster wirft (Jumpt-to-Top-Bug).
+        # Das Panel bleibt solange HA läuft registriert, was völlig legitim ist.
         
         if entry.entry_id in hass.data.get(DOMAIN, {}):
             coordinator = hass.data[DOMAIN].pop(entry.entry_id)
