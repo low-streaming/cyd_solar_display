@@ -125,9 +125,9 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
         """Latest version available for install."""
         v = self.coordinator.latest_version
         if v:
-            return str(v).strip().lstrip("vV")
+            # DEBUG: Füge '[ ]' hinzu, um zu testen, ob dieser Code wirklich auf dem HA läuft!
+            return f"[{str(v).strip().lstrip('vV')}]"
         return v
-        
     @property
     def state(self):
         """Force exactly the state, bypassing any AwesomeVersion cached state bugs."""
