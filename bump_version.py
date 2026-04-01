@@ -2,8 +2,8 @@ import os
 
 files = [
     r'README.md',
-    r'manifest.json',
-    r'index.html',
+    r'webflasher\manifest.json',
+    r'webflasher\index.html',
     r'cyd_solar_display.yaml',
     r'custom_components\cyd_solar_display\www\cyd-preview.js',
     r'custom_components\cyd_solar_display\update.py',
