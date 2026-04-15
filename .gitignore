@@ -6,3 +6,5 @@
 
 *.yaml
 *.bin
+!cyd_solar_display.bin
+!cyd_solar_display_factory.bin
