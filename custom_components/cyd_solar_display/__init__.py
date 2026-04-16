@@ -49,10 +49,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     frontend_panels = hass.data.get("frontend_panels", {})
     existing_panel = frontend_panels.get(DOMAIN)
     
-    # If the panel exists but points to a different entry_id, remove it first
     if existing_panel and existing_panel.config.get("entry_id") != entry.entry_id:
         _LOGGER.debug("Updating CYD Monitor panel to new entry_id: %s", entry.entry_id)
-        hass.components.frontend.async_remove_panel(DOMAIN)
+        frontend.async_remove_panel(hass, DOMAIN)
         existing_panel = None
 
     if not existing_panel:

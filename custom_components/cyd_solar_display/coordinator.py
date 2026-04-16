@@ -174,7 +174,7 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
                     
                     state = self.hass.states.get(esphome_update_id)
                     if state:
-                        installed_ver = state.attributes.get("installed_version", "1.2.7")
+                        installed_ver = state.attributes.get("installed_version", "1.2.9")
                     break
         else:
             _LOGGER.warning("Kein ESPHome-Gerät für Host %s gefunden. Update-Funktion eingeschränkt.", target_host)
