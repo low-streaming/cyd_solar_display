@@ -63,18 +63,23 @@ class CYDPreview extends LitElement {
   }
 
   async saveConfig() {
-    if (!this.panel || !this.panel.config || !this.panel.config.entry_id) return;
+    if (!this.panel || !this.panel.config || !this.panel.config.entry_id) {
+      console.error("Save failed: No panel config or entry_id found", this.panel);
+      alert("❌ Fehler: Keine gültige Geräte-ID gefunden. Bitte Home Assistant neu starten.");
+      return;
+    }
     const entryId = this.panel.config.entry_id;
     try {
       const payload = { ...this.editConfig };
       delete payload.last_page;
       delete payload._last_sync;
       
-      await this.hass.callApi('POST', `cyd_solar_display/config/${entryId}`, payload);
+      const response = await this.hass.callApi('POST', `cyd_solar_display/config/${entryId}`, payload);
       alert("✅ Einstellungen wurden erfolgreich gespeichert!");
     } catch (e) {
-      console.error(e);
-      alert("❌ Fehler beim Speichern der Einstellungen.");
+      console.error("Save Config Error:", e);
+      const status = e.status_code || (e.error ? e.error.code : 'Unknown');
+      alert(`❌ Fehler beim Speichern der Einstellungen (Code: ${status}).`);
     }
   }
 
@@ -1003,7 +1008,7 @@ class CYDPreview extends LitElement {
   }
 
   renderInfo() {
-    const currentVersion = "1.2.7";
+    const currentVersion = "1.2.9";
     const latest = this.latestVersion || "0.0.0";
     const updateAvailable = latest !== "0.0.0" && latest !== currentVersion;
 

@@ -45,9 +45,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # NEW: Forward setups to platforms (update)
     await hass.config_entries.async_forward_entry_setups(entry, ["update"])
 
-    # Register the Sidebar Panel (only once, guard by checking frontend_panels)
+    # Register the Sidebar Panel (Robust update logic)
     frontend_panels = hass.data.get("frontend_panels", {})
-    if DOMAIN not in frontend_panels:
+    existing_panel = frontend_panels.get(DOMAIN)
+    
+    # If the panel exists but points to a different entry_id, remove it first
+    if existing_panel and existing_panel.config.get("entry_id") != entry.entry_id:
+        _LOGGER.debug("Updating CYD Monitor panel to new entry_id: %s", entry.entry_id)
+        hass.components.frontend.async_remove_panel(DOMAIN)
+        existing_panel = None
+
+    if not existing_panel:
         try:
             await panel_custom.async_register_panel(
                 hass,
@@ -60,7 +68,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 config={"entry_id": entry.entry_id}
             )
         except Exception as err:
-            _LOGGER.warning("Panel already registered or error: %s", err)
+            _LOGGER.warning("Could not register panel: %s", err)
 
     entry.async_on_unload(entry.add_update_listener(update_listener))
 
