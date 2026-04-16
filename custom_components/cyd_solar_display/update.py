@@ -120,7 +120,7 @@ class CYDSolarUpdateEntity(CoordinatorEntity, UpdateEntity):
             _LOGGER.debug("Fehler beim Ermitteln der Firmware für %s: %s", self._target_host, e)
 
         # 4. Letztes Fallback: Coordinator-Daten (nur als Fallback-Wert 1.2.7)
-        return str(self.coordinator.data.get("installed_version", "1.2.7")).strip().lstrip("vV")
+        return str(self.coordinator.data.get("installed_version", "1.2.9")).strip().lstrip("vV")
 
     @property
     def latest_version(self):

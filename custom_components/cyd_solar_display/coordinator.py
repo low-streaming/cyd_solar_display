@@ -150,7 +150,7 @@ class CYDSolarCoordinator(DataUpdateCoordinator):
         # --- Discover ESPHome Entity ---
         esphome_update_id = None
         ota_service_name = None
-        installed_ver = "1.2.7"
+        installed_ver = "1.2.9"
         
         target_host = self.entry.data.get(CONF_HOST)
         _LOGGER.debug("Suche nach ESPHome-Gerät für Host %s", target_host)

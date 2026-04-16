@@ -15,7 +15,7 @@ for f in files:
         with open(f, 'r', encoding='utf-8') as file:
             content = file.read()
         
-        content = content.replace('1.2.6', '1.2.7')
+        content = content.replace('1.2.8', '1.2.9')
         
         with open(f, 'w', encoding='utf-8') as file:
             file.write(content)

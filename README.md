@@ -47,6 +47,10 @@ Wenn du ein frisches Display hast, kannst du es direkt über den Browser flashen
 3. Klicke auf **Installieren** und wähle den COM-Port aus
 4. Nach dem Flash verbindet sich das Display mit deinem WLAN (Portal öffnet sich)
 
+### 💡 Welches File für was?
+*   **`cyd_solar_display_factory.bin`**: Nutze dieses File für den **Flash per USB** (z.B. Web-Flasher). Es enthält den Bootloader.
+*   **`cyd_solar_display.bin`**: Nutze dieses File nur für **vorhandene Installationen** per OTA-Update (Over-the-Air) in Home Assistant.
+
 ---
 
 ## 📦 Integration in Home Assistant (HACS)
@@ -79,6 +83,14 @@ Das System prüft automatisch auf neue Versionen.
 ---
 
 ## 📋 Changelog
+
+### v1.2.9 — 2026-04-16 🚀 Global Sync
+- ✅ **Version Alignment**: All project components synchronized to v1.2.9
+- ✅ **Stability Fix**: Optimized touchscreen update interval for better responsiveness
+
+### v1.2.8 — 2026-04-16 🚀 Maintenance Update
+- ✅ **Firmware Synced**: All version strings aligned across the repository
+- ✅ **OTA Fixed**: Re-compiled OTA and Factory binaries provided in root
 
 ### v1.2.7 — 2026-03-28 🚀 Stabilitäts-Update
 - ✅ **One-Click Firmware Update**: Neue Sektion im Hilfe-Tab
